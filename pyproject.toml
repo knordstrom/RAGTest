@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "pycontainer"
+version = "0.1.0"
+description = ""
+authors = ["Keith Nordstrom <keith@timeli.io>"]
+readme = "README.rst"
+packages = [{include = "api"}, {include = "library"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pytest = "^8.1.1"
+Flask = "^3.0.2"
+gpt4all = "^2.2.1.post1"
+google-api-python-client = "^2.122.0"
+google-auth-httplib2 = "^0.2.0"
+google-auth-oauthlib = "^1.2.0"
+weaviate-client = "^4.5.4"
+langchain = "^0.1.12"
+langchain-experimental = "^0.0.55"
+langchain-openai = "^0.0.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
