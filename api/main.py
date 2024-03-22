@@ -1,0 +1,89 @@
+from os import abort
+import flask
+import context
+from library.gmail import Gmail
+from library.llm import LLM, Wizard
+import library.median as median
+import importlib as i
+i.reload(median)
+import library.weaviate as weaviate
+
+app = flask.Flask(__name__)
+
+@app.route('/median', methods=['GET'])
+def get_median() -> str:
+    left: str = flask.request.args.get('left')
+    right: str = flask.request.args.get('right')
+
+    #Convert the lists of strings to lists of integers
+    left_list: list = get_int_list_from_string(left)
+    right_list: list = get_int_list_from_string(right)
+
+    print("left_list: " + str(left_list))
+    print("right_list: " + str(right_list))
+
+    # Call the public method from the `Solution` class
+    result: int = median.Solution().findMedianSortedArrays(left_list, right_list)
+    return str(result)
+
+def get_int_list_from_string(string: str) -> list:
+    try:
+        return list(map(int, get_list_from_string(string)))
+    except AttributeError:
+        abort(404)
+
+@app.route('/ask', methods=['GET'])
+def ask() -> str:
+    query = flask.request.args.get('q')
+    if query is not None and query != '':
+        w: LLM = Wizard(weaviate.Weaviate("http://127.0.0.1:8080"))
+        return w.query(query)
+    else:
+        flask.abort(404)
+        return "No query provided"
+
+@app.route('/email', methods=['GET'])
+def email() -> str:
+    email = flask.request.args.get('e') #'keith@madsync.com'
+
+    if email is not None and email != '':
+        mapped: list = read_last_emails(email)
+        write_to_vdb(mapped)
+        return mapped
+    else:
+        flask.abort(404)
+        return "No email provided"
+
+def read_last_emails(email: str) -> list:
+    try:
+        g = Gmail(email, app.root_path + '/../resources/gmail_creds.json')
+        ids = g.get_emails()
+        print("Retrieving " + str(len(ids))  + " emails")
+        mapped = []
+        for id in ids:
+            mapped.append(g.get_email(msg_id=id['id']))
+        
+        return mapped
+    finally:
+        g.close()
+
+def write_to_vdb(mapped: list) -> None:
+    try:
+        w = weaviate.Weaviate("http://127.0.0.1:8080")
+        for j,email in enumerate(mapped):
+            print("=> Considering email " + str(j) + " of " + str(len(mapped)) + "...")
+            try:
+                w.upsert(email)
+            except Exception as e:
+                print("Error: " + str(e))
+        print(w.count())
+    finally:
+        w.close()
+
+def get_list_from_string(string: str) -> list:
+    if string == None:
+        return []
+    return list(map(int, string.split(',')))
+
+if __name__ == '__main__':
+    app.run()
