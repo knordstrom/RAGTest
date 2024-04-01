@@ -3,3 +3,6 @@ init:
 
 test:
 	poetry run pytest
+
+run:
+	flask --app api/main run --port=5010

@@ -1,7 +1,7 @@
 from os import abort
 import flask
 import context
-from library.gmail import Gmail
+from library.gmail import Gmail, GmailLogic
 from library.llm import LLM, Wizard
 import library.median as median
 import importlib as i
@@ -44,24 +44,26 @@ def ask() -> str:
 
 @app.route('/email', methods=['GET'])
 def email() -> str:
-    email = flask.request.args.get('e') #'keith@madsync.com'
+    email = flask.request.args.get('e')
+    count = flask.request.args.get('n', None, int)
 
     if email is not None and email != '':
-        mapped: list = read_last_emails(email)
+        mapped: list = read_last_emails(email, count = count)
         write_to_vdb(mapped)
         return mapped
     else:
         flask.abort(404)
         return "No email provided"
 
-def read_last_emails(email: str) -> list:
+def read_last_emails(email: str, count = None) -> list:
     try:
-        g = Gmail(email, app.root_path + '/../resources/gmail_creds.json')
-        ids = g.get_emails()
+        g: Gmail = Gmail(email, app.root_path + '/../resources/gmail_creds.json')
+        gm: GmailLogic = GmailLogic(g)
+        ids = gm.get_emails(count)
         print("Retrieving " + str(len(ids))  + " emails")
         mapped = []
         for id in ids:
-            mapped.append(g.get_email(msg_id=id['id']))
+            mapped.append(gm.get_email(msg_id=id['id']))
         
         return mapped
     finally:
