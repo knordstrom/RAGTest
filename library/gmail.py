@@ -1,7 +1,5 @@
 import os
 import pickle
-import datetime
-import re
 from library import models
 
 # Gmail API utils
@@ -56,20 +54,10 @@ class GmailLogic:
                 messages_left = False
         return messages
     
-    def get_email(self, user_id: str='me', msg_id: str='') -> str:
+    def get_email(self, user_id: str='me', msg_id: str='') -> dict:
         print("Getting email with id " + msg_id + " for user " + user_id)
-        data = self.gmail.get(userId=user_id, id=msg_id)['payload']
-        if data.get("parts"):
-            vals = data['parts']
-        else:
-            vals = []
-        for v in vals:
-            if v['mimeType'] == 'text/plain':
-                return urlsafe_b64decode(str(v['body']['data'])).decode()
-        
-        message = map(lambda m: m.get('body'), vals)
-        # print("Got email: " + str(message))
-        return str(message)
+        data = self.gmail.get(userId=user_id, id=msg_id)
+        return models.Message.extract_data(data)
     
 
     def read_message(self, user_id: str='me', message: str=''):
@@ -83,8 +71,7 @@ class GmailLogic:
         """
         msg = self.gmail.get(id=message, userId=user_id, format='full')
         # parts can be the message body, or attachments
-        payload = msg['payload']['parts']
-        return payload
+        return msg
     
 # Realization of the Gmail API interface
 class Gmail(GmailServiceProvider):
