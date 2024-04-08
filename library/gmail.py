@@ -106,10 +106,15 @@ class Gmail(GmailServiceProvider):
         return build('gmail', 'v1', credentials=creds)
 
     def list(self, userId='me', pageToken = None, maxResults = None):
-        return self.service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults).execute()
+        with self.service as service:
+            return service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults).execute()
     
     def get(self, id, userId='me', format='full'):
-        return self.service.users().messages().get(userId=userId, id=id, format = format).execute()
+        try:
+             result = self.service.users().messages().get(userId=userId, id=id, format = format).execute()   
+        finally:
+            self.service.close()
+        return result
     
     def close(self):
         self.service.close()

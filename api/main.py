@@ -2,7 +2,7 @@ from os import abort
 import flask
 import context
 from library.gmail import Gmail, GmailLogic
-from library.llm import LLM, Wizard
+from library.llm import LLM, Wizard, Hermes, Falcon
 import library.median as median
 import importlib as i
 i.reload(median)
@@ -37,7 +37,7 @@ def ask() -> str:
     query = flask.request.args.get('q')
     if query is not None and query != '':
         w: LLM = Wizard(weaviate.Weaviate("http://127.0.0.1:8080"))
-        return w.query(query)
+        return w.query(query, weaviate.WeaviateSchemas.EMAIL_TEXT)
     else:
         flask.abort(404)
         return "No query provided"
@@ -55,12 +55,11 @@ def email() -> str:
         flask.abort(404)
         return "No email provided"
 
-def read_last_emails(email: str, count = None) -> list:
+def read_last_emails(email: str, count = None) -> list[dict]:
     try:
         g: Gmail = Gmail(email, app.root_path + '/../resources/gmail_creds.json')
         gm: GmailLogic = GmailLogic(g)
         ids = gm.get_emails(count)
-        print("Retrieving " + str(len(ids))  + " emails")
         mapped = []
         for id in ids:
             mapped.append(gm.get_email(msg_id=id['id']))
@@ -69,16 +68,19 @@ def read_last_emails(email: str, count = None) -> list:
     finally:
         g.close()
 
-def write_to_vdb(mapped: list) -> None:
+def write_to_vdb(mapped: list[dict]) -> None:
+    print("Writing to VDB..." + str(len(mapped)))
     try:
         w = weaviate.Weaviate("http://127.0.0.1:8080")
         for j,email in enumerate(mapped):
             print("=> Considering email " + str(j) + " of " + str(len(mapped)) + "...")
             try:
-                w.upsert(email)
+                if email['body'] == None or email['body'] == '':
+                    email['body'] = email['subject']
+                w.upsertChunkedText(email, weaviate.WeaviateSchemas.EMAIL_TEXT, weaviate.WeaviateSchemas.EMAIL, 'body')
             except Exception as e:
                 print("Error: " + str(e))
-        print(w.count())
+        print(w.count(weaviate.WeaviateSchemas.EMAIL))
     finally:
         w.close()
 

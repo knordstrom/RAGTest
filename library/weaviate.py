@@ -1,120 +1,157 @@
+import copy
+import enum
 import weaviate as w
 #import langchain_experimental.text_splitter as lang_splitter
 import langchain_text_splitters as lang_splitter
 from langchain_community.embeddings import GPT4AllEmbeddings
 from library.vdb import VDB 
 import weaviate.classes as wvc
+from weaviate.classes.config import Property, DataType
 
-class_obj = {
-    # Class definition
-    "class": "EmailText",
+class WeaviateSchemas(enum.Enum):
 
-    # Property definitions
-    "properties": [
-        {
-            "name": "text",
-            "dataType": ["text"],
-        }
-    ],
+    EMAIL = 'email'
+    EMAIL_TEXT = 'email_text'
 
-    # Specify a vectorizer
-    "vectorizer": "text2vec-gpt4all",
+class WeaviateSchema:
 
-    # Module settings
-    "moduleConfig": {
-        "text2vec-gpt4all": {
-            "vectorizeClassName": False,
-            "model": "ada",
-            "modelVersion": "002",
-            "type": "text"
-        },
-    },
-}
+    class_objs: list[(str,dict)] = ([
+        (WeaviateSchemas.EMAIL,{
+            "class": "Email",
+            "vectorizer": False,
+
+            # Property definitions
+            "properties": [
+                Property(name = "email_id", data_type=DataType.TEXT),
+                Property(name ="history_id", data_type=DataType.TEXT),
+                Property(name ="thread_id", data_type=DataType.TEXT),
+                Property(name ="labels", data_type=DataType.TEXT_ARRAY),
+                Property(name ="to", data_type=DataType.OBJECT_ARRAY, nested_properties=[
+                    Property(name ="email", data_type = DataType.TEXT),
+                    Property(name ="name", data_type = DataType.TEXT)
+                ]),
+                Property(name ="cc", data_type=DataType.OBJECT_ARRAY, nested_properties=[
+                    Property(name ="email", data_type = DataType.TEXT),
+                    Property(name ="name", data_type = DataType.TEXT)
+                ]),
+                Property(name ="bcc", data_type=DataType.OBJECT_ARRAY, nested_properties=[
+                    Property(name ="email", data_type = DataType.TEXT),
+                    Property(name ="name", data_type = DataType.TEXT)
+                ]),
+                Property(name ="subject", data_type=DataType.TEXT),
+                Property(name ="from", data_type = DataType.OBJECT, nested_properties=[
+                    Property(name ="email", data_type = DataType.TEXT),
+                    Property(name ="name", data_type = DataType.TEXT)
+                ]),
+                Property(name ="date", data_type=DataType.DATE),
+            ],
+
+    }),
+    (WeaviateSchemas.EMAIL_TEXT, {
+            # Class definition
+            "class": "EmailText",
+
+            # Property definitions
+            "properties": [
+                Property(name = "text", data_type=DataType.TEXT),
+            ],
+            "references": [
+                wvc.config.ReferenceProperty(name="email_id", target_collection="Email"),
+                wvc.config.ReferenceProperty(name="date", target_collection="Email"),
+                wvc.config.ReferenceProperty(name="from", target_collection="Email"),
+                wvc.config.ReferenceProperty(name="to", target_collection="Email"),
+                wvc.config.ReferenceProperty(name="thread_id", target_collection="Email"),
+            ],
+
+            # Specify a vectorizer
+            "vectorizer": True,
+    })
+])
 
 
 class Weaviate(VDB):
 
+    schemas = {}
+
     @property
     def client(self):
-        return w.Client(self.url)
+        return w.connect_to_local(
+            port=8080,
+        )
+
+    def collection(self, key: WeaviateSchemas) -> object:
+        schema = self.schemas[key]
+        return self.client.collections.get(schema['class'])
     
-    def __init__(self, url) -> None:
+    def __init__(self, url, schemas: list[(str,dict)] = WeaviateSchema.class_objs) -> None:
         self.url = url
-        self.create_schema(class_obj)     
+        for schema_entry in schemas:
+            key, schema = schema_entry
+            self.create_schema(schema)  
+            self.schemas[key] = schema 
 
     def create_schema(self, schema_object) -> None:
         try:
-            self.client.schema.get(schema_object['class'])
+            vectorizer = wvc.config.Configure.Vectorizer.text2vec_transformers() if schema_object['vectorizer'] else None
+            print("Creating new schema " + schema_object['class'] + " with vectorizer " + str(vectorizer))
+            self.client.collections.create(schema_object['class'], 
+                                        properties = schema_object['properties'], 
+                                        references = schema_object.get('references', None),
+                                        vectorizer_config = vectorizer                               
+                                )                         
         except w.exceptions.UnexpectedStatusCodeError:
-            print("Creating new schema " + schema_object['class'] + "...")
-            self.client.schema.create_class(schema_object)
-    
-    def upsert(self, text:str) -> bool:
-        values = self.split(text)
+            print("Schema already exists")
 
-        map(lambda x: print(x), values)
+    def upsertChunkedText(self, obj, key: WeaviateSchemas, metadataKey: WeaviateSchemas, splitOn: str) -> bool:
+        text = obj[splitOn]
+        split_text = self.split(text)
+        collection = self.collection(key)
+        metaCollection = self.collection(metadataKey)
+        with metaCollection.batch.dynamic() as batch:
+            batch.add_object(
+                    obj,
+                    uuid = w.util.generate_uuid5(obj)
+            )
 
-        with self.client.batch(
-            batch_size=200,  # Specify batch size
-            num_workers=2,   # Parallelize the process
-        ) as batch:
-            for row in values:
-                if row.page_content is not None and row.page_content != "":
-
-                    print("Upserting " + str(row))
-                    question_object = {
-                        "text": row.page_content,
+        with collection.batch.dynamic() as batch:
+            for value in split_text:
+                row = {
+                        "text": value.page_content,
                     }
-                    batch.add_data_object(
-                        question_object,
-                        class_name = class_obj['class'],
-                        uuid = w.util.generate_uuid5(question_object)
-                    )
-                else:
-                    print("Skipping row with no content")
-
+                batch.add_object(
+                    row,
+                    uuid = w.util.generate_uuid5(row)
+            )
         return True
     
-    def count(self) -> object:
-        return self.client.query.aggregate(class_obj['class']).with_meta_count().do()
+    def count(self, key: WeaviateSchemas) -> object:
+        collection = self.collection(key)
+        return collection.aggregate.over_all()
 
     def split(self, text:str) -> list:
-
-
         text_splitter = lang_splitter.CharacterTextSplitter(
             separator="\n\n",
             chunk_size=1000,
             chunk_overlap=200,
             length_function=len,
             is_separator_regex=False,
-)
+        )
         # text_splitter = lang_splitter.SemanticChunker(GPT4AllEmbeddings())
         return text_splitter.create_documents([text])
     
-    def search(self, query:str) -> list:
+    def search(self, query:str, key: WeaviateSchemas) -> list:
 
-        # items = self.client.collections.get(class_obj['class'])
-        # response = items.query.near_text(
-        #     query=query,
-        #     limit=5,
-        #     # target_vector="title_country",  # Specify the target vector for named vector collections
-        #     return_metadata=wvc.query.MetadataQuery(distance=True)
-        # )
-        print("Querying for " + query + " in " + class_obj['class'] + "...")
-        response = (
-            self.client.query.get(class_obj['class'], ["text"])
-            .with_near_text({
-                "concepts": [query]
-            })
-            .with_limit(2)
-            .with_additional(["distance"])
-            .do()
+        collection = self.collection(key)
+
+        response = collection.query.near_text(
+            query=query,
+            limit=5,
+            return_metadata=wvc.query.MetadataQuery(distance=True)
         )
 
-        # {'data': {'Get': {'EmailText': [{'distance': 0.0, 'text': 'I do not know the answer to that question.'}]}}}
+        print("Found " + str(len(response.objects)) + " objects")
 
-        return map(lambda x: x['text'], response['data']['Get'][class_obj['class']])
+        return response #map(lambda x: x.properties['text'], response.objects)
     
-    def close(self):
-        pass  #the v3 client doesn't have a close method, need to upgrade to invoking 4
-#        self.client.close()
+    def close(self):       
+        self.client.close()

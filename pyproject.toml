@@ -18,6 +18,8 @@ weaviate-client = "^4.5.4"
 langchain = "^0.1.12"
 langchain-experimental = "^0.0.55"
 langchain-openai = "^0.0.8"
+beautifulsoup4 = "^4.12.3"
+email-reply-parser = "^0.5.12"
 
 
 [build-system]

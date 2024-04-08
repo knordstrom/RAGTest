@@ -1,0 +1,4 @@
+__pycache__*
+library/__pycache__*
+api/__pycache__*
+tests/__pycache__*
