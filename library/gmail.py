@@ -49,10 +49,9 @@ class GmailLogic:
             results = self.gmail.list(userId='me', pageToken=pageToken, maxResults=count)
             pageToken = results.get('nextPageToken')
             new_messages = results.get('messages', [])
-            # print("Got messages: " + str(new_messages))
             count -= len(new_messages)
             messages += new_messages
-            if not pageToken or (not count or count <= 0) or len(messages) == 0:               
+            if not pageToken or (not count or count <= 0) or len(new_messages) == 0:               
                 messages_left = False
         return messages
     
@@ -68,7 +67,6 @@ class GmailLogic:
                 return urlsafe_b64decode(str(v['body']['data'])).decode()
         
         message = map(lambda m: m.get('body'), vals)
-        # print("Got email: " + str(message))
         return str(message)
     
 
