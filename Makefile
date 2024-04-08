@@ -1,8 +1,8 @@
 init:
-	pip install -r requirements.txt
+	poetry install
 
 test:
-	poetry run pytest
+	poetry run coverage run -m pytest && poetry run coverage report -m
 
 run:
 	flask --app api/main run --port=5010
