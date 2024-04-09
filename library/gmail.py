@@ -49,7 +49,7 @@ class GmailLogic:
             new_messages = results.get('messages', [])
             count -= len(new_messages)
             messages += new_messages
-            if not pageToken or (not count or count <= 0) or len(messages) == 0:               
+            if not pageToken or (not count or count <= 0) or len(new_messages) == 0:               
                 messages_left = False
         return messages
     
