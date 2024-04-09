@@ -5,8 +5,6 @@ import pytest
 import unittest
 import os
 
-
-
 class TestMessage(unittest.TestCase):
 
     resource = os.path.dirname(__file__) + "/../resources/sample_email.json"
@@ -60,7 +58,6 @@ class TestMessage(unittest.TestCase):
                 assert email_obj['from'] == {'email': 'yourprovider@simplepractice.com', 'name': 'Doctor Appointment'}
                 assert email_obj['date'] == '2024-04-07 13:40:26'
                 assert str(email_obj['body']) == ''
-                print("All tests passed")
         else:
             print("File " +  + " not found")
             assert False
