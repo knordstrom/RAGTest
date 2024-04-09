@@ -139,19 +139,19 @@ class Weaviate(VDB):
         # text_splitter = lang_splitter.SemanticChunker(GPT4AllEmbeddings())
         return text_splitter.create_documents([text])
     
-    def search(self, query:str, key: WeaviateSchemas) -> list:
+    def search(self, query:str, key: WeaviateSchemas, limit: int = 5) -> list:
 
         collection = self.collection(key)
 
         response = collection.query.near_text(
             query=query,
-            limit=5,
+            limit=limit,
             return_metadata=wvc.query.MetadataQuery(distance=True)
         )
 
         print("Found " + str(len(response.objects)) + " objects")
 
-        return response #map(lambda x: x.properties['text'], response.objects)
+        return response
     
     def close(self):       
         self.client.close()

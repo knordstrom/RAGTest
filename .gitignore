@@ -3,4 +3,4 @@
 /**/__pycache__ /*
 token.pickle
 /resources/gmail_creds.json
-
+.coverage

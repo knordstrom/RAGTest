@@ -6,9 +6,9 @@ class LLM:
         self.model = GPT4All(model_name)
         self.vdb = vdb
 
-    def query(self, question, key, max_tokens=50):
+    def query(self, question, key, context_limit = 5, max_tokens=50):
 
-        context = self.vdb.search(question, key)
+        context = self.vdb.search(question, key, context_limit)
         
         emails = []
         for o in context.objects:

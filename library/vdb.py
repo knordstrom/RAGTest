@@ -15,7 +15,7 @@ class VDB:
     def split(self, text:str) -> list:
         pass
 
-    def search(self, query:str) -> list:
+    def search(self, query:str, limit: int = 5) -> list:
         pass
     
     def close(self):
