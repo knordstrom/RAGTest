@@ -47,7 +47,6 @@ class GmailLogic:
             results = self.gmail.list(userId='me', pageToken=pageToken, maxResults=count)
             pageToken = results.get('nextPageToken')
             new_messages = results.get('messages', [])
-            # print("Got messages: " + str(new_messages))
             count -= len(new_messages)
             messages += new_messages
             if not pageToken or (not count or count <= 0) or len(messages) == 0:               
