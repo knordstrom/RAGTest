@@ -35,9 +35,10 @@ def get_int_list_from_string(string: str) -> list:
 @app.route('/ask', methods=['GET'])
 def ask() -> str:
     query = flask.request.args.get('q')
+    count = flask.request.args.get('n', None, int)
     if query is not None and query != '':
         w: LLM = Wizard(weaviate.Weaviate("http://127.0.0.1:8080"))
-        return w.query(query, weaviate.WeaviateSchemas.EMAIL_TEXT)
+        return w.query(query, weaviate.WeaviateSchemas.EMAIL_TEXT, context_limit = count)
     else:
         flask.abort(404)
         return "No query provided"

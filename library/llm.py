@@ -16,14 +16,24 @@ class LLM:
             
         mail_context = '"' + '"\n\n"'.join(emails) + '"\n\n'
 
-        prompt = """
-        Question: {}
-        Email Context: {}
+        print("Retrieving" + len(emails) + ' emails')
+        print("Context " + mail_context)
 
-        You are a chief of staff for the person asking the question given the context above. 
+        prompt = """
+        ### Instruction:
+        Question: {}
+        Context: {}
+
+        You are a chief of staff for the person asking the question given the context. 
         Please provide a response to the question in no more than 5 sentences. If you do not know the answer,
         please respond with "I do not know the answer to that question."
+
+        ### Response:
         """.format(question, mail_context)
+
+        # print out how many bytes the prompt is
+        print("Prompt length: ", len(prompt))
+        print("Prompt byte size ", len(prompt.encode('utf-8')))
 
         return self.model.generate(prompt, max_tokens=max_tokens)
     
