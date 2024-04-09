@@ -1,6 +1,7 @@
 import os
 import pickle
-
+import datetime
+import re
 from library import models
 
 # Gmail API utils
@@ -18,10 +19,75 @@ from email.mime.base import MIMEBase
 from mimetypes import guess_type as guess_mime_type
 import os
 
-class Gmail:
+# interface for the Gmail API wrapper
+class GmailServiceProvider:
+
+    def service(self):
+        pass
+
+    def list(self, userId='me', pageToken=None, maxResults = None):
+        pass
+
+    def get(self, id, userId='me', format='full'):
+        pass
+
+    def close(self):
+        pass
+    
+
+# Dependency Injectable Gmail methods
+class GmailLogic:
+    def __init__(self, gmail: GmailServiceProvider):
+        self.gmail = gmail
+
+    def get_emails(self, count = None) -> list:
+        pageToken = None
+        messages_left = True
+        messages = []
+
+        while messages_left:
+            results = self.gmail.list(userId='me', pageToken=pageToken, maxResults=count)
+            pageToken = results.get('nextPageToken')
+            new_messages = results.get('messages', [])
+            count -= len(new_messages)
+            messages += new_messages
+            if not pageToken or (not count or count <= 0) or len(new_messages) == 0:               
+                messages_left = False
+        return messages
+    
+    def get_email(self, user_id: str='me', msg_id: str='') -> str:
+        print("Getting email with id " + msg_id + " for user " + user_id)
+        data = self.gmail.get(userId=user_id, id=msg_id)['payload']
+        if data.get("parts"):
+            vals = data['parts']
+        else:
+            vals = []
+        for v in vals:
+            if v['mimeType'] == 'text/plain':
+                return urlsafe_b64decode(str(v['body']['data'])).decode()
+        
+        message = map(lambda m: m.get('body'), vals)
+        return str(message)
+    
+
+    def read_message(self, user_id: str='me', message: str=''):
+        """
+        This function takes Gmail API `service` and the given `message_id` and does the following:
+            - Downloads the content of the email
+            - Prints email basic information (To, From, Subject & Date) and plain/text parts
+            - Creates a folder for each email based on the subject
+            - Downloads text/html content (if available) and saves it under the folder created as index.html
+            - Downloads any file that is attached to the email and saves it in the folder created
+        """
+        msg = self.gmail.get(id=message, userId=user_id, format='full')
+        # parts can be the message body, or attachments
+        payload = msg['payload']['parts']
+        return payload
+    
+# Realization of the Gmail API interface
+class Gmail(GmailServiceProvider):
     # Request all access (permission to read/send/receive emails, manage the inbox, and more)
     SCOPES = ['https://mail.google.com/']
-    #our_email = 'your_gmail@gmail.com'
 
     @property
     def service(self):
@@ -50,43 +116,11 @@ class Gmail:
                 pickle.dump(creds, token)
         return build('gmail', 'v1', credentials=creds)
 
-    def get_emails(self) -> list:
-        # call the Gmail API
-        results = self.service.users().messages().list(userId='me').execute()
-        messages = results.get('messages', [])
-        print("Got messages: " + str(messages))
-        return messages
+    def list(self, userId='me', pageToken = None, maxResults = None):
+        return self.service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults).execute()
     
-    def get_email(self, user_id: str='me', msg_id: str='') -> str:
-        print("Getting email with id " + msg_id + " for user " + user_id)
-        data = self.service.users().messages().get(userId=user_id, id=msg_id).execute()['payload']
-        if data.get("parts"):
-            vals = data['parts']
-        else:
-            vals = []
-        for v in vals:
-            if v['mimeType'] == 'text/plain':
-                return urlsafe_b64decode(str(v['body']['data'])).decode()
-        
-        message = map(lambda m: m.get('body'), vals)
-        # print("Got email: " + str(message))
-        return str(message)
+    def get(self, id, userId='me', format='full'):
+        return self.service.users().messages().get(userId=userId, id=id, format = format).execute()
     
-
-    def read_message(self, user_id: str='me', message: str=''):
-        """
-        This function takes Gmail API `service` and the given `message_id` and does the following:
-            - Downloads the content of the email
-            - Prints email basic information (To, From, Subject & Date) and plain/text parts
-            - Creates a folder for each email based on the subject
-            - Downloads text/html content (if available) and saves it under the folder created as index.html
-            - Downloads any file that is attached to the email and saves it in the folder created
-        """
-        msg = self.service.users().messages().get(userId=user_id, id=message, format='full').execute()
-        # parts can be the message body, or attachments
-        payload = msg['payload']['parts']
-        return payload
-    
-
     def close(self):
         self.service.close()
