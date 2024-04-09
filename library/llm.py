@@ -16,7 +16,7 @@ class LLM:
             
         mail_context = '"' + '"\n\n"'.join(emails) + '"\n\n'
 
-        print("Retrieving" + len(emails) + ' emails')
+        print("Retrieving" + str(len(emails)) + ' emails')
         print("Context " + mail_context)
 
         prompt = """
