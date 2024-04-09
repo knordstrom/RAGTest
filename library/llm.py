@@ -35,7 +35,9 @@ class LLM:
         print("Prompt length: ", len(prompt))
         print("Prompt byte size ", len(prompt.encode('utf-8')))
 
-        return self.model.generate(prompt, max_tokens=max_tokens)
+        response = self.model.generate(prompt, max_tokens=max_tokens)
+        print("Response: " + response)
+        return response
     
 
 class Wizard(LLM) :
@@ -49,4 +51,20 @@ class Falcon(LLM):
 class Hermes(LLM):
     def __init__(self, vdb: VDB):
         super().__init__("nous-hermes-llama2-13b.Q4_0.gguf", vdb)
+
+class Mini(LLM):
+    def __init__(self, vdb: VDB):
+        super().__init__("all-MiniLM-L6-v2-f16.gguf", vdb)        
+
+class MistralOrca(LLM):
+    def __init__(self, vdb: VDB):
+        super().__init__("mistral-7b-openorca.gguf2.Q4_0.gguf", vdb)   
+    
+class MistralInstruct(LLM):
+    def __init__(self, vdb: VDB):
+        super().__init__("mistral-7b-instruct-v0.1.Q4_0.gguf", vdb)   
+
+
+        
+
     
