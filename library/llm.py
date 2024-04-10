@@ -6,7 +6,7 @@ class LLM:
         self.model = GPT4All(model_name)
         self.vdb = vdb
 
-    def query(self, question, key, context_limit = 5, max_tokens=50):
+    def query(self, question, key, context_limit = 5, max_tokens=500):
 
         context = self.vdb.search(question, key, context_limit)
         
@@ -36,7 +36,7 @@ class LLM:
         print("Prompt byte size ", len(prompt.encode('utf-8')))
 
         response = self.model.generate(prompt, max_tokens=max_tokens)
-        print("Response: " + response)
+        print("Response: " + response + " (" + str(len(response)) + " bytes)")
         return response
     
 

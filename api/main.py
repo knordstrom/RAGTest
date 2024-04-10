@@ -37,7 +37,7 @@ def ask() -> str:
     query = flask.request.args.get('q')
     count = flask.request.args.get('n', None, int)
     if query is not None and query != '':
-        w: LLM = MistralOrca(weaviate.Weaviate("http://127.0.0.1:8080"))
+        w: LLM = MistralInstruct(weaviate.Weaviate("http://127.0.0.1:8080"))
         return w.query(query, weaviate.WeaviateSchemas.EMAIL_TEXT, context_limit = count)
     else:
         flask.abort(404)
