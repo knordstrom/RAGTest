@@ -6,28 +6,65 @@ class LLM:
         self.model = GPT4All(model_name)
         self.vdb = vdb
 
-    def query(self, question, max_tokens=50):
+    def query(self, question, key, context_limit = 5, max_tokens=500):
 
-        print("Asking   : ", question)
-        context = self.vdb.search(question)
+        context = self.vdb.search(question, key, context_limit)
         
-        print("Context  : ", str(context))
-        
-        # .join(" | ")
+        emails = []
+        for o in context.objects:
+            emails.append(o.properties['text'])
+            
+        mail_context = '"' + '"\n\n"'.join(emails) + '"\n\n'
+
+        print("Retrieving" + str(len(emails)) + ' emails')
+        print("Context " + mail_context)
 
         prompt = """
+        ### Instruction:
         Question: {}
-        Email Context: {}
+        Context: {}
 
-        You are a chief of staff for the person asking the question given the context above. 
+        You are a chief of staff for the person asking the question given the context. 
         Please provide a response to the question in no more than 5 sentences. If you do not know the answer,
         please respond with "I do not know the answer to that question."
-        """.format(question, context)
 
-        return self.model.generate(prompt, max_tokens=max_tokens)
+        ### Response:
+        """.format(question, mail_context)
+
+        # print out how many bytes the prompt is
+        print("Prompt length: ", len(prompt))
+        print("Prompt byte size ", len(prompt.encode('utf-8')))
+
+        response = self.model.generate(prompt, max_tokens=max_tokens)
+        print("Response: " + response + " (" + str(len(response)) + " bytes)")
+        return response
     
 
 class Wizard(LLM) :
     def __init__(self, vdb: VDB):
         super().__init__("wizardlm-13b-v1.2.Q4_0.gguf", vdb)
+
+class Falcon(LLM):
+    def __init__(self, vdb: VDB):
+        super().__init__("gpt4all-falcon-newbpe-q4_0.gguf", vdb)
+
+class Hermes(LLM):
+    def __init__(self, vdb: VDB):
+        super().__init__("nous-hermes-llama2-13b.Q4_0.gguf", vdb)
+
+class Mini(LLM):
+    def __init__(self, vdb: VDB):
+        super().__init__("all-MiniLM-L6-v2-f16.gguf", vdb)        
+
+class MistralOrca(LLM):
+    def __init__(self, vdb: VDB):
+        super().__init__("mistral-7b-openorca.gguf2.Q4_0.gguf", vdb)   
+    
+class MistralInstruct(LLM):
+    def __init__(self, vdb: VDB):
+        super().__init__("mistral-7b-instruct-v0.1.Q4_0.gguf", vdb)   
+
+
+        
+
     

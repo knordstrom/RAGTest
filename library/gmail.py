@@ -1,7 +1,5 @@
 import os
 import pickle
-import datetime
-import re
 from library import models
 
 # Gmail API utils
@@ -55,19 +53,10 @@ class GmailLogic:
                 messages_left = False
         return messages
     
-    def get_email(self, user_id: str='me', msg_id: str='') -> str:
+    def get_email(self, user_id: str='me', msg_id: str='') -> dict:
         print("Getting email with id " + msg_id + " for user " + user_id)
-        data = self.gmail.get(userId=user_id, id=msg_id)['payload']
-        if data.get("parts"):
-            vals = data['parts']
-        else:
-            vals = []
-        for v in vals:
-            if v['mimeType'] == 'text/plain':
-                return urlsafe_b64decode(str(v['body']['data'])).decode()
-        
-        message = map(lambda m: m.get('body'), vals)
-        return str(message)
+        data = self.gmail.get(userId=user_id, id=msg_id)
+        return models.Message.extract_data(data)
     
 
     def read_message(self, user_id: str='me', message: str=''):
@@ -81,8 +70,7 @@ class GmailLogic:
         """
         msg = self.gmail.get(id=message, userId=user_id, format='full')
         # parts can be the message body, or attachments
-        payload = msg['payload']['parts']
-        return payload
+        return msg
     
 # Realization of the Gmail API interface
 class Gmail(GmailServiceProvider):
@@ -117,10 +105,15 @@ class Gmail(GmailServiceProvider):
         return build('gmail', 'v1', credentials=creds)
 
     def list(self, userId='me', pageToken = None, maxResults = None):
-        return self.service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults).execute()
+        with self.service as service:
+            return service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults).execute()
     
     def get(self, id, userId='me', format='full'):
-        return self.service.users().messages().get(userId=userId, id=id, format = format).execute()
+        try:
+             result = self.service.users().messages().get(userId=userId, id=id, format = format).execute()   
+        finally:
+            self.service.close()
+        return result
     
     def close(self):
         self.service.close()
