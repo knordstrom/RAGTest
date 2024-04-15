@@ -1,0 +1,90 @@
+FROM python:3.11-alpine as base
+
+ARG DEV=false
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
+
+RUN apk update && \
+    apk add libpq
+
+
+FROM base as builder
+
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
+RUN apk update && \
+    apk add musl-dev build-base gcc gfortran openblas-dev
+
+WORKDIR /app
+
+# Install Poetry
+RUN pip install poetry==1.7.1
+
+# Install the app
+COPY processor/pyproject.toml processor/poetry.lock ./
+RUN poetry update
+RUN pip install gpt4all
+RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR;
+
+
+FROM base as runtime
+
+WORKDIR /app
+
+RUN apk update && \
+    apk add musl-dev build-base gcc gfortran openblas-dev
+RUN pip install poetry==1.7.1
+
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+
+RUN mkdir -p /app/processor
+RUN mkdir -p /app/library
+COPY processor/pyproject.toml processor/poetry.lock ./
+RUN poetry install
+
+COPY processor/main.py processor/context.py ./processor/
+COPY library/vdb.py library/weaviate.py ./library/
+
+RUN ls -la
+
+CMD ["poetry", "run", "processor"]
+
+
+
+
+
+
+# FROM python:3.8.2-alpine
+
+# RUN mkdir RAGTest
+# RUN mkdir RAGTest/processor
+
+# ENV PYTHONFAULTHANDLER=1 \
+#   PYTHONUNBUFFERED=1 \
+#   PYTHONHASHSEED=random \
+#   PIP_NO_CACHE_DIR=off \
+#   PIP_DISABLE_PIP_VERSION_CHECK=on \
+#   PIP_DEFAULT_TIMEOUT=100 \
+#   # Poetry's configuration:
+#   POETRY_NO_INTERACTION=1 \
+#   POETRY_VIRTUALENVS_CREATE=false \
+#   POETRY_CACHE_DIR='/var/cache/pypoetry' \
+#   POETRY_HOME='/usr/local' \
+#   POETRY_VERSION=1.7.1
+
+# RUN apk update && \
+#     apk add libpq
+    
+# RUN curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+
+# COPY processor/main.py RAGTest/processor
+# COPY poetry.lock RAGTest/
+# COPY pyproject.toml RAGTest/
+# COPY requirements.txt RAGTest/
+
+# RUN cd RAGTest
+# RUN /usr/local/poetry install
+# CMD ["poetry", "run', "processor"]

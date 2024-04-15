@@ -76,15 +76,17 @@ class Weaviate(VDB):
     @property
     def client(self):
         return w.connect_to_local(
-            port=8080,
+            host=self.host,
+            port=self.port,
         )
 
     def collection(self, key: WeaviateSchemas) -> object:
         schema = self.schemas[key]
         return self.client.collections.get(schema['class'])
     
-    def __init__(self, url, schemas: list[(str,dict)] = WeaviateSchema.class_objs) -> None:
-        self.url = url
+    def __init__(self, host = "127.0.0.1", port = 8080, schemas: list[(str,dict)] = WeaviateSchema.class_objs) -> None:
+        self.host = host
+        self.port = port
         for schema_entry in schemas:
             key, schema = schema_entry
             self.create_schema(schema)  
@@ -103,6 +105,8 @@ class Weaviate(VDB):
             print("Schema already exists")
 
     def upsertChunkedText(self, obj, key: WeaviateSchemas, metadataKey: WeaviateSchemas, splitOn: str) -> bool:
+        print("Splitting text " + str(obj) + " on " + splitOn    )
+        print()
         text = obj[splitOn]
         split_text = self.split(text)
         collection = self.collection(key)

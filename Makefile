@@ -6,3 +6,6 @@ test:
 
 run:
 	poetry run flask --app api/main run --port=5010
+
+docker-processor:
+	docker build -f ProcessorDockerfile -t context-processor:0.1.1 .
