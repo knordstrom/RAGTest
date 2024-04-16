@@ -5,24 +5,27 @@ import os
 import library.weaviate as weaviate
 import traceback
 
-def write_to_vdb(mapped: list[dict]) -> None:
+def write_to_vdb(mapped: list) -> None:
         db = os.getenv("VECTOR_DB_HOST", "127.0.0.1")
         db_port = os.getenv("VECTOR_DB_PORT", "8080")
         print("Writing to VDB at " + db + ":" + db_port + " ... " + str(len(mapped)))
         w = None
         try:
             w = weaviate.Weaviate(db, db_port)
+            print("Weave")
             for j,record in enumerate(mapped):
-                email = record.value
-                print("=> Considering email " + str(j) + " of " + str(len(mapped)) + "...")
-                print("Upserting email " + str(email) + " on from ")
+                print("RRRRR " + str(type(record.value)) + " " + str(record.value))
                 try:
+                    email: dict = record.value
+                    print("=> Considering email " + str(j) + " of " + str(len(mapped)) + "...")
+                    print("Upserting email " + str(email) + " on from ")
+                
                     if email['body'] == None or email['body'] == '':
                         email['body'] = email['subject']
                     w.upsertChunkedText(email, weaviate.WeaviateSchemas.EMAIL_TEXT, weaviate.WeaviateSchemas.EMAIL, 'body')
                 except:           
                     print("Error: ")
-                    traceback.print_exc()
+                    traceback.print_stack()
             print(w.count(weaviate.WeaviateSchemas.EMAIL))
         finally:
             if w is not None:
@@ -41,7 +44,7 @@ def start():
 
         count = 0
 
-        key = TopicPartition(topic='emails', partition=0)
+        key: TopicPartition = TopicPartition(topic=topic, partition=0)
         partitions = None
         message = None
         while partitions == None or len(partitions) == 0:
@@ -55,8 +58,6 @@ def start():
             except Exception as e:
                 print("Error: " + str(e))
                 continue
-
-            print("Tock")
 
             if message is None or message == {}:  
                 continue

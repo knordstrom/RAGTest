@@ -10,6 +10,7 @@ from kafka import KafkaProducer
 
 class APISupport:
 
+    @staticmethod
     def read_last_emails(email: str, count = None) -> list[dict]:
         try:
             g: Gmail = Gmail(email, app.root_path + '/../resources/gmail_creds.json')
@@ -55,7 +56,7 @@ def ask() -> str:
     query = flask.request.args.get('q')
     count = flask.request.args.get('n', None, int)
     if query is not None and query != '':
-        w: LLM = MistralInstruct(weaviate.Weaviate("http://127.0.0.1:8080"))
+        w: LLM = MistralInstruct(weaviate.Weaviate("127.0.0.1", "8080"))
         return w.query(query, weaviate.WeaviateSchemas.EMAIL_TEXT, context_limit = count)
     else:
         flask.abort(404)
