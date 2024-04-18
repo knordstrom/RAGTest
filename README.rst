@@ -16,10 +16,14 @@ Setup
   #. Clone the repo
   #. Install the requirements using `make init` or `poetry install`
   #. Install docker desktop that will house the weaviate server
-  #, Run `make docker-processor` in the root folder to create the container to process emails
+  #. Run `make docker-processor` in the root folder to create the container to process emails
   #. Navigate to the docker folder and run `docker-compose up -d` to start the weaviate server, kafka, zookeeper, 
       and the processor
-  #. Download credentials from the google cloud console at https://console.cloud.google.com/apis/credentials and place them in the `resources` folder as `gmail_creds.json`
+  #. Pull the gpt4all api project from https://github.com/nomic-ai/gpt4all/tree/main
+  #. Download the Mistral Instruct model from https://gpt4all.io/models/gguf/mistral-7b-instruct-v0.1.Q4_0.gguf
+  #. Place the model in the `gpt4all` folder under gpt4all-api/gpt4all_api/models
+  #. Follow the instructions in the gpt4all project to set up the docker API that will house the model
+  #. Download email credentials from the google cloud console at https://console.cloud.google.com/apis/credentials and place them in the `resources` folder as `gmail_creds.json`
   #. Run the flask app with `make run` or `flask --app api/main run --port=5010`
 
 Usage

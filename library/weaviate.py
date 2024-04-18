@@ -85,7 +85,7 @@ class Weaviate(VDB):
         schema = self.schemas[key]
         return self.client.collections.get(schema['class'])
     
-    def __init__(self, host, port, schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> None:
+    def __init__(self, host="127.0.0.1", port="8080", schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> None:
         self.host = host
         self.port = port
         self.url = host + ":" + port
