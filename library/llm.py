@@ -1,9 +1,13 @@
-from gpt4all import GPT4All
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from library.weaviate import VDB
+from langchain.chains import LLMChain
+from langchain_community.llms import GPT4All
+from langchain import PromptTemplate
 
 class LLM:
     def __init__(self, model_name, vdb: VDB):
-        self.model = GPT4All(model_name)
+        callbacks = [StreamingStdOutCallbackHandler()]
+        self.model = GPT4All(model=model_name, callbacks=callbacks, verbose=True)
         self.vdb = vdb
 
     def query(self, question, key, context_limit = 5, max_tokens=500):
@@ -19,24 +23,29 @@ class LLM:
         print("Retrieving" + str(len(emails)) + ' emails')
         print("Context " + mail_context)
 
-        prompt = """
-        ### Instruction:
-        Question: {}
-        Context: {}
+        # LANGCHAIN IMPLEMENTATION
+        template='''### Instruction:
+        Question: {Question}
+        Context: {Context}
 
         You are a chief of staff for the person asking the question given the context. 
         Please provide a response to the question in no more than 5 sentences. If you do not know the answer,
         please respond with "I do not know the answer to that question."
 
-        ### Response:
-        """.format(question, mail_context)
+        ### Response:'''
+        language_prompt = PromptTemplate(
+            input_variables=["Question","Context"],
+            template=template,
+        )
 
         # print out how many bytes the prompt is
-        print("Prompt length: ", len(prompt))
-        print("Prompt byte size ", len(prompt.encode('utf-8')))
+        print("Prompt length: ", len(template))
+        print("Prompt byte size ", len(template.encode('utf-8')))
 
-        response = self.model.generate(prompt, max_tokens=max_tokens)
-        print("Response: " + response + " (" + str(len(response)) + " bytes)")
+        llm_chain = LLMChain(prompt=language_prompt, llm=self.model)
+        response = llm_chain({'Question': question, 'Context':mail_context})
+        
+        print("Response: ", response)
         return response
     
 
