@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Keith Nordstrom <keith@timeli.io>"]
 readme = "README.rst"
-packages = [{include = "api"}, {include = "library"}, {include = "processor"}]
+packages = [{include = "library"}, {include = "processor"}]
 
 [tool.poetry.scripts]
 processor = "processor.main:start"
@@ -13,7 +13,6 @@ processor = "processor.main:start"
 python = "^3.11"
 pytest = "^8.1.1"
 Flask = "^3.0.2"
-gpt4all = "^2.4.0"
 google-api-python-client = "^2.122.0"
 google-auth-httplib2 = "^0.2.0"
 google-auth-oauthlib = "^1.2.0"
@@ -26,8 +25,6 @@ email-reply-parser = "^0.5.12"
 coverage = "^7.4.4"
 kafka-python = "^2.0.2"
 python-dotenv = "^1.0.1"
-
-
 
 
 [build-system]
