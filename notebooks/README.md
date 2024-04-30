@@ -1,4 +1,4 @@
-## Instructions on How to Run the Python Scripts
+## Information about the Python Scripts
 
 The Python scripts are categorized into two groups. Most of the code is derived from the LangChain Documentation on [Graphs](https://python.langchain.com/docs/use_cases/graph/):
 
