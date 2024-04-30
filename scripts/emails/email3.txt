@@ -1,0 +1,9 @@
+Hi Emily,
+
+I'll make it to the meeting. I'll prepare the latest data visualizations and trend analyses to ensure we have all the information needed for an informed discussion.
+
+Thanks,
+Sophia
+
+Nodes:[Node(id='Emily', type='Person'), Node(id='Sophia', type='Person')]
+Relationships:[Relationship(source=Node(id='Sophia', type='Person'), target=Node(id='Emily', type='Person'), type='COMMUNICATION')]

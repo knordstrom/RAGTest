@@ -1,0 +1,9 @@
+Hi Raj,
+
+Absolutely, let’s touch base at 4 PM today. I think aligning our strategies could drive better results next quarter.
+
+Best,
+Tom
+
+Nodes:[Node(id='Raj', type='Person'), Node(id='Tom', type='Person')]
+Relationships:[Relationship(source=Node(id='Tom', type='Person'), target=Node(id='Raj', type='Person'), type='COMMUNICATION')]

@@ -1,0 +1,9 @@
+Hey Tom,
+
+Before we go into tomorrow’s meeting, can we have a quick chat about aligning the Q3 sales initiatives with your marketing plans? It would be great to present a unified strategy.
+
+Thanks,
+Raj
+
+Nodes:[Node(id='Tom', type='Person'), Node(id='Raj', type='Person')]
+Relationships:[Relationship(source=Node(id='Raj', type='Person'), target=Node(id='Tom', type='Person'), type='COMMUNICATION')]

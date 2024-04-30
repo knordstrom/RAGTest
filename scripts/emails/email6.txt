@@ -1,0 +1,9 @@
+Hi Sophia,
+
+Could you please send me the latest engagement stats? I need them to correlate our campaign results with overall market trends for the presentation tomorrow.
+
+Cheers,
+Tom
+
+Nodes:[Node(id='Sophia', type='Person'), Node(id='Tom', type='Person'), Node(id='Engagement Stats', type='Data'), Node(id='Campaign Results', type='Data'), Node(id='Market Trends', type='Concept'), Node(id='Presentation', type='Event')]
+Relationships:[Relationship(source=Node(id='Tom', type='Person'), target=Node(id='Sophia', type='Person'), type='REQUEST'), Relationship(source=Node(id='Tom', type='Person'), target=Node(id='Engagement Stats', type='Data'), type='NEED'), Relationship(source=Node(id='Engagement Stats', type='Data'), target=Node(id='Campaign Results', type='Data'), type='CORRELATE_WITH'), Relationship(source=Node(id='Campaign Results', type='Data'), target=Node(id='Market Trends', type='Concept'), type='CORRELATE_WITH'), Relationship(source=Node(id='Tom', type='Person'), target=Node(id='Presentation', type='Event'), type='PREPARE_FOR')]

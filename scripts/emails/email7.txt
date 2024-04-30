@@ -1,0 +1,9 @@
+Hi Tom,
+
+I've attached the engagement stats along with some analysis. Let me know if you need any more details or further breakdowns.
+
+Best,
+Sophia
+
+Nodes:[Node(id='Tom', type='Person'), Node(id='Sophia', type='Person')]
+Relationships:[Relationship(source=Node(id='Sophia', type='Person'), target=Node(id='Tom', type='Person'), type='SENT_MESSAGE')]

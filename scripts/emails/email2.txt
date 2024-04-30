@@ -1,0 +1,9 @@
+Hi Emily,
+
+I'll be there. I've started compiling the marketing data for the quarter and have some insights to share that could impact our overall strategy.
+
+Best,
+Tom
+
+Nodes:[Node(id='Emily', type='Person'), Node(id='Tom', type='Person')]
+Relationships:[Relationship(source=Node(id='Tom', type='Person'), target=Node(id='Emily', type='Person'), type='COMMUNICATION')]
