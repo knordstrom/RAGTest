@@ -71,21 +71,3 @@ services:
       PYTHONUNBUFFERED: 1
       VECTOR_DB_HOST: "docker-weaviate-1"
       VECTOR_DB_PORT: 8080
-  
-  gpt4all_api:
-    image: gpt4all_api
-    container_name: gpt4all_api
-    restart: always #restart on error (usually code compilation from save during bad state)
-    ports:
-      - "4891:4891"
-    environment:
-      - APP_ENVIRONMENT=dev
-      - WEB_CONCURRENCY=2
-      - LOGLEVEL=debug
-      - PORT=4891
-      - model=mistral-7b-instruct-v0.1.Q4_0 # using variable from .env file
-      - inference_mode=cpu
-    volumes:
-      - './gpt4all_api/app:/app'
-      - './gpt4all_api/models:/models' # models are mounted in the container
-    command: ["/start-reload.sh"]
