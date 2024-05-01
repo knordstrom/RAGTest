@@ -26,7 +26,26 @@ class TestFilters(unittest.TestCase):
         
         self.assertEqual(map["/0"], "/careers")
  
+def test_splitter(self):
+        text = """Hi all - I'm hiring senior and lead engineers - Full details here - https://www.stride.build/careers NYC and Chicago are ideal yet 
+        we are open to hiring anywhere within the US. If you know anyone, please have them email me directly so I know they came through this 
+        group.
+        
+        In other news we've just launched a new product. Check it out here - https://www.stride.build/0. It's been a long hourney but I think you'll
+        find it's been well worth it, if just for the laughs. Please feel free to write in and tell us about your experiences with it, we really appreciate your feedback
+        and are very excited about the possibilities this thing generates.
 
+        By the way, do any of you like ice cream? We are thinking of having a company outing to the local ice cream shop. Let me know if you're interested.
+        We find ice cream to be a great way to bond and get to know each other better. We also like to eat lots and lots and lots of it, as perhaps you can tell
+        from the size of our team. We are a very close knit group and we like to do things together. We are also hiring, so if you know anyone who might be interested
+        please tell them about our ice cream habit.
+
+        Thanks!"""
+        result = utils.Utils.split(text)
+        print("Split", str(result))
+        assert len(result) == 2
+        assert len(result[0].page_content) == 692
+        assert len(result[1].page_content) == 544
     
 
 class Fixtures:

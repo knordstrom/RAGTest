@@ -23,3 +23,17 @@ class Utils:
 
         return (modified_string, replaced_values)
 
+    @staticmethod
+    def is_invite(filename: str) -> bool:
+        return filename.endswith(".ics") or filename.endswith(".vcf") or filename.endswith(".vcs")
+    
+    @staticmethod
+    def split(text:str) -> list:
+        text_splitter = lang_splitter.RecursiveCharacterTextSplitter(
+            separators=["\n\n", "\n", " ", ""],
+            chunk_size=1000,
+            chunk_overlap=200,
+            length_function=len,
+        )
+        # text_splitter = lang_splitter.SemanticChunker(GPT4AllEmbeddings())
+        return text_splitter.create_documents([text])

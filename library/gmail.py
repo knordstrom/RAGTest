@@ -35,6 +35,7 @@ class GmailServiceProvider:
 
 # Dependency Injectable Gmail methods
 class GmailLogic:
+    count = 0
     def __init__(self, gmail: GmailServiceProvider):
         self.gmail = gmail
 
@@ -54,7 +55,8 @@ class GmailLogic:
         return messages
     
     def get_email(self, user_id: str='me', msg_id: str='') -> dict:
-        print("Getting email with id " + msg_id + " for user " + user_id)
+        self.count += 1
+        print(str(self.count) + ". Getting email with id " + msg_id + " for user " + user_id)
         data = self.gmail.get(userId=user_id, id=msg_id)
         return models.Message.extract_data(data)
     
@@ -110,10 +112,27 @@ class Gmail(GmailServiceProvider):
     
     def get(self, id, userId='me', format='full'):
         try:
-             result = self.service.users().messages().get(userId=userId, id=id, format = format).execute()   
+             result = self.service.users().messages().get(userId=userId, id=id, format = format).execute()  
+             self.__get_attachments(result, userId) 
         finally:
             self.service.close()
+
+        
         return result
+    
+    def __get_attachments(self, message: dict, userId='me'):
+        attachments = []
+        for part in  message['payload'].get('parts',[]):
+            filename = part.get('filename')      
+            if filename:
+                attachmentId = part.get('body', {}).get('attachmentId')
+                attachment = self.service.users().messages().attachments().get(userId=userId, messageId=id, id=attachmentId).execute()
+                attachment['filename'] = filename
+                print("Attachment: " + str(filename))
+                attachments.append(attachment)
+
+        if len(attachments) > 0:
+            message['attachments'] = attachments
     
     def close(self):
         self.service.close()
