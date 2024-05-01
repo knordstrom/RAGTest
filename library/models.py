@@ -3,6 +3,9 @@ import re
 from base64 import urlsafe_b64decode
 from bs4 import BeautifulSoup
 from email_reply_parser import EmailReplyParser
+import ics
+
+from library import utils, models
 
 class Message:
 
@@ -106,6 +109,24 @@ class Message:
         except:
             new_message['from'] = val
 
+    @staticmethod
+    def try_get_attachments(message: dict, new_message: dict):
+        attachments = message.get('attachments', [])
+        events = []
+        for attachment in attachments:
+            filename = attachment['filename']
+            if utils.Utils.is_invite(filename):
+                attachment['data'] = EmailReplyParser.parse_reply(urlsafe_b64decode(attachment['data']).decode('utf-8'))
+                try:  
+                    event = models.Event.create(attachment['data'])
+                    events.append(event)
+                except Exception as e:
+                    print("Error creating event from attachment " + str(attachment) + " with error " + str(e))
+
+        if len(events) > 0:
+            print("Events found in message " + str(events))
+            new_message['events'] = events
+
 
     @staticmethod
     def extract_data(message: dict) -> dict:
@@ -119,6 +140,7 @@ class Message:
         new_message = Message.create_message(message)
 
         Message.try_get_body(message, new_message)
+        Message.try_get_attachments(message, new_message)     
 
         # check the headers to get the rest of the fields
         for header in message['payload']['headers']:
@@ -146,3 +168,51 @@ class Message:
             return new_message
         else:
             return None
+
+class Event:
+
+    @staticmethod
+    def extract_attendee(attendee: str, file: str) -> dict:
+        email = attendee.to_ical().decode("utf-8").replace('mailto:', '')
+        reg = r'((ATTENDEE|ORGANIZER).*;CN=(.+):mailto:' + email + ')'
+        matches = re.findall(reg, file)
+
+        return {
+            'name': matches[0][2] if len(matches)>0 else email,
+            'email': email,
+        }
+
+
+    @staticmethod
+    def extract_person(component) -> dict:
+        return {
+            'name': component.common_name,
+            'email': component.email,
+        }
+
+    @staticmethod
+    def create(file: str) -> dict:
+        if not file:
+             file = ''
+        file.strip()
+        events = ics.Calendar(file).events
+
+        print("Calendar event found...")
+
+        for component in events:
+            attendees = []
+            for attendee in component.attendees: 
+                attendees.append(Event.extract_person(attendee))
+
+            return {
+                "event_id": component.uid,
+                "summary": component.name,
+                "description": component.description,
+                "location": component.location,
+                "start": str(component.begin),
+                "end": str(component.end),
+                "organizer": Event.extract_person(component.organizer),
+                "status": component.status,
+                "attendees": attendees,
+                "content": file
+            }

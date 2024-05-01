@@ -1,9 +1,11 @@
 import json
-from types import TracebackType
 from kafka import KafkaConsumer, TopicPartition
 import os
 import library.weaviate as weaviate
 import traceback
+import warnings
+
+warnings.simplefilter("ignore", ResourceWarning)
 
 def write_to_vdb(mapped: list) -> None:
         db = os.getenv("VECTOR_DB_HOST", "127.0.0.1")
@@ -12,20 +14,23 @@ def write_to_vdb(mapped: list) -> None:
         w = None
         try:
             w = weaviate.Weaviate(db, db_port)
-            print("Weave")
             for j,record in enumerate(mapped):
-                print("RRRRR " + str(type(record.value)) + " " + str(record.value))
-                try:
+                #try:
                     email: dict = record.value
+                    events = email.get('events', [])
+                    email.pop('events', None)
                     print("=> Considering email " + str(j) + " of " + str(len(mapped)) + "...")
-                    print("Upserting email " + str(email) + " on from ")
-                
+   
                     if email['body'] == None or email['body'] == '':
                         email['body'] = email['subject']
                     w.upsertChunkedText(email, weaviate.WeaviateSchemas.EMAIL_TEXT, weaviate.WeaviateSchemas.EMAIL, 'body')
-                except:           
-                    print("Error: ")
-                    traceback.print_stack()
+
+                    for event in events:
+                        print("Upserting event " + str(event) + " on from " + str(email['from']))
+                        if event.get('description') == None or event.get('description') == '':
+                            event['description'] = event.get('summary', '')
+                        w.upsertChunkedText(event, weaviate.WeaviateSchemas.EVENT_TEXT, weaviate.WeaviateSchemas.EVENT, 'description')
+                        
             print(w.count(weaviate.WeaviateSchemas.EMAIL))
         finally:
             if w is not None:
@@ -71,8 +76,6 @@ def start():
             
             consumer.commit()
             
-    except Exception as e:
-        print("Error: " + str(e))
     finally:
         print("Closing consumer")
         consumer.close()
