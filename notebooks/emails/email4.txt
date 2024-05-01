@@ -1,0 +1,10 @@
+Hello Emily,
+
+I will attend the meeting. Additionally, I'll bring the latest sales figures and projections for the next quarter.
+
+Regards,
+Raj
+
+
+Nodes:[Node(id='Emily', type='Person'), Node(id='Raj', type='Person'), Node(id='Meeting', type='Event'), Node(id='Sales Figures', type='Document'), Node(id='Projections', type='Document')]
+Relationships:[Relationship(source=Node(id='Raj', type='Person'), target=Node(id='Meeting', type='Event'), type='ATTEND'), Relationship(source=Node(id='Raj', type='Person'), target=Node(id='Sales Figures', type='Document'), type='BRING'), Relationship(source=Node(id='Raj', type='Person'), target=Node(id='Projections', type='Document'), type='BRING')]

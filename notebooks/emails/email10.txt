@@ -1,0 +1,9 @@
+Team,
+
+Thank you for a productive meeting today. I appreciate everyone's insights and contributions. Please proceed with the actions discussed, and let’s aim to have the draft report ready for review by next Wednesday. Feel free to reach out if you encounter any issues.
+
+Best regards,
+Emily
+
+Nodes:[Node(id='Emily', type='Person'), Node(id='Team', type='Group')]
+Relationships:[Relationship(source=Node(id='Emily', type='Person'), target=Node(id='Team', type='Group'), type='THANKED'), Relationship(source=Node(id='Team', type='Group'), target=Node(id='Draft Report', type='Document'), type='PREPARE'), Relationship(source=Node(id='Draft Report', type='Document'), target=Node(id='Next Wednesday', type='Date'), type='REVIEW_BY')]

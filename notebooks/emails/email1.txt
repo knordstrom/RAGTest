@@ -1,0 +1,9 @@
+Hi Team,
+
+As we approach the end of the quarter, it's time to start preparing our Q2 financial report. I would like to schedule a kickoff meeting this Friday at 10 AM to discuss our agenda and set our goals for this report. Please confirm your availability.
+
+Best regards,
+Emily
+
+Nodes:[Node(id='Q2 Financial Report', type='Report'), Node(id='Kickoff Meeting', type='Event'), Node(id='Emily', type='Person')]
+Relationships:[Relationship(source=Node(id='Emily', type='Person'), target=Node(id='Kickoff Meeting', type='Event'), type='ORGANIZER'), Relationship(source=Node(id='Kickoff Meeting', type='Event'), target=Node(id='Q2 Financial Report', type='Report'), type='DISCUSSION_TOPIC')]

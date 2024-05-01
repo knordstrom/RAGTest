@@ -1,0 +1,9 @@
+Hello everyone,
+
+Thank you for confirming your attendance for tomorrow's meeting. Please find attached the agenda and be prepared to discuss your respective department's contributions to the report. Let’s aim for a productive session.
+
+Best,
+Emily
+
+Nodes:[Node(id='Meeting', type='Event'), Node(id='Agenda', type='Document'), Node(id='Report', type='Document'), Node(id='Emily', type='Person')]
+Relationships:[Relationship(source=Node(id='Emily', type='Person'), target=Node(id='Meeting', type='Event'), type='ORGANIZER'), Relationship(source=Node(id='Agenda', type='Document'), target=Node(id='Meeting', type='Event'), type='RELATED_TO'), Relationship(source=Node(id='Meeting', type='Event'), target=Node(id='Report', type='Document'), type='DISCUSSION_TOPIC')]
