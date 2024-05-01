@@ -27,6 +27,8 @@ def write_to_vdb(mapped: list) -> None:
 
                     for event in events:
                         print("Upserting event " + str(event) + " on from " + str(email['from']))
+                        if event.get('description') == None or event.get('description') == '':
+                            event['description'] = event.get('summary', '')
                         w.upsertChunkedText(event, weaviate.WeaviateSchemas.EVENT_TEXT, weaviate.WeaviateSchemas.EVENT, 'description')
                         
             print(w.count(weaviate.WeaviateSchemas.EMAIL))
