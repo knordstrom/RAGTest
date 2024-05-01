@@ -7,6 +7,9 @@ from library.llm import LLM, Wizard, Hermes, Falcon, Mini, MistralInstruct, Mist
 import importlib as i
 import library.weaviate as weaviate
 from kafka import KafkaProducer
+import warnings
+
+warnings.simplefilter("ignore", ResourceWarning)
 
 class APISupport:
 
