@@ -2,9 +2,9 @@ import copy
 import enum
 import weaviate as w
 #import langchain_experimental.text_splitter as lang_splitter
-import langchain_text_splitters as lang_splitter
 from langchain_community.embeddings import GPT4AllEmbeddings
 from library.vdb import VDB 
+from library import utils
 import weaviate.classes as wvc
 from weaviate.classes.config import Property, DataType
 
@@ -12,6 +12,8 @@ class WeaviateSchemas(enum.Enum):
 
     EMAIL = 'email'
     EMAIL_TEXT = 'email_text'
+    EVENT = 'event'
+    EVENT_TEXT = 'event_text'
 
 class WeaviateSchema:
 
@@ -65,6 +67,47 @@ class WeaviateSchema:
 
             # Specify a vectorizer
             "vectorizer": True,
+    }),
+    (WeaviateSchemas.EVENT, {
+            # Class definition
+            "class": "Event",
+
+            # Property definitions
+            "properties": [
+                Property(name = "event_id", data_type=DataType.TEXT),
+                Property(name = "summary", data_type=DataType.TEXT),
+                Property(name = "location", data_type=DataType.TEXT),
+                Property(name = "start", data_type=DataType.DATE),
+                Property(name = "end", data_type=DataType.DATE),
+            ],
+            "references": [
+                wvc.config.ReferenceProperty(name="email_id", target_collection="Email"),
+                wvc.config.ReferenceProperty(name="date", target_collection="Email"),
+                wvc.config.ReferenceProperty(name="from", target_collection="Email"),
+                wvc.config.ReferenceProperty(name="to", target_collection="Email"),
+                wvc.config.ReferenceProperty(name="thread_id", target_collection="Email"),
+                wvc.config.ReferenceProperty(name="name", target_collection="Event"),
+                wvc.config.ReferenceProperty(name="description", target_collection="Event"),
+            ],
+
+            # Specify a vectorizer
+            "vectorizer": False,
+    }),
+    (WeaviateSchemas.EVENT_TEXT, {
+            # Class definition
+            "class": "Event",
+
+            # Property definitions
+            "properties": [
+                Property(name = "text", data_type=DataType.TEXT),
+            ],
+            "references": [
+                wvc.config.ReferenceProperty(name="event_id", target_collection="Event"),
+                wvc.config.ReferenceProperty(name="name", target_collection="Event"),
+            ],
+
+            # Specify a vectorizer
+            "vectorizer": True,
     })
 ])
 
@@ -108,9 +151,10 @@ class Weaviate(VDB):
 
     def upsertChunkedText(self, obj, key: WeaviateSchemas, metadataKey: WeaviateSchemas, splitOn: str) -> bool:
         text = obj[splitOn]
-        split_text = self.split(text)
+        split_text = utils.Utils.split(text)
         collection = self.collection(key)
         metaCollection = self.collection(metadataKey)
+        del obj[splitOn]
         with metaCollection.batch.dynamic() as batch:
             batch.add_object(
                     obj,
@@ -131,17 +175,6 @@ class Weaviate(VDB):
     def count(self, key: WeaviateSchemas) -> object:
         collection = self.collection(key)
         return collection.aggregate.over_all()
-
-    def split(self, text:str) -> list:
-        text_splitter = lang_splitter.CharacterTextSplitter(
-            separator="\n\n",
-            chunk_size=1000,
-            chunk_overlap=200,
-            length_function=len,
-            is_separator_regex=False,
-        )
-        # text_splitter = lang_splitter.SemanticChunker(GPT4AllEmbeddings())
-        return text_splitter.create_documents([text])
     
     def search(self, query:str, key: WeaviateSchemas, limit: int = 5) -> list:
 
