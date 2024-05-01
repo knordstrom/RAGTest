@@ -172,18 +172,6 @@ class Message:
 class Event:
 
     @staticmethod
-    def extract_attendee(attendee: str, file: str) -> dict:
-        email = attendee.to_ical().decode("utf-8").replace('mailto:', '')
-        reg = r'((ATTENDEE|ORGANIZER).*;CN=(.+):mailto:' + email + ')'
-        matches = re.findall(reg, file)
-
-        return {
-            'name': matches[0][2] if len(matches)>0 else email,
-            'email': email,
-        }
-
-
-    @staticmethod
     def extract_person(component) -> dict:
         return {
             'name': component.common_name,
