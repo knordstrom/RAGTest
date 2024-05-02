@@ -17,8 +17,7 @@ Setup
   #. Install the requirements using `make init` or `poetry install`
   #. Install docker desktop that will house the weaviate server
   #. Run `make docker-processor` in the root folder to create the container to process emails
-  #. Navigate to the docker folder and run `docker-compose up -d` to start the weaviate server, kafka, zookeeper, 
-      and the processor
+  #. Navigate to the docker folder and run `docker-compose up -d` to start the weaviate server, kafka, zookeeper, and the processor
   #. Download credentials from the google cloud console at https://console.cloud.google.com/apis/credentials and place them in the `resources` folder as `gmail_creds.json`
   #. Run the flask app with `make run` or `flask --app api/main run --port=5010`
 

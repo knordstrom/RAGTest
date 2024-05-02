@@ -4,29 +4,29 @@ import library.utils as utils
 
 class TestFilters(unittest.TestCase):
 
-    def test_filter_tokens_bill(self):
+    def test_tokenize_urls_bill(self):
         email, expected = Fixtures.bill
-        filtered, map = utils.Utils.filter_tokens(email)
+        filtered, map = utils.Utils.tokenize_urls(email)
         self.assertEqual(filtered.split("\n"), expected.split("\n"))
         
         self.assertEqual(map["/0"], "/?qs=ca7315dfe9ecf24871e90dc4ba068c5bb1a2877b649e24bc62abe98408aa746ae3ab31a17cef8fbfcdc55e5bd0e1a257cc1c4ac3b69456f2ad2ffd60bc377b3a")
         self.assertEqual(map["/23"], "/?qs=ca7315dfe9ecf248c7dee0a7f0d05b4203a6e1877326cc7bb9402cbfd321a0f3c2f183e3363d20e0f381e2af273f7147543c5691549ca8ebba57b9687d02a42d")
 
-    def test_filter_tokens_bill(self):
+    def test_tokenize_urls_newsletter(self):
         email, expected = Fixtures.newsletter
-        filtered, map = utils.Utils.filter_tokens(email)
+        filtered, map = utils.Utils.tokenize_urls(email)
         self.assertEqual(filtered.split("\n"), expected.split("\n"))
         
         self.assertEqual(map["/0"], "/comm/jobs/view/3895695518/?trackingId=b%2BnFD4EalrLKZ4XyS4QvQg%3D%3D&refId=ByteString%28length%3D16%2Cbytes%3D9cb9191d...613fc476%29&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3B%2FqiVQpxoRkSa9DgLVSm7EQ%3D%3D&midToken=AQHOmWZkzlO39Q&midSig=3vtYihGNMCFHc1&trk=eml-email_job_alert_digest_01-job_card-0-view_job&trkEmail=eml-email_job_alert_digest_01-job_card-0-view_job-null-2l9y4~luykrlt2~t-null-null&eid=2l9y4-luykrlt2-t&otpToken=MTYwNjFiZTExYjJlYzljZWI1MjkwNGU5NDYxYWU2YjI4N2M4ZDA0NDllYTQ4YjZkNzljMzA1NmU0ZjU5NWRmOWYyZDA4NGJlNGZjN2MxZTc0NzQ3MmI3Yzk1N2FlOGQxMjUyYzY2NTYzMDA0YmI1YSwxLDE%3D")
  
-    def test_filter_tokens_general(self):
+    def test_tokenize_urls_general(self):
         email, expected = Fixtures.general
-        filtered, map = utils.Utils.filter_tokens(email)
+        filtered, map = utils.Utils.tokenize_urls(email)
         self.assertEqual(filtered.split("\n"), expected.split("\n"))
         
         self.assertEqual(map["/0"], "/careers")
  
-def test_splitter(self):
+    def test_splitter(self):
         text = """Hi all - I'm hiring senior and lead engineers - Full details here - https://www.stride.build/careers NYC and Chicago are ideal yet 
         we are open to hiring anywhere within the US. If you know anyone, please have them email me directly so I know they came through this 
         group.

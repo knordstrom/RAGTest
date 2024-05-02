@@ -4,7 +4,7 @@ import langchain_text_splitters as lang_splitter
 
 class Utils:
     @staticmethod
-    def filter_tokens(email: str) -> tuple[str, dict]:
+    def tokenize_urls(email: str) -> tuple[str, dict]:
         replaced_values = {}
         modified_string = email.replace("\r", "\n")
         modified_string = re.sub(r'[\n]{2,}', '\n', modified_string)
