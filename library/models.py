@@ -6,6 +6,9 @@ from email_reply_parser import EmailReplyParser
 import ics
 
 from library import utils, models
+import ics
+
+from library import utils, models
 
 class Message:
 
@@ -127,6 +130,24 @@ class Message:
             print("Events found in message " + str(events))
             new_message['events'] = events
 
+    @staticmethod
+    def try_get_attachments(message: dict, new_message: dict):
+        attachments = message.get('attachments', [])
+        events = []
+        for attachment in attachments:
+            filename = attachment['filename']
+            if utils.Utils.is_invite(filename):
+                attachment['data'] = EmailReplyParser.parse_reply(urlsafe_b64decode(attachment['data']).decode('utf-8'))
+                try:  
+                    event = models.Event.create(attachment['data'])
+                    events.append(event)
+                except Exception as e:
+                    print("Error creating event from attachment " + str(attachment) + " with error " + str(e))
+
+        if len(events) > 0:
+            print("Events found in message " + str(events))
+            new_message['events'] = events
+
 
     @staticmethod
     def extract_data(message: dict) -> dict:
@@ -140,6 +161,7 @@ class Message:
         new_message = Message.create_message(message)
 
         Message.try_get_body(message, new_message)
+        Message.try_get_attachments(message, new_message)     
         Message.try_get_attachments(message, new_message)     
 
         # check the headers to get the rest of the fields
