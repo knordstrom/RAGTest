@@ -26,6 +26,11 @@ services:
     restart: on-failure:0
     volumes:
       - /var/lib/neo4j/data:/data
+    environment:
+      - NEO4JLABS_PLUGINS=["apoc"]
+      - NEO4J_apoc_export_file_enabled=true 
+      - NEO4J_apoc_import_file_enabled=true 
+      - NEO4J_apoc_import_file_use__neo4j__config=true 
   zoo1:
     image: confluentinc/cp-zookeeper:7.3.2
     hostname: zoo1
