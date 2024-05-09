@@ -3,10 +3,14 @@ import datetime
 import json
 from kafka import KafkaProducer
 from library.llm_api import LLM_API
+from library.llm_groq import LLM_Groq
 import library.neo4j as neo
 from library.gmail import Gmail, GmailLogic
 from library import weaviate as we  
 
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_groq import ChatGroq
+from groq import Groq
 
 class APISupport:
 
@@ -57,8 +61,6 @@ class APISupport:
         schedule = n.get_schedule(email, start_time, end_time)
         print("Schedule was ", str(schedule))
 
-        llm = LLM_API('localhost', '4891', we.Weaviate())
-
         prompt = '''### Instruction:
         You are a helpful administrative assistant for the person with the email {email} and you are giving them a briefing
         on what they have to do during the specified time period. In answering the question, please consider the following schedule.
@@ -78,8 +80,28 @@ class APISupport:
             'Context': str(schedule)
         }
 
-        
-        response = llm.query_with_template(prompt, context, context_limit = 3)
 
-        return response
+        client = Groq(
+            api_key="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"
+        )
+
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt.format(**context),
+                }
+            ],
+            model="llama3-8b-8192",
+            temperature=0.01,
+            max_tokens=2000,
+        )
+
+        return {
+            "Context": schedule,
+            "email": email,
+            "start_time": start_time.isoformat(),
+            "end_time": end_time.isoformat(),
+            "text": chat_completion.choices[0].message.content
+        }
     

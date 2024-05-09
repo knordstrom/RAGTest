@@ -10,7 +10,7 @@ from library.neo4j import Neo4j
 class TestMessage(unittest.TestCase):
 
     # Cypher query to create the data in the Neo4j database:
-    # 
+    #
     # CREATE (p1:Person {name: 'Keith Nordstrom',email:'keith@cognimate.ai'})
     # CREATE (p2:Person {name: 'Mithali Shashidhar',email:'mithali@cognimate.ai'})
     # CREATE (p3:Person {name: 'Prakash Aditham',email:'prakash@cognimate.ai'})
@@ -46,8 +46,8 @@ class TestMessage(unittest.TestCase):
         assert response[0]['person.name'] == 'Keith Nordstrom'
         assert response[0]['event.name'] == 'Kickoff Meeting'
         assert response[0]['event.description'] == 'Getting everyone together to discuss the sofia project'
-        assert response[0]['event.start'].isoformat() == '2024-05-06T17:00:00.000000000-06:00'
-        assert response[0]['event.end'].isoformat() == '2024-05-06T17:30:00.000000000-06:00'
+        assert response[0]['event.start'] == '2024-05-06T17:00:00.000000000-06:00'
+        assert response[0]['event.end'] == '2024-05-06T17:30:00.000000000-06:00'
         assert response[0]['invite.status'] == 'Unknown'
         assert len(response[0]['attendees']) == 1
         assert response[0]['attendees'][0]['name'] == 'Mithali Shashindar'
@@ -56,8 +56,8 @@ class TestMessage(unittest.TestCase):
         assert response[1]['person.name'] == 'Keith Nordstrom'
         assert response[1]['event.name'] == 'Follow Up Meeting'
         assert response[1]['event.description'] == 'We need to meet to answer any questions anyone has about the pitch deck'
-        assert response[1]['event.start'].isoformat() == '2024-05-08T17:00:00.000000000-06:00'
-        assert response[1]['event.end'].isoformat() == '2024-05-08T17:30:00.000000000-06:00'
+        assert response[1]['event.start'] == '2024-05-08T17:00:00.000000000-06:00'
+        assert response[1]['event.end'] == '2024-05-08T17:30:00.000000000-06:00'
         assert response[1]['invite.status'] == 'Accepted'
         assert len(response[1]['attendees']) == 2
         assert response[1]['attendees'][0]['name'] == 'Mithali Shashindar'

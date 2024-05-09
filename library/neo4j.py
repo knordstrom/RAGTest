@@ -40,6 +40,8 @@ class Neo4j:
             k = key(record)
             if k not in collated:
                 record['attendees'] = []
+                record['event.start'] = record['event.start'].isoformat()
+                record['event.end'] = record['event.end'].isoformat()
                 collated[k] = record
                 
             if record['attendee.email'] != record['person.email']:
