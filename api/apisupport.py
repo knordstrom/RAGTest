@@ -1,6 +1,7 @@
 from datetime import date
 import datetime
 import json
+import os
 from kafka import KafkaProducer
 from library.llm_api import LLM_API
 from library.llm_groq import LLM_Groq
@@ -11,6 +12,8 @@ from library import weaviate as we
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 from groq import Groq
+from dotenv import load_dotenv
+
 
 class APISupport:
 
@@ -80,9 +83,10 @@ class APISupport:
             'Context': str(schedule)
         }
 
+        load_dotenv()
 
         client = Groq(
-            api_key="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"
+            api_key=os.getenv('GROQ_API_KEY'),
         )
 
         chat_completion = client.chat.completions.create(
