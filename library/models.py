@@ -119,8 +119,8 @@ class Message:
         for attachment in attachments:
             filename = attachment['filename']
             if utils.Utils.is_invite(filename):
-                attachment['data'] = EmailReplyParser.parse_reply(urlsafe_b64decode(attachment['data']).decode('utf-8'))
                 try:  
+                    attachment['data'] = EmailReplyParser.parse_reply(urlsafe_b64decode(attachment['data']).decode('utf-8'))
                     event = models.Event.create(attachment['data'])
                     events.append(event)
                 except Exception as e:
@@ -129,25 +129,6 @@ class Message:
         if len(events) > 0:
             print("Events found in message " + str(events))
             new_message['events'] = events
-
-    @staticmethod
-    def try_get_attachments(message: dict, new_message: dict):
-        attachments = message.get('attachments', [])
-        events = []
-        for attachment in attachments:
-            filename = attachment['filename']
-            if utils.Utils.is_invite(filename):
-                attachment['data'] = EmailReplyParser.parse_reply(urlsafe_b64decode(attachment['data']).decode('utf-8'))
-                try:  
-                    event = models.Event.create(attachment['data'])
-                    events.append(event)
-                except Exception as e:
-                    print("Error creating event from attachment " + str(attachment) + " with error " + str(e))
-
-        if len(events) > 0:
-            print("Events found in message " + str(events))
-            new_message['events'] = events
-
 
     @staticmethod
     def extract_data(message: dict) -> dict:
