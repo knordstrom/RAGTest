@@ -19,6 +19,7 @@ RUN apk update && \
     apk add linux-headers build-base python3-dev ethtool && \
     apk add musl-dev gcc gfortran openblas-dev libffi-dev g++
 
+# RUN apk update apk add libffi-dev
 
 WORKDIR /app
 
@@ -54,4 +55,4 @@ COPY library/vdb.py library/weaviate.py library/utils.py library/models.py ./lib
 
 RUN ls -la
 
-CMD ["poetry", "run", "processor"]
+CMD ["poetry", "run", "event_processor"]

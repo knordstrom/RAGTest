@@ -8,8 +8,10 @@ packages = [{include = "library"}, {include = "processor"}]
 
 [tool.poetry.scripts]
 processor = "processor.main:start"
+event_processor = "processor.main:start_kafka_calendar"
 
 [tool.poetry.dependencies]
+py2neo = "*"
 python = "^3.11"
 pytest = "^8.1.1"
 Flask = "^3.0.2"

@@ -1,6 +1,7 @@
 version: '3.4'
 services:
   weaviate:
+    platform: linux/x86_64
     image: cr.weaviate.io/semitechnologies/weaviate:1.24.4
     ports:
     - 8080:8080
@@ -15,18 +16,26 @@ services:
       TRANSFORMERS_INFERENCE_API: http://t2v-transformers:8080
       CLUSTER_HOSTNAME: 'weaviate-1'
   t2v-transformers:  # Set the name of the inference container
+    platform: linux/x86_64
     image: cr.weaviate.io/semitechnologies/transformers-inference:sentence-transformers-multi-qa-MiniLM-L6-cos-v1
     environment:
       ENABLE_CUDA: 0 
   neo4j:
+    platform: linux/x86_64
     image: neo4j:4.3.1
     ports:
     - 7687:7687
     - 7474:7474
     restart: on-failure:0
+    environment:
+      - NEO4J_AUTH=neo4j/password
     volumes:
       - /var/lib/neo4j/data:/data
+      - /var/lib/neo4j/conf:/conf
+      - /var/lib/neo4j/logs:/logs
+      - /var/lib/neo4j/plugins:/plugins
   zoo1:
+    platform: linux/x86_64
     image: confluentinc/cp-zookeeper:7.3.2
     hostname: zoo1
     container_name: zoo1
@@ -38,6 +47,7 @@ services:
       ZOOKEEPER_SERVERS: zoo1:2888:3888
 
   kafka1:
+    platform: linux/x86_64
     image: confluentinc/cp-kafka:7.3.2
     hostname: kafka1
     container_name: kafka1
@@ -66,8 +76,17 @@ services:
   processor:
     image: context-processor:0.1.1
     environment:
-      KAFKA_BROKER: "kafka1:29092"
+      KAFKA_BROKER: "host.docker.internal:29092"
       KAFKA_TOPIC: "emails"
       PYTHONUNBUFFERED: 1
       VECTOR_DB_HOST: "docker-weaviate-1"
       VECTOR_DB_PORT: 8080
+
+  event_processor:
+    image: event-processor:0.1.1
+    environment:
+      KAFKA_BROKER: "host.docker.internal:29092"
+      KAFKA_TOPIC: "calendar"
+      PYTHONUNBUFFERED: 1
+      NEO4J_DB_HOST: "docker-neo4j-1"
+      NEO4J_DB_PORT: 7687
