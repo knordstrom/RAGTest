@@ -19,6 +19,12 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import warnings
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+import os
 
 class APISupport:
 
@@ -136,8 +142,7 @@ def require(keys: list[str], type = str) -> str:
 
 @app.route('/calendar', methods=['GET'])
 def calendar() -> str:
-    # email = flask.request.args.get('e')
-    # count = flask.request.args.get('n', None, int)
+    count = flask.request.args.get('n', None, int)
     SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
     creds = None
     if os.path.exists("token.json"):
@@ -148,7 +153,7 @@ def calendar() -> str:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                "/Users/mithalishashidhar/Downloads/cognimate/RAGTest/api/credentials.json", SCOPES
+                "../resources/gmail_creds.json", SCOPES
             )
             creds = flow.run_local_server(port=3000)
             # Save the credentials for the next run
@@ -164,7 +169,7 @@ def calendar() -> str:
             .list(
                 calendarId="primary",
                 timeMin=now,
-                maxResults=2,
+                maxResults=count,
                 singleEvents=True,
                 orderBy="startTime",
             )
@@ -177,6 +182,11 @@ def calendar() -> str:
             return
         APISupport.write_to_kafka_cal(events)
         return events
+            
+
+    except HttpError as error:
+        print(f"An error occurred: {error}")
+        return "error"
             
 
     except HttpError as error:
