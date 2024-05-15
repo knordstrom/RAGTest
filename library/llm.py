@@ -1,6 +1,6 @@
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from library.weaviate import VDB
-from langchain.chains import LLMChain
+from langchain.chains.llm import LLMChain
 from langchain_community.llms import GPT4All
 from langchain import PromptTemplate
 
@@ -33,8 +33,14 @@ class LLM:
         please respond with "I do not know the answer to that question."
 
         ### Response:'''
+        
+        return self.query_with_template(template, {'Question': question, 'Context':mail_context})
+        
+    
+    def query_with_template(self, template: str, config: dict, context_limit = 5, max_tokens=500, prompt=None):
+
         language_prompt = PromptTemplate(
-            input_variables=["Question","Context"],
+            input_variables=list(config.keys()),
             template=template,
         )
 
@@ -42,12 +48,11 @@ class LLM:
         print("Prompt length: ", len(template))
         print("Prompt byte size ", len(template.encode('utf-8')))
 
-        llm_chain = LLMChain(prompt=language_prompt, llm=self.model)
-        response = llm_chain({'Question': question, 'Context':mail_context})
+        llm_chain = LLMChain(prompt=language_prompt, llm=self.model.llm)
+        response = llm_chain(config)
         
         print("Response: ", response)
         return response
-    
 
 class Wizard(LLM) :
     def __init__(self, vdb: VDB):

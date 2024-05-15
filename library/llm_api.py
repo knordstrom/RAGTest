@@ -32,7 +32,7 @@ class LangLLM(LangChainBaseLLM):
                 'model': self._llm_type,
                 'prompt': [prompt],
                 'max_tokens': kwargs.get('max_tokens', 500),
-                'temperature': kwargs.get('temperature', 0),
+                'temperature': 0,
                 'end_id': 2,
                 'pad_token': 2,
                 'bad_words': '',
@@ -45,7 +45,7 @@ class LangLLM(LangChainBaseLLM):
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
         """Get the identifying parameters."""
-        return {"llmUrl": self.llmUrl}
+        return {"llmUrl": self.llm_url}
     
 
 class ApiModel:

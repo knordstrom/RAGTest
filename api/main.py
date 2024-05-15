@@ -1,79 +1,64 @@
+import datetime
+from dateutil import parser as dateparser
 import json
 from os import abort
 import flask
+from api.apisupport import APISupport
 import context
 from library.gmail import Gmail, GmailLogic
 from library.llm import LLM, Wizard, Hermes, Falcon, Mini, MistralInstruct, MistralOrca
 import importlib as i
 import library.weaviate as weaviate
 from kafka import KafkaProducer
+import warnings
 
-class APISupport:
-
-    @staticmethod
-    def read_last_emails(email: str, count = None) -> list[dict]:
-        try:
-            g: Gmail = Gmail(email, app.root_path + '/../resources/gmail_creds.json')
-            gm: GmailLogic = GmailLogic(g)
-            ids = gm.get_emails(count)
-            mapped = []
-            for id in ids:
-                mapped.append(gm.get_email(msg_id=id['id']))
-            
-            return mapped
-        finally:
-            g.close()
-
-    @staticmethod
-    def write_to_kafka(emails: list[dict]) -> None:
-        producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092', 
-                                 api_version="7.3.2", 
-                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-        count = 0
-        for email in emails:
-            if email == None:
-                print("Email with no entries found " + str(email) + "...")
-                continue
-            
-            ks = str(email['to'][0])
-            key = bytearray().extend(map(ord, ks))
-            
-            producer.send('emails', key = key, value = email)
-            count += 1
-        producer.flush()
-        print("Wrote " + str(count) + " emails to Kafka")
-
-    @staticmethod
-    def get_list_from_string(self, string: str) -> list:
-        if string == None:
-            return []
-        return list(map(int, string.split(',')))
+warnings.simplefilter("ignore", ResourceWarning)
 
 app = flask.Flask(__name__)
 
 @app.route('/ask', methods=['GET'])
 def ask() -> str:
-    query = flask.request.args.get('q')
+    query = email = require(['query', 'q'])
     count = flask.request.args.get('n', None, int)
-    if query is not None and query != '':
-        w: LLM = MistralInstruct(weaviate.Weaviate("127.0.0.1", "8080"))
-        return w.query(query, weaviate.WeaviateSchemas.EMAIL_TEXT, context_limit = count)
-    else:
-        flask.abort(404)
-        return "No query provided"
+
+    w: LLM = MistralInstruct(weaviate.Weaviate("127.0.0.1", "8080"))
+    return w.query(query, weaviate.WeaviateSchemas.EMAIL_TEXT, context_limit = count)
+
 
 @app.route('/email', methods=['GET'])
 def email() -> str:
-    email = flask.request.args.get('e')
+    email = require(['email', 'e'])
     count = flask.request.args.get('n', None, int)
+    mapped: list = APISupport.read_last_emails(email, app.root_path + '/../resources/gmail_creds.json', count = count)
+    APISupport.write_to_kafka(mapped)
+    return mapped
 
-    if email is not None and email != '':
-        mapped: list = APISupport.read_last_emails(email, count = count)
-        APISupport.write_to_kafka(mapped)
-        return mapped
-    else:
-        flask.abort(404)
-        return "No email provided"
+
+@app.route('/briefs', methods=['GET'])
+def briefs() -> str:
+    email: str = require(['email', 'e'])
+    print("Email", email)
+    start_time: datetime = to_date_time(require(['start']), 'start')
+    print("Start time", start_time, type(start_time))
+    plus12 = start_time + datetime.timedelta(hours=12)
+    print("Start time plus12", plus12, type(plus12))
+    end_time: datetime = to_date_time(flask.request.args.get('end',default = plus12.isoformat()), 'end')
+    return APISupport.create_briefings_for(email, start_time, end_time)
+
+def to_date_time(date: str, name: str) -> datetime:
+    try:
+       return dateparser.parse(date)
+    except ValueError:
+        flask.abort(400, "Invalid time value for parameter " + name + ". Please express the value in ISO 8601 format." )
+
+def require(keys: list[str], type = str) -> str:
+    for key in keys:
+        value = flask.request.args.get(key, type=type)
+        if value is not None:         
+            return value
+    keys = "' or '".join(keys)
+    flask.abort(400, f"Missing required parameter '{keys}'")
+
 
 if __name__ == '__main__':
     app.run()
