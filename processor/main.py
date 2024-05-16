@@ -26,8 +26,6 @@ def write_to_vdb(mapped: list) -> None:
                     if email['body'] == None or email['body'] == '':
                         email['body'] = email['subject']
                     w.upsertChunkedText(email, weaviate.WeaviateSchemas.EMAIL_TEXT, weaviate.WeaviateSchemas.EMAIL, 'body')
-                    print("upsertedchunked part is complete")
-                    # print("events: ", event)
                     for event in events:
                         print("Upserting event " + str(event) + " on from " + str(email['from']))
                         if event.get('description') == None or event.get('description') == '':
@@ -159,7 +157,6 @@ def start():
             print("Tick")
             try:
                 message = consumer.poll(timeout_ms=2000)
-                print("message: ", message)
             except Exception as e:
                 print("Error: " + str(e))
                 continue
