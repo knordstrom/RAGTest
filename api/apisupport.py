@@ -4,7 +4,7 @@ import json
 import os
 from kafka import KafkaProducer
 from library.llm_api import LLM_API
-# from library.llm_groq import LLM_Groq
+from library.llm_groq import LLM_Groq
 import library.neo4j as neo
 from library.gmail import Gmail, GmailLogic
 from library import weaviate as we  
@@ -108,19 +108,4 @@ class APISupport:
             "end_time": end_time.isoformat(),
             "text": chat_completion.choices[0].message.content
         }
-
-    @staticmethod
-    def write_to_kafka_cal(events: dict) -> None:
-        producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092', 
-                                 api_version="7.3.2", 
-                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-        count = 0
-        for event in events:
-            count += 1
-            if event == None:
-                print("There are no events")
-                continue
-            producer.send('calendar', value = event)
-        producer.flush()
-        print("Wrote " + str(count) + " calendar events to Kafka")
     
