@@ -1,9 +1,5 @@
 from datetime import datetime
-from time import strftime
-from langchain.chains import GraphCypherQAChain
-from py2neo import Graph, Node, Relationship, NodeMatcher
-from langchain_openai import ChatOpenAI
-from langchain_community.llms import GPT4All
+from neo4j import GraphDatabase
 import os
 import hashlib
 
@@ -15,45 +11,53 @@ class Neo4j:
         self.url = f"neo4j://{self.db_host}:{self.db_port}"
         self.username = "neo4j"
         self.password = "password"
-        self.graph = None
+        self.driver = GraphDatabase.driver(self.url, auth=(self.username, self.password))
 
     def connect(self):
         print("url is: ", self.url)
-        self.graph = Graph(self.url, auth=(self.username, self.password))
         try:
-            self.graph.run("MATCH () RETURN 1 LIMIT 1")
+            with self.driver.session() as session:
+                session.run("MATCH () RETURN 1 LIMIT 1")
             print('Successfully connected')
         except Exception:
             print('Unsuccessful connection')
 
     def close(self):
-        self.graph.driver.close()
+        self.driver.close()
 
     def get_schedule(self, email: str, start_time: datetime, end_time: datetime) -> dict:
         query = """
-        MATCH (person:Person {email: '""" + email + """'})
+        MATCH (person:Person {email: $email})
         MATCH (event:Event)-[invite:ATTENDS]-(person)
         MATCH (attendee:Person)-[attending:ATTENDS]-(event)
-        WHERE event.end >= datetime('""" + start_time.isoformat() + """') AND event.start <= datetime('""" + end_time.isoformat() + """')
+        WHERE event.end >= datetime($start_time) AND event.start <= datetime($end_time)
         RETURN DISTINCT person.name, person.email, event.name, event.description, event.start, event.end, invite.status, attendee.name, attendee.email, attending.status
         """
         print("Querying Neo4j with: " + query)
-        results = self.graph.run(query)
-        print("Results were",   results)
-        return Neo4j.collate_schedule_response(results)
+        with self.driver.session() as session:
+            results = session.run(query, email=email, start_time=start_time.isoformat(), end_time=end_time.isoformat())
+            print("Results were", results)
+            return Neo4j.collate_schedule_response(results)
 
     def merge_node(self, label, identifier, properties):
-        matcher = NodeMatcher(self.graph)
-        existing_node = matcher.match(label, id=properties["id"]).first()
-        if not existing_node:
-            node = Node(label, **properties)
-            self.graph.merge(node, label, identifier)
-        else:
-            print(f"Node with id {properties['id']} already exists.")
+        query = f"""
+        MERGE (n:{label} {{{identifier}: $id}})
+        ON CREATE SET n += $properties
+        ON MATCH SET n += $properties
+        """
+        print(f"Merging node: {label} with properties {properties}")
+        with self.driver.session() as session:
+            session.run(query, id=properties[identifier], properties=properties)
 
-    def create_relationship(self, start_node, rel_type, end_node, properties):
-        rel = Relationship(start_node, rel_type, end_node, **properties)
-        self.graph.create(rel)
+    def create_relationship(self, start_node_label, start_node_key, start_node_value, rel_type, end_node_label, end_node_key, end_node_value, properties):
+        query = f"""
+        MATCH (start:{start_node_label} {{{start_node_key}: $start_node_value}})
+        MATCH (end:{end_node_label} {{{end_node_key}: $end_node_value}})
+        MERGE (start)-[r:{rel_type} {{id: $rel_id}}]->(end)
+        ON CREATE SET r += $properties
+        """
+        with self.driver.session() as session:
+            session.run(query, start_node_value=start_node_value, end_node_value=end_node_value, rel_id=properties['id'], properties=properties)
 
     def process_events(self, events):
         person_list = []
@@ -112,14 +116,9 @@ class Neo4j:
             self.merge_node("Event", "id", event)
 
         for attend in attendance_list:
-            person_node = self.graph.nodes.match("Person", email=attend['person_email']).first()
-            event_node = self.graph.nodes.match("Event", id=attend['event_id']).first()
-            self.create_relationship(person_node, "ATTENDS", event_node, {"id": attend["attend_rel_id"], "status": attend["status"]})
-            self.create_relationship(event_node, "INVITED", person_node, {"id": attend["invited_rel_id"]})
+            self.create_relationship("Person", "email", attend['person_email'], "ATTENDS", "Event", "id", attend['event_id'], {"id": attend["attend_rel_id"], "status": attend["status"]})
+            self.create_relationship("Event", "id", attend['event_id'], "INVITED", "Person", "email", attend['person_email'], {"id": attend["invited_rel_id"], "status": attend["status"]})
 
-
-
-    
     @staticmethod
     def collate_schedule_response(records):
         def key(record):
@@ -142,11 +141,5 @@ class Neo4j:
                     'attending.status': record['attending.status']
                 })
 
-        
         response = list(collated.values())
-        # return the response sorted on start time
         return sorted(response, key=lambda x: x['event.start'])
-
-
-
-        
