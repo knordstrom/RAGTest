@@ -228,7 +228,7 @@ class Weaviate(VDB):
         collection = self.collection(key)
         return collection.aggregate.over_all()
     
-    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty = .9) -> list:
+    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty = .7) -> list:
 
         collection = self.collection(key)
 

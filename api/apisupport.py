@@ -1,16 +1,13 @@
-from datetime import date
 import datetime
 import json
 import os
 from kafka import KafkaProducer
-from library.llm_api import LLM_API
-# from library.llm_groq import LLM_Groq
+import context
+import library.weaviate as weaviate
+from library.groq_client import GroqClient
 import library.neo4j as neo
 from library.gmail import Gmail, GmailLogic
-from library import weaviate as we  
 
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_groq import ChatGroq
 from groq import Groq
 from dotenv import load_dotenv
 
@@ -33,7 +30,7 @@ class APISupport:
 
     @staticmethod
     def write_to_kafka(emails: list[dict]) -> None:
-        producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092', 
+        producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
                                  api_version="7.3.2", 
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
         count = 0
@@ -76,7 +73,7 @@ class APISupport:
         #    2. pertinent to the event
     @staticmethod
     def create_briefings_for(email: str, start_time: datetime, end_time: datetime) -> dict:
-        n = neo.Neo4j()
+        n = neo.Neo4j(os.getenv('',"bolt://localhost:7687"), os.getenv('',"neo4j"), os.getenv('',"thisislocalanyway"))
 
         print("Getting schedule for " + email + " from " + start_time.isoformat() + " to " + end_time.isoformat())
         schedule = n.get_schedule(email, start_time, end_time)
@@ -103,21 +100,7 @@ class APISupport:
 
         load_dotenv()
 
-        client = Groq(
-            api_key=os.getenv('GROQ_API_KEY'),
-        )
-
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt.format(**context),
-                }
-            ],
-            model="llama3-8b-8192",
-            temperature=0.01,
-            max_tokens=2000,
-        )
+        chat_completion = GroqClient(os.getenv('GROQ_API_KEY')).query(prompt, context, max_tokens=500)
 
         return {
             "Context": schedule,
@@ -126,4 +109,37 @@ class APISupport:
             "end_time": end_time.isoformat(),
             "text": chat_completion.choices[0].message.content
         }
+    
+    @staticmethod
+    def perform_ask(question, key, context_limit = 5, max_tokens=2000):
+        vdb = weaviate.Weaviate(os.getenv('VECTOR_DB_HOST',"127.0.0.1"), os.getenv('VECTOR_DB_PORT',"8080"))
+        context = vdb.search(question, key, context_limit)
+        
+        emails = []
+        for o in context.objects:
+            emails.append(o.properties['text'])
+            
+        mail_context = '"' + '"\n\n"'.join(emails) + '"\n\n'
+
+        print("Retrieving" + str(len(emails)) + ' emails')
+        print("Context " + mail_context)
+
+        # LANGCHAIN IMPLEMENTATION
+        prompt='''### Instruction:
+        Question: {Question}
+        Context: {Context}
+
+        You are a chief of staff for the person asking the question given the Context. 
+        Please provide a response to the question in no more than 5 sentences. If the answer is not contained in Context,
+        please respond with "I do not know the answer to that question."
+
+        ### Response:'''
+
+        texts = []
+        for o in context.objects:
+            texts.append(o.properties['text'])
+
+        print(str(texts))
+        
+        return GroqClient(os.getenv('GROQ_API_KEY'), max_tokens=max_tokens).query(prompt, {'Question':question, 'Context': texts})
     

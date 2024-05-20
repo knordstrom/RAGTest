@@ -1,0 +1,54 @@
+FROM python:3.11-alpine as base
+
+ARG DEV=false
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
+
+RUN apk update && \
+    apk add libpq
+
+
+FROM base as builder
+
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
+RUN apk update && \
+    apk add linux-headers build-base python3-dev ethtool && \
+    apk add musl-dev gcc gfortran openblas-dev
+
+WORKDIR /app
+
+# Install Poetry
+RUN pip install poetry==1.8.0
+
+# Install the app
+COPY pyproject.toml ./
+RUN poetry update
+RUN pip install gpt4all
+RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR;
+
+
+FROM base as runtime
+
+WORKDIR /app
+
+RUN apk update && \
+    apk add gcc musl-dev gfortran openblas-dev antiword
+RUN pip install poetry==1.8.0
+
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+
+RUN mkdir -p /app/api
+RUN mkdir -p /app/library
+COPY pyproject.toml ./
+RUN poetry lock --no-update
+RUN poetry install
+
+COPY api/main.py api/context.py api/apisupport.py ./api/
+COPY library/vdb.py library/weaviate.py library/models.py library/gmail.py library/neo4j.py library/utils.py library/groq_client.py ./library/
+
+CMD ["poetry", "run", "flask", "--app", "api/main", "run", "--port=5010", "--host=0.0.0.0"]
+EXPOSE 5010

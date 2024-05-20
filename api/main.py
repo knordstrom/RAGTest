@@ -1,15 +1,12 @@
 import datetime
+import os
 from dateutil import parser as dateparser
-import json
+
 from os import abort
 import flask
-from api.apisupport import APISupport
-# import context
-from library.gmail import Gmail, GmailLogic
-from library.llm import LLM, Wizard, Hermes, Falcon, Mini, MistralInstruct, MistralOrca
-import importlib as i
+from apisupport import APISupport
+import context
 import library.weaviate as weaviate
-from kafka import KafkaProducer
 import warnings
 import os.path
 
@@ -25,11 +22,9 @@ app = flask.Flask(__name__)
 
 @app.route('/ask', methods=['GET'])
 def ask() -> str:
-    query = email = require(['query', 'q'])
+    query = require(['query', 'q'])
     count = flask.request.args.get('n', None, int)
-
-    w: LLM = MistralInstruct(weaviate.Weaviate("127.0.0.1", "8080"))
-    return w.query(query, weaviate.WeaviateSchemas.EMAIL_TEXT, context_limit = count)
+    return APISupport.perform_ask(query, weaviate.WeaviateSchemas.EMAIL_TEXT, context_limit = count)
 
 
 @app.route('/email', methods=['GET'])

@@ -3,6 +3,7 @@ from kafka import KafkaConsumer, TopicPartition
 import os
 import library.weaviate as weaviate
 import library.handlers as h
+import library.handlers as h
 import traceback
 import warnings
 from library import neo4j
@@ -27,7 +28,7 @@ def write_to_vdb(mapped: list) -> None:
 
                 for event in events:
                     print("Upserting event " + str(event) + " on from " + str(email['from']))
-                    handler.handle_event(event, email['from'])
+                    handler.handle_event(event) # , email['from']
                         
             print(w.count(weaviate.WeaviateSchemas.EMAIL))
         finally:
