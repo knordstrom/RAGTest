@@ -147,9 +147,6 @@ class Neo4j:
         # return the response sorted on start time
         return sorted(response, key=lambda x: x['event.start'])
 
-if __name__ == "__main__":
-    graph = Neo4j()
-    graph.connect()
-    # graph.get_schedule("mithali@cognimate.ai", datetime.fromisoformat("2024-05-06T17:00:00-06:00"), datetime.fromisoformat("2024-05-06T17:30:00-06:00"))
+
 
         

@@ -80,7 +80,7 @@ services:
   event_processor:
     image: event-processor:0.1.1
     environment:
-      KAFKA_BROKER: "host.docker.internal:29092"
+      KAFKA_BROKER: "kafka1:29092"
       KAFKA_TOPIC: "calendar"
       PYTHONUNBUFFERED: 1
       NEO4J_DB_HOST: "docker-neo4j-1"
