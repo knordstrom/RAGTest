@@ -49,7 +49,7 @@ RUN poetry lock --no-update
 RUN poetry install
 
 COPY processor/main.py processor/context.py ./processor/
-COPY library/vdb.py library/weaviate.py library/utils.py library/models.py ./library/
+COPY library/vdb.py library/weaviate.py library/utils.py library/models.py library/neo4j.py ./library/
 
 
 RUN ls -la

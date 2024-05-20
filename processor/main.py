@@ -4,8 +4,8 @@ import os
 import library.weaviate as weaviate
 import traceback
 import warnings
-from py2neo import Graph, Node, Relationship
-import hashlib
+from library import neo4j
+from datetime import datetime
 
 warnings.simplefilter("ignore", ResourceWarning)
 
@@ -37,99 +37,11 @@ def write_to_vdb(mapped: list) -> None:
             if w is not None:
                 w.close()
 
-def write_to_neo4j(events) -> None:
-        db = os.getenv("NEO4J_DB_HOST", "docker-neo4j-1")
-        db_port = os.getenv("NEO4J_DB_PORT", "7687")
-        url = "neo4j://" + db + ":" + db_port
-        username = "neo4j"
-        password = "password"
-        graph = Graph(url, auth=(username, password))
-        try:
-            graph.run("Match () Return 1 Limit 1")
-            print('successfully connected')
-        except Exception:
-            print('unsuccessful connection')
-        print("Writing to Neo4j at " + ":" + url + " ... " + str(len(events)))
-        person_list = []
-        events_list = []
-        attendance_list = []
-        try:
-            for record in events:
-                event = record.value
-                print("event: ", event)
-                status = ""
-                start = ""
-                end = ""
-                event_summary = ""
-                event_description = ""
-                event_recurring_id = ""
-                # get event information (meeting information)
-                event_id = event["id"]
-                if "status" in event:
-                    status = event["status"]
-                if "recurringEventId" in event:
-                    event_recurring_id = event["recurringEventId"]
-                if "start" in event:
-                    start = event["start"].get("dateTime", event["start"].get("date"))
-                if "end" in event:
-                    end = event["end"].get("dateTime", event["end"].get("date"))
-                if "summary" in event:
-                    event_summary = event["summary"]
-                if "description" in event:
-                    event_description = event["description"]
-                event_dict = {"id": event_id, "start": start, "end": end, "description": event_description,
-                              "summary": event_summary, "recurring_id": event_recurring_id, "status": status}
-                events_list.append(event_dict)
-                # get person information
-                attendees = event["attendees"]
-                for item in attendees:
-                    email = ""
-                    name = ""
-                    response_status = ""
-                    attendee_id = ""
-                    attend_rel_id = ""
-                    invited_rel_id = ""
-                    if "email" in item:
-                        email = item["email"]
-                        sha256 = hashlib.sha256()
-                        sha256.update(email.encode('utf-8'))
-                        attendee_id = sha256.hexdigest()
-                        attend_rel_id = attendee_id + event_id
-                        invited_rel_id = event_id + attendee_id
-                    if "displayName" in item:
-                        name = item["displayName"]
-                    if "responseStatus" in item:
-                        response_status = item["responseStatus"]
-                    attendee = {"id": attendee_id, "email": email, "name": name, "response_status": response_status}
-                    rel_dict = {"person_email": email, "event_id": event_dict["id"], "status":response_status, 
-                                "attend_rel_id": attend_rel_id, "invited_rel_id": invited_rel_id}
-                    attendance_list.append(rel_dict)
-                    person_list.append(attendee)
-            # Creating and merging Person nodes
-            for person in person_list:
-                node = Node("Person", id = person['id'], email = person['email'], name = person['name'], response_status = person['response_status'])
-                graph.merge(node, "Person", "id")
 
-
-            # Creating and merging Event nodes
-            for event in events_list:
-                node = Node("Event", id = event['id'], start = event['start'], end = event['end'], 
-                description = event["description"], summary = event["summary"], recurring_id = event["recurring_id"],
-                status = event["status"])
-                graph.merge(node, "Event", "id")
-
-            # Creating ATTENDS relationships
-            for attend in attendance_list:
-                person_node = graph.nodes.match("Person", email=attend['person_email']).first()
-                event_node = graph.nodes.match("Event", id=attend['event_id']).first()
-                attend_rel = Relationship(person_node, "ATTENDS", event_node, id = attend["attend_rel_id"], status = attend["status"])
-                graph.create(attend_rel)
-                invited_rel = Relationship(event_node, "INVITED", person_node, id = attend["invited_rel_id"])
-                graph.create(invited_rel)
-            print("Data has been successfully added to the graph!")
-        except Exception as exception:
-            print(f"An error occurred: {exception}")
-
+def write_to_neo4j(events):
+    graph = neo4j.Neo4j()
+    graph.connect()
+    graph.process_events(events)
 
 
 def start():
@@ -215,7 +127,7 @@ def start_kafka_calendar():
                 print()
 
                 write_to_neo4j(message[key])
-                print(" ... written to VDB")
+                print(" ... written to Graph DB")
             
             consumer.commit()
             
