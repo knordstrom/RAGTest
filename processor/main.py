@@ -5,6 +5,8 @@ import library.weaviate as weaviate
 import library.handlers as h
 import traceback
 import warnings
+from library import neo4j
+from datetime import datetime
 
 warnings.simplefilter("ignore", ResourceWarning)
 
@@ -32,6 +34,13 @@ def write_to_vdb(mapped: list) -> None:
             if w is not None:
                 w.close()
 
+
+def write_to_neo4j(events):
+    graph = neo4j.Neo4j()
+    graph.connect()
+    graph.process_events(events)
+
+
 def start():
     kafka = os.getenv("KAFKA_BROKER", "127.0.0.1:9092")
     topic = os.getenv("KAFKA_TOPIC", "emails")
@@ -39,7 +48,8 @@ def start():
     try:
         consumer = KafkaConsumer(bootstrap_servers=kafka, 
                                 group_id='processor',
-                                value_deserializer=lambda v: json.loads(v.decode('utf-8')))
+                                value_deserializer=lambda v: json.loads(v.decode('utf-8')),
+                                api_version="7.3.2")
         consumer.subscribe(topics=[topic])
         print("Subscribed to " + topic + ", waiting for messages...")
 
@@ -75,6 +85,53 @@ def start():
     finally:
         print("Closing consumer")
         consumer.close()
+
+
+def start_kafka_calendar():
+    kafka = os.getenv("KAFKA_BROKER", "127.0.0.1:9092")
+    topic = os.getenv("KAFKA_TOPIC", "calendar")
+    print("Starting processor at " + kafka + " on topic " + topic + " ...")
+    try:
+        consumer = KafkaConsumer(bootstrap_servers=kafka, 
+                                group_id='processor2',
+                                value_deserializer=lambda v: json.loads(v.decode('utf-8')),
+                                api_version="7.3.2")
+        consumer.subscribe(topics=[topic])
+        print("Subscribed to " + topic + ", waiting for messages...")
+
+        count = 0
+
+        key: TopicPartition = TopicPartition(topic=topic, partition=0)
+        partitions = None
+        message = None
+        while partitions == None or len(partitions) == 0:
+            partitions = consumer.partitions_for_topic(topic)
+            print("Waiting for partitions... have " + str(partitions))
+            
+        while True:
+            print("Tick")
+            try:
+                message = consumer.poll(timeout_ms=2000)
+            except Exception as e:
+                print("Error: " + str(e))
+                continue
+
+            if message is None or message == {}:  
+                continue
+            else:
+                count += 1
+                print("Received message " + str(count) + ":" + str(message))
+                print()
+
+                write_to_neo4j(message[key])
+                print(" ... written to Graph DB")
+            
+            consumer.commit()
+            
+    finally:
+        print("Closing consumer")
+        consumer.close()
+
 
 if __name__ == '__main__':
     start()

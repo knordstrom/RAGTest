@@ -9,3 +9,4 @@ run:
 
 docker-processor:
 	docker build -f ProcessorDockerfile -t context-processor:0.1.1 .
+	docker build -f EventProcessorDockerfile -t event-processor:0.1.1 .

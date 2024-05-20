@@ -19,6 +19,7 @@ RUN apk update && \
     apk add linux-headers build-base python3-dev ethtool && \
     apk add musl-dev gcc gfortran openblas-dev libffi-dev g++
 
+# RUN apk update apk add libffi-dev
 
 WORKDIR /app
 
@@ -37,7 +38,7 @@ FROM base as runtime
 WORKDIR /app
 
 RUN apk update && \
-    apk add gcc musl-dev gfortran openblas-dev libffi-dev g++ antiword
+    apk add gcc musl-dev gfortran openblas-dev libffi-dev g++
 RUN pip install poetry==1.8.0
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
@@ -49,9 +50,9 @@ RUN poetry lock --no-update
 RUN poetry install
 
 COPY processor/main.py processor/context.py ./processor/
-COPY library/vdb.py library/weaviate.py library/utils.py library/models.py library/handlers.py library/document_parser.py library/neo4j.py ./library/
+COPY library/vdb.py library/weaviate.py library/utils.py library/models.py library/neo4j.py ./library/ 
 
 
 RUN ls -la
 
-CMD ["poetry", "run", "processor"]
+CMD ["poetry", "run", "event_processor"]
