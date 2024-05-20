@@ -13,7 +13,6 @@ class GroqClient:
         )
 
     def query(self, prompt, context):
-        # print(  "Con   ", context)
         chat_completion = self.client.chat.completions.create(
             messages=[
                 {
