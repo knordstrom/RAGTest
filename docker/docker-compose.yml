@@ -76,7 +76,18 @@ services:
       PYTHONUNBUFFERED: 1
       VECTOR_DB_HOST: "docker-weaviate-1"
       VECTOR_DB_PORT: 8080
-    
+
+  event_processor:
+    image: event-processor:0.1.1
+    environment:
+      KAFKA_BROKER: "kafka1:29092"
+      KAFKA_TOPIC: "calendar"
+      PYTHONUNBUFFERED: 1
+      NEO4J_DB_HOST: "docker-neo4j-1"
+      NEO4J_DB_PORT: 7687
+      NEO4J_USERNAME: "${NEO4J_USERNAME}"
+      NEO4J_PASSWORD: "${NEO4J_PASSWORD}"
+
   # api:
   #   image: context-api:0.1.1
   #   ports:
