@@ -14,6 +14,9 @@ class WeaviateSchemas(enum.Enum):
     EMAIL_TEXT = 'email_text'
     EVENT = 'event'
     EVENT_TEXT = 'event_text'
+    DOCUMENT = 'document'
+    DOCUMENT_TEXT = 'document_text'
+    DOCUMENT_SUMMARY = 'document_summary'
 
 class WeaviateSchema:
 
@@ -104,6 +107,55 @@ class WeaviateSchema:
             "references": [
                 wvc.config.ReferenceProperty(name="event_id", target_collection="Event"),
                 wvc.config.ReferenceProperty(name="name", target_collection="Event"),
+            ],
+
+            # Specify a vectorizer
+            "vectorizer": True,
+    }),
+    (WeaviateSchemas.DOCUMENT, {
+            # Class definition
+            "class": "Document",
+
+            # Property definitions
+            "properties": [
+                Property(name = "document_id", data_type=DataType.TEXT),
+                ## TODO: placeholder for other properties
+            ],
+            "references": [
+                wvc.config.ReferenceProperty(name="text", target_collection="DocumentText"),
+                wvc.config.ReferenceProperty(name="text", target_collection="DocumentSummary"),
+            ],
+
+            # Specify a vectorizer
+            "vectorizer": False,
+    }),
+    (WeaviateSchemas.DOCUMENT_TEXT, {
+            # Class definition
+            "class": "DocumentText",
+
+            # Property definitions
+            "properties": [
+                Property(name = "text", data_type=DataType.TEXT),
+            ],
+            "references": [
+                wvc.config.ReferenceProperty(name="document_id", target_collection="Document"),
+                wvc.config.ReferenceProperty(name="text", target_collection="DocumentSummary"),
+            ],
+
+            # Specify a vectorizer
+            "vectorizer": True,
+    }),
+    (WeaviateSchemas.DOCUMENT_SUMMARY, {
+            # Class definition
+            "class": "DocumentSummary",
+
+            # Property definitions
+            "properties": [
+                Property(name = "text", data_type=DataType.TEXT),
+            ],
+            "references": [
+                wvc.config.ReferenceProperty(name="document_id", target_collection="Document"),
+                wvc.config.ReferenceProperty(name="text", target_collection="DocumentText"),
             ],
 
             # Specify a vectorizer
