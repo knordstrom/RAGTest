@@ -2,6 +2,7 @@ import json
 from kafka import KafkaConsumer, TopicPartition
 import os
 import library.weaviate as weaviate
+import library.handlers as h
 import traceback
 import warnings
 
@@ -14,22 +15,17 @@ def write_to_vdb(mapped: list) -> None:
         w = None
         try:
             w = weaviate.Weaviate(db, db_port)
+            handler = h.Handlers(w)
             for j,record in enumerate(mapped):
-                #try:
-                    email: dict = record.value
-                    events = email.get('events', [])
-                    email.pop('events', None)
-                    print("=> Considering email " + str(j) + " of " + str(len(mapped)) + "...")
-   
-                    if email['body'] == None or email['body'] == '':
-                        email['body'] = email['subject']
-                    w.upsertChunkedText(email, weaviate.WeaviateSchemas.EMAIL_TEXT, weaviate.WeaviateSchemas.EMAIL, 'body')
+                email: dict = record.value
+                events = email.get('events', [])
+                email.pop('events', None)
+                print("=> Considering email " + str(j) + " of " + str(len(mapped)) + "...")
+                handler.handle_email(email)
 
-                    for event in events:
-                        print("Upserting event " + str(event) + " on from " + str(email['from']))
-                        if event.get('description') == None or event.get('description') == '':
-                            event['description'] = event.get('summary', '')
-                        w.upsertChunkedText(event, weaviate.WeaviateSchemas.EVENT_TEXT, weaviate.WeaviateSchemas.EVENT, 'description')
+                for event in events:
+                    print("Upserting event " + str(event) + " on from " + str(email['from']))
+                    handler.handle_event(event) # , email['from']
                         
             print(w.count(weaviate.WeaviateSchemas.EMAIL))
         finally:

@@ -1,17 +1,10 @@
 import datetime
-from time import strftime
-from neo4j import GraphDatabase
-from langchain.chains import GraphCypherQAChain
 from langchain_community.graphs import Neo4jGraph
-from langchain_openai import ChatOpenAI
-from langchain_community.llms import GPT4All
-
-from library.llm_api import LLM_API
 
 class Neo4j:
 
-    def __init__(self):
-        self.driver = Neo4jGraph("bolt://localhost:7687", "neo4j", "thisislocalanyway")
+    def __init__(self, uri: str, user: str, password: str):
+        self.driver = Neo4jGraph(uri, user, password)
 
     def close(self):
         self.driver.close()

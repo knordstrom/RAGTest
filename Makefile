@@ -9,3 +9,9 @@ run:
 
 docker-processor:
 	docker build -f ProcessorDockerfile -t context-processor:0.1.1 .
+
+docker-api:
+	docker build -f ApiDockerfile -t context-api:0.1.1 .
+
+docker-all:
+	make docker-processor && make docker-api
