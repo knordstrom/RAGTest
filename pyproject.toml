@@ -11,7 +11,6 @@ processor = "processor.main:start"
 event_processor = "processor.main:start_kafka_calendar"
 
 [tool.poetry.dependencies]
-py2neo = "^2021.2.4"
 python = "^3.11"
 pytest = "^8.1.1"
 Flask = "^3.0.2"
@@ -39,6 +38,7 @@ python-docx = "^1.1.2"
 pypdf = "^4.2.0"
 textextract = "^1.2.0"
 textract = "^1.6.5"
+neo4j = "^5.20.0"
 
 
 [tool.poetry.group.dev.dependencies]
