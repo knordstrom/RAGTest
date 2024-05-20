@@ -55,7 +55,7 @@ class APISupport:
         #    2. pertinent to the event
     @staticmethod
     def create_briefings_for(email: str, start_time: datetime, end_time: datetime) -> dict:
-        n = neo.Neo4j()
+        n = neo.Neo4j(os.getenv('',"bolt://localhost:7687"), os.getenv('',"neo4j"), os.getenv('',"thisislocalanyway"))
 
         print("Getting schedule for " + email + " from " + start_time.isoformat() + " to " + end_time.isoformat())
         schedule = n.get_schedule(email, start_time, end_time)
