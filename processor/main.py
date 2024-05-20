@@ -17,13 +17,7 @@ def write_to_vdb(mapped: list) -> None:
         try:
             w = weaviate.Weaviate(db, db_port)
             handler = h.Handlers(w)
-            handler = h.Handlers(w)
             for j,record in enumerate(mapped):
-                email: dict = record.value
-                events = email.get('events', [])
-                email.pop('events', None)
-                print("=> Considering email " + str(j) + " of " + str(len(mapped)) + "...")
-                handler.handle_email(email)
                 email: dict = record.value
                 events = email.get('events', [])
                 email.pop('events', None)
