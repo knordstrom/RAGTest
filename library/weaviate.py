@@ -176,13 +176,14 @@ class Weaviate(VDB):
         collection = self.collection(key)
         return collection.aggregate.over_all()
     
-    def search(self, query:str, key: WeaviateSchemas, limit: int = 5) -> list:
+    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty = .9) -> list:
 
         collection = self.collection(key)
 
         response = collection.query.near_text(
             query=query,
             limit=limit,
+            certainty=certainty,
             return_metadata=wvc.query.MetadataQuery(distance=True)
         )
 
