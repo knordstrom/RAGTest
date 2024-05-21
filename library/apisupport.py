@@ -29,6 +29,25 @@ class APISupport:
             g.close()
 
     @staticmethod
+    def write_to_kafka_cal(events: dict) -> None:
+        producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
+                                 api_version="7.3.2", 
+                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+        count = 0
+        
+        for event in events:
+            count += 1
+            if event == None:
+                print("There are no events")
+                continue
+            producer.send('calendar', value = event)
+
+    
+        producer.flush()
+        print("Wrote " + str(count) + " calendar events to Kafka")
+
+
+    @staticmethod
     def write_to_kafka(emails: list[dict]) -> None:
         producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
                                  api_version="7.3.2", 
@@ -55,7 +74,8 @@ class APISupport:
         #    2. pertinent to the event
     @staticmethod
     def create_briefings_for(email: str, start_time: datetime, end_time: datetime) -> dict:
-        n = neo.Neo4j(os.getenv('',"bolt://localhost:7687"), os.getenv('',"neo4j"), os.getenv('',"thisislocalanyway"))
+        n = neo.Neo4j()
+        n.connect()
 
         print("Getting schedule for " + email + " from " + start_time.isoformat() + " to " + end_time.isoformat())
         schedule = n.get_schedule(email, start_time, end_time)
@@ -82,14 +102,14 @@ class APISupport:
 
         load_dotenv()
 
-        chat_completion = GroqClient(os.getenv('GROQ_API_KEY')).query(prompt, context, max_tokens=500)
+        chat_completion = GroqClient(os.getenv('GROQ_API_KEY'), max_tokens=2000).query(prompt, context)
 
         return {
             "Context": schedule,
             "email": email,
             "start_time": start_time.isoformat(),
             "end_time": end_time.isoformat(),
-            "text": chat_completion.choices[0].message.content
+            "text": chat_completion
         }
     
     @staticmethod
@@ -123,5 +143,11 @@ class APISupport:
 
         print(str(texts))
         
-        return GroqClient(os.getenv('GROQ_API_KEY'), max_tokens=max_tokens).query(prompt, {'Question':question, 'Context': texts})
+        response = GroqClient(os.getenv('GROQ_API_KEY'), max_tokens=max_tokens).query(prompt, {'Question':question, 'Context': texts})
+        return {
+            "Question": question,
+            "Response": response,
+            "Context": emails,
+            
+        }
     

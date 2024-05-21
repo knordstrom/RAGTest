@@ -12,8 +12,8 @@ docker-processor:
 	docker build -f EventProcessorDockerfile -t event-processor:0.1.1 .
 
 docker-api:
-	docker build -f APIDockerfile -t context-api:0.1.1 .
+	docker build -f ApiDockerfile -t context-api:0.1.1 .
 
 docker-all: 
-	docker-processor 
-	docker-api
+	make docker-processor 
+	make docker-api

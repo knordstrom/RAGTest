@@ -1,3 +1,5 @@
+import datetime
+import enum
 import os
 import pickle
 from library import models
@@ -6,6 +8,7 @@ from library import models
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 # for encoding/decoding messages in base64
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 # for dealing with attachement MIME types
@@ -73,15 +76,28 @@ class GmailLogic:
         msg = self.gmail.get(id=message, userId=user_id, format='full')
         # parts can be the message body, or attachments
         return msg
+
+class GoogleSchemas(enum.Enum):
+
+    GMAIL = 'gmail'
+    CALENDAR = 'calendar'
+
+    @staticmethod
+    def v(schema):
+        if schema == GoogleSchemas.GMAIL:
+            return 'v1'
+        if schema == GoogleSchemas.CALENDAR:
+            return 'v3'
+        return None    
     
 # Realization of the Gmail API interface
 class Gmail(GmailServiceProvider):
     # Request all access (permission to read/send/receive emails, manage the inbox, and more)
-    SCOPES = ['https://mail.google.com/']
+    SCOPES = ['https://mail.google.com/', "https://www.googleapis.com/auth/calendar.readonly"]
 
-    @property
-    def service(self):
-        return self.__authenticate()
+    def service(self, google_schema: GoogleSchemas):
+        credentials = self.__authenticate()
+        return build(google_schema.value, GoogleSchemas.v(google_schema), credentials=credentials)
 
     def __init__(self, email, creds):
         self.email = email
@@ -89,50 +105,67 @@ class Gmail(GmailServiceProvider):
 
     def __authenticate(self):
         creds = None
-        # the file token.pickle stores the user's access and refresh tokens, and is
+        # the file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first time
-        if os.path.exists("token.pickle"):
-            with open("token.pickle", "rb") as token:
-                creds = pickle.load(token)
+        if os.path.exists("token.json"):
+            creds = Credentials.from_authorized_user_file("token.json", self.SCOPES)
+
         # if there are no (valid) credentials availablle, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(self.creds, self.SCOPES)
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    self.creds, self.SCOPES
+                )
                 creds = flow.run_local_server(port=3000)
             # save the credentials for the next run
-            with open("token.pickle", "wb") as token:
-                pickle.dump(creds, token)
-        return build('gmail', 'v1', credentials=creds)
+            with open("token.json", "w") as token:
+                token.write(creds.to_json())
+        return creds
+        
 
     def list(self, userId='me', pageToken = None, maxResults = None):
-        with self.service as service:
+        with self.service(GoogleSchemas.GMAIL) as service:
             return service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults).execute()
     
     def get(self, id, userId='me', format='full'):
-        try:
-             result = self.service.users().messages().get(userId=userId, id=id, format = format).execute()  
+        with self.service(GoogleSchemas.GMAIL) as service:
+             result = service.users().messages().get(userId=userId, id=id, format = format).execute()  
              self.__get_attachments(result, userId) 
-        finally:
-            self.service.close()
-
-        
+    
         return result
+    
+    def events(self, now: datetime.datetime, count: int = 10):
+        with self.service(GoogleSchemas.CALENDAR) as service:
+            print("Getting the upcoming 10 events")
+            events_result = (
+                service.events()
+                .list(
+                    calendarId="primary",
+                    timeMin=now,
+                    maxResults=count,
+                    singleEvents=True,
+                    orderBy="startTime",
+                )
+                .execute()
+            )
+            events = events_result.get("items", [])
+            print("events: ", events)            
+            return events
+
     
     def __get_attachments(self, message: dict, userId='me'):
         attachments = []
-        for part in  message['payload'].get('parts',[]):
-            filename = part.get('filename')      
-            if filename:
-                attachmentId = part.get('body', {}).get('attachmentId')
-                attachment = self.service.users().messages().attachments().get(userId=userId, messageId=id, id=attachmentId).execute()
-                attachment['filename'] = filename
-                print("Attachment: " + str(filename))
-                attachments.append(attachment)
+        with self.service(GoogleSchemas.GMAIL) as service:
+            for part in  message['payload'].get('parts',[]):
+                filename = part.get('filename')      
+                if filename:
+                    attachmentId = part.get('body', {}).get('attachmentId')
+                    attachment = service.users().messages().attachments().get(userId=userId, messageId=id, id=attachmentId).execute()
+                    attachment['filename'] = filename
+                    print("Attachment: " + str(filename))
+                    attachments.append(attachment)
 
-        if len(attachments) > 0:
-            message['attachments'] = attachments
-    
-    def close(self):
-        self.service.close()
+            if len(attachments) > 0:
+                message['attachments'] = attachments

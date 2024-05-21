@@ -4,8 +4,10 @@ from dateutil import parser as dateparser
 
 from os import abort
 import flask
-from apisupport import APISupport
+from library.apisupport import APISupport
+from googleapiclient.errors import HttpError
 import context
+from library.gmail import Gmail
 import library.weaviate as weaviate
 import warnings
 
@@ -40,6 +42,24 @@ def briefs() -> str:
     end_time: datetime = to_date_time(flask.request.args.get('end',default = plus12.isoformat()), 'end')
     return APISupport.create_briefings_for(email, start_time, end_time)
 
+@app.route('/calendar', methods=['GET'])
+def calendar() -> str:
+    email: str = require(['email', 'e'])
+    count = require(['n'], int)
+
+    try:
+        now = datetime.datetime.now(datetime.UTC).isoformat()
+        print("Getting the upcoming " + str(count) + " events")
+        print("Creds " + app.root_path + '/../resources/gmail_creds.json')
+        events = Gmail(email, app.root_path + '/../resources/gmail_creds.json').events(now, count)
+        APISupport.write_to_kafka_cal(events)
+        return events
+
+    except HttpError as error:
+        print(f"An error occurred: {error}")
+        flask.abort(400, f"An HTTP error occurred '{error}'")
+
+
 def to_date_time(date: str, name: str) -> datetime:
     try:
        return dateparser.parse(date)
@@ -53,6 +73,7 @@ def require(keys: list[str], type = str) -> str:
             return value
     keys = "' or '".join(keys)
     flask.abort(400, f"Missing required parameter '{keys}'")
+
 
 
 if __name__ == '__main__':

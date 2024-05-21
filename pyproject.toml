@@ -4,10 +4,11 @@ version = "0.1.0"
 description = ""
 authors = ["Keith Nordstrom <keith@timeli.io>"]
 readme = "README.rst"
-packages = [{include = "api"}, {include = "library"}, {include = "processor"}]
+packages = [{include = "library"}, {include = "processor"}]
 
 [tool.poetry.scripts]
 processor = "processor.main:start"
+event_processor = "processor.main:start_kafka_calendar"
 
 [tool.poetry.dependencies]
 python = "^3.11"
