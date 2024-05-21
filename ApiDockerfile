@@ -47,7 +47,7 @@ COPY pyproject.toml ./
 RUN poetry lock --no-update
 RUN poetry install
 
-COPY api/main.py api/context.py api/apisupport.py ./api/
+COPY api/main.py api/context.py library/apisupport.py ./api/
 COPY library/vdb.py library/weaviate.py library/models.py library/gmail.py library/neo4j.py library/utils.py library/groq_client.py ./library/
 
 CMD ["poetry", "run", "flask", "--app", "api/main", "run", "--port=5010", "--host=0.0.0.0"]

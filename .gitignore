@@ -52,4 +52,6 @@ coverage.xml
 docs/_build/
 
 token.pickle
+token.json
+poetry.lock
 .env

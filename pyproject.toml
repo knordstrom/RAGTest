@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Keith Nordstrom <keith@timeli.io>"]
 readme = "README.rst"
-packages = [{include = "api"}, {include = "library"}, {include = "processor"}]
+packages = [{include = "library"}, {include = "processor"}]
 
 [tool.poetry.scripts]
 processor = "processor.main:start"
@@ -37,7 +37,6 @@ python-docx = "^1.1.2"
 pypdf = "^4.2.0"
 textextract = "^1.2.0"
 textract = "^1.6.5"
-neo4j = "^5.20.0"
 
 
 [tool.poetry.group.dev.dependencies]

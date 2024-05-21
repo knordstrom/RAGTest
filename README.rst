@@ -15,12 +15,14 @@ Setup
 
   #. Clone the repo
   #. Install the requirements using `make init` or `poetry install`
+  #. Get an API key for Groq at https://console.groq.com/keys 
+  #. Add it as `GROQ_API_KEY` in a `.env` file in the `docker` directory
   #. Install docker desktop that will house the weaviate server
   #. Run `make docker-processor` in the root folder to create the container to process emails
   #. Navigate to the docker folder and run `docker-compose up -d` to start the weaviate server, kafka, zookeeper, and the processor
   #. Download credentials from the google cloud console at https://console.cloud.google.com/apis/credentials and place them in the `resources` folder as `gmail_creds.json`
-  #. Run the flask app with `make run` or `flask --app api/main run --port=5010`
-  #. Get an API key for Groq at https://console.groq.com/keys and set it as an environment variable `GROQ_API_KEY`. You can also do this through a .env file in the root folder of the project
+  #. Set your GROQ key as an environment variable `GROQ_API_KEY`. You can also do this through a .env file in the root folder of the project
+  #. Run the flask app with `make run` or `flask --app api/main run --port=5010` 
 
 Usage
 -----

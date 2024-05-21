@@ -14,5 +14,6 @@ docker-processor:
 docker-api:
 	docker build -f ApiDockerfile -t context-api:0.1.1 .
 
-docker-all:
-	make docker-processor && make docker-api
+docker-all: 
+	make docker-processor 
+	make docker-api
