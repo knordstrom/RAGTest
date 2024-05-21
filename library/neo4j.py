@@ -21,8 +21,11 @@ class Neo4j:
             with self.driver.session() as session:
                 session.run("MATCH () RETURN 1 LIMIT 1")
             print('Successfully connected')
-        except Exception:
+        except Exception as inst:
             print('Unsuccessful connection')
+            print(type(inst))    # the exception type
+            print(inst.args)     # arguments stored in .args
+            print(inst)  
 
     def close(self):
         self.driver.close()
@@ -222,7 +225,6 @@ class Neo4j:
                     'email': record['attendee.email'],
                     'attending.status': record['attending.status']
                 })
-
 
         response = list(collated.values())
         return sorted(response, key=lambda x: x['event.start'])
