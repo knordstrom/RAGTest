@@ -30,18 +30,12 @@ class Neo4j:
     def get_schedule(self, email: str, start_time: datetime, end_time: datetime) -> dict:
         query = """
         MATCH (person:Person {email: $email})
-        MATCH (person:Person {email: $email})
         MATCH (event:Event)-[invite:ATTENDS]-(person)
         MATCH (attendee:Person)-[attending:ATTENDS]-(event)
-        WHERE event.end >= datetime($start_time) AND event.start <= datetime($end_time)
         WHERE event.end >= datetime($start_time) AND event.start <= datetime($end_time)
         RETURN DISTINCT person.name, person.email, event.name, event.description, event.start, event.end, invite.status, attendee.name, attendee.email, attending.status
         """
         print("Querying Neo4j with: " + query)
-        with self.driver.session() as session:
-            results = session.run(query, email=email, start_time=start_time.isoformat(), end_time=end_time.isoformat())
-            print("Results were", results)
-            return Neo4j.collate_schedule_response(results)
         with self.driver.session() as session:
             results = session.run(query, email=email, start_time=start_time.isoformat(), end_time=end_time.isoformat())
             print("Results were", results)
