@@ -209,13 +209,8 @@ class Neo4j:
         collated = {}
         for record in records:
             record_dict = {}
-            record_dict = {}
             k = key(record)
             if k not in collated:
-                record_dict['attendees'] = []
-                record_dict['event.start'] = record['event.start'].isoformat()
-                record_dict['event.end'] = record['event.end'].isoformat()
-                collated[k] = record_dict
                 record_dict['attendees'] = []
                 record_dict['event.start'] = record['event.start'].isoformat()
                 record_dict['event.end'] = record['event.end'].isoformat()
