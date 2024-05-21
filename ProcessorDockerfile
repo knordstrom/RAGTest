@@ -26,7 +26,7 @@ WORKDIR /app
 RUN pip install poetry==1.8.0
 
 # Install the app
-COPY processor/pyproject.toml processor/poetry.lock ./
+COPY pyproject.toml ./
 RUN poetry update
 RUN pip install gpt4all
 RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR;
