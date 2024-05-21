@@ -17,7 +17,8 @@ ENV POETRY_NO_INTERACTION=1 \
 
 RUN apk update && \
     apk add linux-headers build-base python3-dev ethtool && \
-    apk add musl-dev gcc gfortran openblas-dev
+    apk add musl-dev gcc gfortran openblas-dev libffi-dev g++
+
 
 WORKDIR /app
 
@@ -36,14 +37,13 @@ FROM base as runtime
 WORKDIR /app
 
 RUN apk update && \
-    apk add gcc musl-dev gfortran openblas-dev antiword
+    apk add gcc musl-dev gfortran openblas-dev libffi-dev g++ antiword
 RUN pip install poetry==1.8.0
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 RUN mkdir -p /app/processor
 RUN mkdir -p /app/library
-RUN mkdir -p /app/api
 COPY pyproject.toml ./
 RUN poetry lock --no-update
 RUN poetry install

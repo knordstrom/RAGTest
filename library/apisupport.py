@@ -65,6 +65,24 @@ class APISupport:
             count += 1
         producer.flush()
         print("Wrote " + str(count) + " emails to Kafka")
+    
+    @staticmethod
+    def write_to_kafka_cal(events: dict) -> None:
+        producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092', 
+                                 api_version="7.3.2", 
+                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+        count = 0
+        
+        for event in events:
+            count += 1
+            if event == None:
+                print("There are no events")
+                continue
+            producer.send('calendar', value = event)
+
+    
+        producer.flush()
+        print("Wrote " + str(count) + " calendar events to Kafka")
 
     # retrieve person node from neo4j
         #    retrieve associated people
