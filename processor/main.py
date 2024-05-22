@@ -41,6 +41,15 @@ def write_to_neo4j(events):
     graph.connect()
     graph.process_events(events)
 
+def print_document(docs):
+    i = 1
+    for doc in docs:
+        print(f"document {i}")
+        print(doc.value)
+        i += 1
+    print("Received all documents")
+
+
 def kafka_listen(default_topic: str, group: str, endpoint: callable):
     kafka = os.getenv("KAFKA_BROKER", "127.0.0.1:9092")
     topic = os.getenv("KAFKA_TOPIC", default_topic)
@@ -48,7 +57,8 @@ def kafka_listen(default_topic: str, group: str, endpoint: callable):
     try:
         consumer = KafkaConsumer(bootstrap_servers=kafka, 
                                 group_id=group,
-                                value_deserializer=lambda v: json.loads(v.decode('utf-8')))
+                                value_deserializer=lambda v: json.loads(v.decode('utf-8')),
+                                api_version="7.3.2")
         consumer.subscribe(topics=[topic])
         print("Subscribed to " + topic + ", waiting for messages...")
         count = 0
@@ -88,7 +98,10 @@ def start():
     kafka_listen("emails", "email_processor", write_to_vdb)
 
 def start_kafka_calendar():
-    kafka_listen("emails", "calendar_processor", write_to_neo4j)
+    kafka_listen("calendar", "calendar_processor", write_to_neo4j)
+
+def start_kafka_documents():
+    kafka_listen("documents", "document_processor", print_document)
 
 if __name__ == '__main__':
     start()

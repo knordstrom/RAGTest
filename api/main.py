@@ -6,7 +6,7 @@ from os import abort
 import flask
 from library.apisupport import APISupport
 from googleapiclient.errors import HttpError
-import context
+# import context
 from library.gmail import Gmail
 import library.weaviate as weaviate
 import warnings
@@ -55,7 +55,7 @@ def calendar() -> str:
     count = require(['n'], int)
 
     try:
-        now = datetime.datetime.now(datetime.UTC).isoformat()
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         print("Getting the upcoming " + str(count) + " events")
         print("Creds " + app.root_path + '/../resources/gmail_creds.json')
         events = Gmail(email, app.root_path + '/../resources/gmail_creds.json').events(now, count)
@@ -81,53 +81,22 @@ def require(keys: list[str], type = str) -> str:
     keys = "' or '".join(keys)
     flask.abort(400, f"Missing required parameter '{keys}'")
 
-@app.route('/calendar', methods=['GET'])
-def calendar() -> str:
-    count = flask.request.args.get('n', None, int)
-    SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
-    creds = None
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                "../resources/gmail_creds.json", SCOPES
-            )
-            creds = flow.run_local_server(port=3000)
-            # Save the credentials for the next run
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
+@app.route('/documents', methods=['GET'])
+def documents() -> str:
+    email: str = require(['email', 'e'])
 
     try:
-        service = build("calendar", "v3", credentials=creds)
-        now = datetime.datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
-        print("Getting the upcoming 10 events")
-        events_result = (
-            service.events()
-            .list(
-                calendarId="primary",
-                timeMin=now,
-                maxResults=count,
-                singleEvents=True,
-                orderBy="startTime",
-            )
-            .execute()
-        )
-        events = events_result.get("items", [])
-        print("events: ", events)
-        if not events:
-            print("No upcoming events found.")
-            return
-        APISupport.write_to_kafka_cal(events)
-        return events
-            
+        # now = datetime.datetime.now(datetime.UTC).isoformat()
+        print("Getting your documents")
+        print("Creds " + app.root_path + '/../resources/gmail_creds.json')
+        doc_info = Gmail(email, app.root_path + '/../resources/gmail_creds.json').get_doc_info()
+        print("doc_info: ", doc_info)
+        APISupport.write_to_kafka_docs(doc_info)
+        return doc_info
 
     except HttpError as error:
         print(f"An error occurred: {error}")
-        return "error"
+        flask.abort(400, f"An HTTP error occurred '{error}'")
 
 
 
