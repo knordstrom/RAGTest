@@ -2,7 +2,6 @@ import datetime
 import json
 import os
 from kafka import KafkaProducer
-# import context
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
 import library.neo4j as neo

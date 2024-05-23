@@ -2,7 +2,7 @@ import datetime
 import enum
 import os
 import pickle
-from library import models
+from library import models, document_parser
 
 # Gmail API utils
 from googleapiclient.discovery import build
@@ -20,7 +20,6 @@ from email.mime.base import MIMEBase
 from mimetypes import guess_type as guess_mime_type
 import os
 from googleapiclient.http import MediaIoBaseDownload
-import fitz  # PyMuPDF
 import json
 
 # interface for the Gmail API wrapper
@@ -105,6 +104,10 @@ class Gmail(GmailServiceProvider):
     SCOPES = ['https://mail.google.com/', 'https://www.googleapis.com/auth/calendar.readonly',
             'https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/documents.readonly']
 
+    MIME_TYPE = {"pdf": "mimeType='application/pdf'",
+                "docx": "mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'",
+                "google_doc": "mimeType='application/vnd.google-apps.document'"}
+
     def service(self, google_schema: GoogleSchemas):
         credentials = self.__authenticate()
         return build(google_schema.value, GoogleSchemas.v(google_schema), credentials=credentials)
@@ -180,34 +183,16 @@ class Gmail(GmailServiceProvider):
             if len(attachments) > 0:
                 message['attachments'] = attachments
 
-    def get_pdf_ids(self):
-        with self.service(GoogleSchemas.DRIVE) as service:
-            results = (
-                service.files()
-                .list(q = "mimeType='application/pdf'",
-                    corpora='user',
-                    includeItemsFromAllDrives=True,
-                    supportsAllDrives=True)
-                .execute()
-            )
-            items = results.get("files", [])
-            if not items:
-                print("No pdf files found.")
-                return
-            pdf_name_ids = {}
-            for item in items:
-                pdf_name_ids[item['id']] = item['name']
-        return pdf_name_ids
 
-    def get_document_ids(self):
+    def get_document_ids(self, type):
         with self.service(GoogleSchemas.DRIVE) as service:
             results = (
                 service.files()
-                .list(q = "mimeType='application/vnd.google-apps.document'",
+                .list(q = self.MIME_TYPE[type],
                     corpora='user',
                     includeItemsFromAllDrives=True,
                     supportsAllDrives=True,
-                    pageSize=2)
+                    pageSize=1)
                 .execute()
             )
             items = results.get("files", [])
@@ -215,13 +200,14 @@ class Gmail(GmailServiceProvider):
             if not items:
                 print("No files found.")
                 return
-            doc_ids = []
+            doc_ids = {}
             for item in items:
-                doc_ids.append(item['id'])
+                doc_ids[item['id']] = item['name']
         return doc_ids
 
-    def get_file_metadata(self, doc_ids):
+    def get_file_metadata(self, doc_id_name):
         metadata = {}
+        doc_ids = list(doc_id_name.keys())
         with self.service(GoogleSchemas.DRIVE) as service:
             for doc in doc_ids:
                 file_id = doc
@@ -240,7 +226,8 @@ class Gmail(GmailServiceProvider):
                         content.append(para_element['textRun']['content'])
         return ''.join(content)
 
-    def get_file_content(self, doc_ids):
+    def get_gdocs_content(self, doc_ids_name):
+        doc_ids = list(doc_ids_name.keys())
         with self.service(GoogleSchemas.DOCUMENTS) as service:
             doc_info = {}
             for doc in doc_ids:
@@ -248,12 +235,11 @@ class Gmail(GmailServiceProvider):
                 doc_structure = {}
                 document = service.documents().get(documentId=doc).execute()
                 text = self.extract_content(document.get('body'))
-                doc_structure["title"] = document.get('title')
                 doc_structure["text"] = text
                 doc_info[doc] = doc_structure
         return doc_info
 
-    def get_pdf_text(self, pdf_dict):
+    def get_pdf_content(self, pdf_dict):
         with self.service(GoogleSchemas.DRIVE) as service:
             pdf_doc_info = {}
             for pdf_doc in pdf_dict.keys():
@@ -265,38 +251,60 @@ class Gmail(GmailServiceProvider):
                 while done is False:
                     status, done = downloader.next_chunk()
                     print("Download %d%%." % int(status.progress() * 100))
-                # Read the PDF content using PyMuPDF
-                doc = fitz.open(pdf_dict[pdf_doc])
-                full_text = ""
-                for page in doc:
-                    text = page.get_text()
-                    full_text = full_text + " " + text
-                pdf_doc_structure["title"] = pdf_dict[pdf_doc]
-                pdf_doc_structure["text"] = full_text
+                parser = document_parser.PdfParser()
+                doc = parser.parse(pdf_dict[pdf_doc])
+                pdf_doc_structure["text"] = doc
                 pdf_doc_info[pdf_doc] = pdf_doc_structure
         return pdf_doc_info
                 
-                    
+    def get_docx_content(self, docx_dict):
+        with self.service(GoogleSchemas.DRIVE) as service:
+            docx_info = {}
+            for docx in docx_dict.keys():
+                docx_structure = {}
+                request = service.files().get_media(fileId=docx)
+                fh = open(docx_dict[docx], 'wb')
+                downloader = MediaIoBaseDownload(fh, request)
+                done = False
+                while done is False:
+                    status, done = downloader.next_chunk()
+                    print("Download %d%%." % int(status.progress() * 100))
+                parser = document_parser.DocxParser()
+                doc = parser.parse(docx_dict[docx])
+                docx_structure["text"] = doc
+                docx_info[docx] = docx_structure
+        return docx_info                
 
     def get_doc_info(self):
         # obtain document and pdf ids from google drive
-        doc_ids = self.get_document_ids()
-        pdf_ids = self.get_pdf_ids()
+        gdoc_ids_name = self.get_document_ids(type="google_doc")
+        docx_ids_name = self.get_document_ids(type="docx")
+        pdf_ids_name = self.get_document_ids(type="pdf")
         # ingest document and pdf file metadata
-        doc_metadata = self.get_file_metadata(doc_ids)
-        pdf_doc_ids = list(pdf_ids.keys())
-        pdf_metadata = self.get_file_metadata(pdf_doc_ids)
+        gdoc_metadata = self.get_file_metadata(gdoc_ids_name)
+        docx_metadata = self.get_file_metadata(docx_ids_name)
+        pdf_metadata = self.get_file_metadata(pdf_ids_name)
         # ingest document and pdf content 
-        doc_info = self.get_file_content(doc_ids)
-        pdf_info = self.get_pdf_text(pdf_ids) 
-        for doc in doc_ids:
-            doc_info[doc]["metadata"] = doc_metadata[doc]
-            doc_info[doc]["doc_type"] = "google_doc"
+        gdoc_info = self.get_gdocs_content(gdoc_ids_name)
+        docx_info = self.get_docx_content(docx_ids_name)
+        pdf_info = self.get_pdf_content(pdf_ids_name)
+
+        doc_info = {} 
+        # add gdoc information to the overall doc_info to write to kafka
+        for gdoc in gdoc_ids_name.keys():
+            doc_info[gdoc] = gdoc_info[gdoc]
+            doc_info[gdoc]["metadata"] = gdoc_metadata[gdoc]
+            doc_info[gdoc]["doc_type"] = "google_doc"
+        # add gdoc information to the overall doc_info to write to kafka
+        for docx in docx_ids_name.keys():
+            doc_info[docx] = docx_info[docx]
+            doc_info[docx]["metadata"] = docx_metadata[docx]
+            doc_info[docx]["doc_type"] = "docx"
         # add pdf information to the overall doc_info to write to kafka
-        for pdf_doc in pdf_doc_ids:
+        for pdf_doc in pdf_ids_name.keys():
             doc_info[pdf_doc] = pdf_info[pdf_doc]
             doc_info[pdf_doc]["metadata"] = pdf_metadata[pdf_doc]
-            doc_info[pdf_doc]["doc_type"] = "pdf_doc"
+            doc_info[pdf_doc]["doc_type"] = "pdf"
         return doc_info
 
 
