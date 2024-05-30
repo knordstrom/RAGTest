@@ -7,222 +7,116 @@ from library.vdb import VDB
 from library import utils
 import weaviate.classes as wvc
 from weaviate.classes.config import Property, DataType
-
-class WeaviateSchemas(enum.Enum):
-
-    EMAIL = 'email'
-    EMAIL_TEXT = 'email_text'
-    EVENT = 'event'
-    EVENT_TEXT = 'event_text'
-    DOCUMENT = 'document'
-    DOCUMENT_TEXT = 'document_text'
-    DOCUMENT_SUMMARY = 'document_summary'
-
-class WeaviateSchema:
-
-    class_objs: list[(WeaviateSchemas,dict)] = ([
-        (WeaviateSchemas.EMAIL,{
-            "class": "Email",
-            "vectorizer": False,
-
-            # Property definitions
-            "properties": [
-                Property(name = "email_id", data_type=DataType.TEXT),
-                Property(name ="history_id", data_type=DataType.TEXT),
-                Property(name ="thread_id", data_type=DataType.TEXT),
-                Property(name ="labels", data_type=DataType.TEXT_ARRAY),
-                Property(name ="to", data_type=DataType.OBJECT_ARRAY, nested_properties=[
-                    Property(name ="email", data_type = DataType.TEXT),
-                    Property(name ="name", data_type = DataType.TEXT)
-                ]),
-                Property(name ="cc", data_type=DataType.OBJECT_ARRAY, nested_properties=[
-                    Property(name ="email", data_type = DataType.TEXT),
-                    Property(name ="name", data_type = DataType.TEXT)
-                ]),
-                Property(name ="bcc", data_type=DataType.OBJECT_ARRAY, nested_properties=[
-                    Property(name ="email", data_type = DataType.TEXT),
-                    Property(name ="name", data_type = DataType.TEXT)
-                ]),
-                Property(name ="subject", data_type=DataType.TEXT),
-                Property(name ="from", data_type = DataType.OBJECT, nested_properties=[
-                    Property(name ="email", data_type = DataType.TEXT),
-                    Property(name ="name", data_type = DataType.TEXT)
-                ]),
-                Property(name ="date", data_type=DataType.DATE),
-            ],
-
-    }),
-    (WeaviateSchemas.EMAIL_TEXT, {
-            # Class definition
-            "class": "EmailText",
-
-            # Property definitions
-            "properties": [
-                Property(name = "text", data_type=DataType.TEXT),
-            ],
-            "references": [
-                wvc.config.ReferenceProperty(name="email_id", target_collection="Email"),
-                wvc.config.ReferenceProperty(name="date", target_collection="Email"),
-                wvc.config.ReferenceProperty(name="from", target_collection="Email"),
-                wvc.config.ReferenceProperty(name="to", target_collection="Email"),
-                wvc.config.ReferenceProperty(name="thread_id", target_collection="Email"),
-            ],
-
-            # Specify a vectorizer
-            "vectorizer": True,
-    }),
-    (WeaviateSchemas.EVENT, {
-            # Class definition
-            "class": "Event",
-
-            # Property definitions
-            "properties": [
-                Property(name = "event_id", data_type=DataType.TEXT),
-                Property(name = "summary", data_type=DataType.TEXT),
-                Property(name = "location", data_type=DataType.TEXT),
-                Property(name = "start", data_type=DataType.DATE),
-                Property(name = "end", data_type=DataType.DATE),
-            ],
-            "references": [
-                wvc.config.ReferenceProperty(name="email_id", target_collection="Email"),
-                wvc.config.ReferenceProperty(name="date", target_collection="Email"),
-                wvc.config.ReferenceProperty(name="from", target_collection="Email"),
-                wvc.config.ReferenceProperty(name="to", target_collection="Email"),
-                wvc.config.ReferenceProperty(name="thread_id", target_collection="Email"),
-                wvc.config.ReferenceProperty(name="name", target_collection="Event"),
-                wvc.config.ReferenceProperty(name="description", target_collection="Event"),
-            ],
-
-            # Specify a vectorizer
-            "vectorizer": False,
-    }),
-    (WeaviateSchemas.EVENT_TEXT, {
-            # Class definition
-            "class": "Event",
-
-            # Property definitions
-            "properties": [
-                Property(name = "text", data_type=DataType.TEXT),
-            ],
-            "references": [
-                wvc.config.ReferenceProperty(name="event_id", target_collection="Event"),
-                wvc.config.ReferenceProperty(name="name", target_collection="Event"),
-            ],
-
-            # Specify a vectorizer
-            "vectorizer": True,
-    }),
-    (WeaviateSchemas.DOCUMENT, {
-            # Class definition
-            "class": "Document",
-
-            # Property definitions
-            "properties": [
-                Property(name = "document_id", data_type=DataType.TEXT),
-                ## TODO: placeholder for other properties
-            ],
-            "references": [
-                wvc.config.ReferenceProperty(name="text", target_collection="DocumentText"),
-                wvc.config.ReferenceProperty(name="text", target_collection="DocumentSummary"),
-            ],
-
-            # Specify a vectorizer
-            "vectorizer": False,
-    }),
-    (WeaviateSchemas.DOCUMENT_TEXT, {
-            # Class definition
-            "class": "DocumentText",
-
-            # Property definitions
-            "properties": [
-                Property(name = "text", data_type=DataType.TEXT),
-            ],
-            "references": [
-                wvc.config.ReferenceProperty(name="document_id", target_collection="Document"),
-                wvc.config.ReferenceProperty(name="text", target_collection="DocumentSummary"),
-            ],
-
-            # Specify a vectorizer
-            "vectorizer": True,
-    }),
-    (WeaviateSchemas.DOCUMENT_SUMMARY, {
-            # Class definition
-            "class": "DocumentSummary",
-
-            # Property definitions
-            "properties": [
-                Property(name = "text", data_type=DataType.TEXT),
-            ],
-            "references": [
-                wvc.config.ReferenceProperty(name="document_id", target_collection="Document"),
-                wvc.config.ReferenceProperty(name="text", target_collection="DocumentText"),
-            ],
-
-            # Specify a vectorizer
-            "vectorizer": True,
-    })
-])
-
+from library.weaviate_schemas import WeaviateSchemas, WeaviateSchema
 
 class Weaviate(VDB):
 
     schemas = {}
+    postponded_references = {}
 
+    _client = None
     @property
     def client(self):
-        print("Connecting to " + self.url)
-        return w.connect_to_local(
-            host=self.host,
-            port=self.port,
-        )
-
+        if self._client is None:
+            print("Connecting to " + self.url)
+            self._client = w.connect_to_local(
+                host=self.host,
+                port=self.port,
+            )
+        return self._client
+    
     def collection(self, key: WeaviateSchemas) -> object:
         schema = self.schemas[key]
         return self.client.collections.get(schema['class'])
     
-    def __init__(self, host = '127.0.0.1', port = '8080', schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> None:
-        self.host = host
-        self.port = port
-        self.url = host + ":" + port
-        for schema_entry in schemas:
-            key, schema = schema_entry
-            self.create_schema(schema)  
-            self.schemas[key] = schema 
+    def __new__(cls, host = '127.0.0.1', port = '8080', schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> None:
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(Weaviate, cls).__new__(cls)
+            self = cls.instance
+            self.host = host
+            self.port = port
+            self.url = host + ":" + port
+            for schema_entry in schemas:
+                key, schema = schema_entry
+                self.create_schema(key, schema)  
+                self.schemas[key] = schema 
 
-    def create_schema(self, schema_object) -> None:
+            for key, references in self.postponded_references.items():
+                schema = self.schemas[key]
+                for reference in references:
+                    self.add_reference(schema, reference)
+        return cls.instance    
+    
+    def sort_references_on_created(self, references):
+        valid_references = []
+        post_references = []
+        for reference in references:
+            if reference.target_collection in self.schemas:
+                valid_references.append(reference)
+            else:
+                post_references.append(reference)
+        return valid_references, post_references
+
+    def create_schema(self, key, schema_object) -> None:
         try:
             vectorizer = wvc.config.Configure.Vectorizer.text2vec_transformers() if schema_object['vectorizer'] else None
-            print("Creating new schema " + schema_object['class'] + " with vectorizer " + str(vectorizer))
-            self.client.collections.create(schema_object['class'], 
-                                        properties = schema_object['properties'], 
-                                        references = schema_object.get('references', None),
-                                        vectorizer_config = vectorizer                               
-                                )                         
-        except w.exceptions.UnexpectedStatusCodeError:
-            print("Schema already exists")
+            properties = [property.name for property in schema_object['properties']]
+            print("Creating new schema " + schema_object['class'] + " with vectorizer " + str(vectorizer), " properties ", properties)
 
-    def upsertChunkedText(self, obj, key: WeaviateSchemas, metadataKey: WeaviateSchemas, splitOn: str) -> bool:
-        text = obj[splitOn]
-        split_text = utils.Utils.split(text)
-        collection = self.collection(key)
-        metaCollection = self.collection(metadataKey)
-        del obj[splitOn]
-        with metaCollection.batch.dynamic() as batch:
+            valid_references, post_references = self.sort_references_on_created(schema_object.get('references', []))
+
+            if len(post_references) > 0:
+                self.postponded_references[key] = post_references
+                print("Postponding reference creation for ", schema_object['class'], ": ", [property.name for property in post_references])
+
+            self.client.collections.create(schema_object['class'], 
+                    properties = schema_object['properties'], 
+                    references = valid_references,
+                    vectorizer_config = vectorizer                               
+            )                         
+        except w.exceptions.UnexpectedStatusCodeError as e:
+            print("Schema may already exist ")
+            print("                  ", schema_object['class'], e)
+        
+    def add_reference(self, schema_object, reference) -> None:
+        print("Adding reference to " + schema_object['class'] + " for " + reference.name)
+        collection = self.collection(schema_object['class'])
+        collection.config.add_reference(reference)
+
+    def upsert(self, obj, collection_key: WeaviateSchemas, id_property: str = None) -> bool:
+        collection = self.collection(collection_key)   
+        identifier = w.util.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
+        with collection.batch.dynamic() as batch:
             batch.add_object(
                     obj,
-                    uuid = w.util.generate_uuid5(obj)
+                    uuid = identifier
             )
-
+        return True
+    
+    def upsert_text_vectorized(self, text: str, metaObj: dict, collection_key: WeaviateSchemas) -> bool:
+        collection = self.collection(collection_key)
+        schema_object = WeaviateSchema.class_map[collection_key]
+        reference_keys = [property.name for property in schema_object['references']]
+        references = {key: metaObj[key] for key in reference_keys}
+        split_text = utils.Utils.split(text)
         with collection.batch.dynamic() as batch:
             for value in split_text:
                 row = {
                         "text": value.page_content,
                     }
                 batch.add_object(
-                    row,
+                    properties = row,
+                    references = references,
                     uuid = w.util.generate_uuid5(row)
             )
         return True
+
+    def upsertChunkedText(self, obj:dict, chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str) -> bool:
+        text = obj[splitOn]        
+        del obj[splitOn]
+        meta = self.upsert(obj, metadata_collection_key) 
+        text = self.upsert_text_vectorized(text, obj, chunked_collection_key)     
+        return meta and text
     
     def count(self, key: WeaviateSchemas) -> object:
         collection = self.collection(key)

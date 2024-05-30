@@ -2,7 +2,10 @@ init:
 	poetry install
 
 test:
-	poetry run coverage run -m pytest && poetry run coverage report -m
+	poetry run coverage run -m pytest tests/unit/ && poetry run coverage report -m
+
+test-integration:
+	poetry run coverage run -m pytest tests/integration/ && poetry run coverage report -m
 
 run:
 	poetry run flask --app api/main run --port=5010

@@ -1,0 +1,240 @@
+[
+  {
+    "creator": "U06EP4STTQ8",
+    "id": "C06DKQJ48TZ",
+    "is_private": false,
+    "is_shared": false,
+    "name": "random",
+    "num_members": 4,
+    "threads": [
+      {
+        "id": "C06DKQJ48TZ|1715803987.739079",
+        "messages": [
+          {
+            "attachments": [
+              {
+                "fallback": "Medium: Fundraising? Why you shouldn’t just copy Sequoia’s Pitch Deck Template",
+                "from_url": "https://medium.com/crane-taking-flight/fundraising-why-you-shouldnt-just-copy-sequoia-s-pitch-deck-template-4b32ac60d93a",
+                "id": 1,
+                "original_url": "https://medium.com/crane-taking-flight/fundraising-why-you-shouldnt-just-copy-sequoia-s-pitch-deck-template-4b32ac60d93a",
+                "text": "This post is for founders creating fundraising decks from Seed to Series C. By the end you should understand how to use this framework for…",
+                "title": "Fundraising? Why you shouldn’t just copy Sequoia’s Pitch Deck Template",
+                "ts": 1484559181
+              }
+            ],
+            "email": "david@some-address.ai",
+            "text": "A friend passed me this yesterday, said it made a huge difference in his success rates. He's got a fair bit of depth as a startup advisor and entrepreneur so it seemed worth digging through \n\n\u003Chttps://medium.com/crane-taking-flight/fundraising-why-you-shouldnt-just-copy-sequoia-s-pitch-deck-template-4b32ac60d93a|https://medium.com/crane-taking-flight/fundraising-why-you-shouldnt-just-copy-sequoia-s-pitch-deck-template-4b32ac60d93a\u003E",
+            "ts": "1715803987.739079",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          }
+        ]
+      },
+      {
+        "id": "C06DKQJ48TZ|1715803804.040759",
+        "messages": [
+          {
+            "attachments": [
+              {
+                "fallback": "Bloomberg.com: Humanity Protocol Becomes Crypto’s New Digital Identity Unicorn",
+                "from_url": "https://www.bloomberg.com/news/articles/2024-05-15/humanity-protocol-becomes-crypto-s-new-digital-identity-unicorn?embedded-checkout=true",
+                "id": 1,
+                "original_url": "https://www.bloomberg.com/news/articles/2024-05-15/humanity-protocol-becomes-crypto-s-new-digital-identity-unicorn?embedded-checkout=true",
+                "text": "The startup raised $30 million at a $1 billion valuation as it looks to challenge projects like Worldcoin.",
+                "title": "Humanity Protocol Becomes Crypto’s New Digital Identity Unicorn"
+              }
+            ],
+            "email": "stephen@some-address.ai",
+            "text": "News like this makes me shake my head sometime: A seed round of $30M valuing the company at $1B? This is like having a Blockchain enabled digital vault for one's identity: \u003Chttps://www.bloomberg.com/news/articles/2024-05-15/humanity-protocol-becomes-crypto-s-new-digital-identity-unicorn?embedded-checkout=true\u003E",
+            "ts": "1715803804.040759",
+            "type": "message",
+            "user": "U06E2R1AYCU"
+          },
+          {
+            "email": "david@some-address.ai",
+            "text": "One billion? Wow",
+            "ts": "1715804028.782619",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          },
+          {
+            "email": "david@some-address.ai",
+            "text": "That's an important problem to solve",
+            "ts": "1715804093.906569",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          },
+          {
+            "email": "david@some-address.ai",
+            "text": "Still, it runs up against the same norms problem a lot of blockchain does: the blockchain can say whatever it wants, there needs to be a mechanism to make the real world conform",
+            "ts": "1715804158.020169",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          },
+          {
+            "email": "jospehine@some-address.ai",
+            "text": "It’s an important problem at the core of a lot of verticals - fin tech, healthcare and citizenship. UPI in India shows why it’s big. Still this early $1b valuation is nuts ",
+            "ts": "1715810311.122319",
+            "type": "message",
+            "user": "U06DKQZ2J4F"
+          },
+          {
+            "email": "david@some-address.ai",
+            "text": "Identity management, yeah for sure. I think this one feels pressing to me because the potential for mischief is so extreme and immediate (viral videos of me saying shit I would never say).\n\nHari and I talked about building exactly this, like a year or two ago. Ensuring that videos use this as a standard for validation is one challenge; monetizing it might even be a bigger one.\n\nSo yeah, i think there's easily a billion dollars of impact. But it's tough to argue for an actual valuation lol.",
+            "ts": "1715810714.145029",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          }
+        ]
+      },
+      {
+        "id": "C06DKQJ48TZ|1711745929.302239",
+        "messages": [
+          {
+            "attachments": [
+              {
+                "fallback": "TechCrunch: Seed funding: Everything founders should know about fundraising, seed rounds and more for 2024 | TechCrunch",
+                "from_url": "https://techcrunch.com/2024/02/11/seed-funding-everything-to-know-2024/?cx_testId=6&cx_testVariant=cx_1&cx_artPos=3",
+                "id": 1,
+                "original_url": "https://techcrunch.com/2024/02/11/seed-funding-everything-to-know-2024/?cx_testId=6&amp;cx_testVariant=cx_1&amp;cx_artPos=3#cxrecs_s",
+                "text": "To understand the state of seed funding, we spoke with three experienced investors for their unique perspectives and advice.",
+                "title": "Seed funding: Everything founders should know about fundraising, seed rounds and more for 2024 | TechCrunch",
+                "ts": 1707670846
+              }
+            ],
+            "email": "stephen@some-address.ai",
+            "text": "Interesting article about raising funds from Seed/Angel investors: \u003Chttps://techcrunch.com/2024/02/11/seed-funding-everything-to-know-2024/?cx_testId=6&amp;cx_testVariant=cx_1&amp;cx_artPos=3#cxrecs_s\u003E",
+            "ts": "1711745929.302239",
+            "type": "message",
+            "user": "U06E2R1AYCU"
+          }
+        ]
+      },
+      {
+        "id": "C06DKQJ48TZ|1710799643.735299",
+        "messages": [
+          {
+            "attachments": [
+              {
+                "fallback": "TechCrunch: App analytics firm Sensor Tower acquires rival Data.ai and is cutting staff | TechCrunch",
+                "from_url": "https://techcrunch.com/2024/03/18/app-analytics-firm-sensor-tower-acquires-rival-data-ai/",
+                "id": 1,
+                "original_url": "https://techcrunch.com/2024/03/18/app-analytics-firm-sensor-tower-acquires-rival-data-ai/",
+                "text": "Sensor Tower, a leading app analytics firm, is acquiring rival \u003Chttp://Data.ai|Data.ai\u003E in a move that consolidates the mobile intelligence industry, creating a powerhouse",
+                "title": "App analytics firm Sensor Tower acquires rival Data.ai and is cutting staff | TechCrunch",
+                "ts": 1710781233
+              }
+            ],
+            "email": "stephen@some-address.ai",
+            "text": "jospehine and my previous company: \u003Chttp://data.ai|data.ai\u003E gets acquired by a much smaller competitor and immediately lays off 60% of the team. :pensive:\n\n\u003Chttps://techcrunch.com/2024/03/18/app-analytics-firm-sensor-tower-acquires-rival-data-ai/|https://techcrunch.com/2024/03/18/app-analytics-firm-sensor-tower-acquires-rival-data-ai/\u003E\n\nPE firm makes $$ from Day 1, using a consolidation play that \u003Chttp://data.ai|data.ai\u003E’s own CEO and investors (Sequoia etc) didn’t care to pursue when the downturn happened. What a sad day to a great brand and once high flying company ",
+            "ts": "1710799643.735299",
+            "type": "message",
+            "user": "U06E2R1AYCU"
+          },
+          {
+            "email": "david@some-address.ai",
+            "text": "ugh sorry to hear. vulture capital ftw",
+            "ts": "1710802178.990339",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          },
+          {
+            "email": "david@some-address.ai",
+            "text": "good job not being there lol",
+            "ts": "1710802210.608029",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          },
+          {
+            "email": "stephen@some-address.ai",
+            "text": "Yes! Glad I didn’t have to get swept up by those layoffs. Got a lawyer and fought for a decent severance for myself",
+            "ts": "1710802279.794609",
+            "type": "message",
+            "user": "U06E2R1AYCU"
+          },
+          {
+            "email": "jospehine@some-address.ai",
+            "text": "The CEO is an utterly incompetent and a full on egotistical ass. Surrounded himself with not very good people either.  Most of the exec team left within a month of each other. ",
+            "ts": "1711247180.453709",
+            "type": "message",
+            "user": "U06DKQZ2J4F"
+          },
+          {
+            "email": "stephen@some-address.ai",
+            "text": "That’s true, anyone with an ounce of integrity and agency could only put up with the CEO and all his “first team”, “we don’t want to get sued again” talk only for so long before they decamped. \n\nHe managed the company through the SEC investigation but emerged a scared cat and managed to run the company into the ground in less than 2 years",
+            "ts": "1711301209.644419",
+            "type": "message",
+            "user": "U06E2R1AYCU"
+          },
+          {
+            "email": "jospehine@some-address.ai",
+            "text": "Not to rehash old stuff - he and he only needed to sell or at least try to make up for revenue churn, which he thought was beneath him after decades being a sales guy! Go figure! Plus he was petrified of the board - which is what rookies do",
+            "ts": "1711304998.028399",
+            "type": "message",
+            "user": "U06DKQZ2J4F"
+          },
+          {
+            "email": "david@some-address.ai",
+            "text": "This is at \u003Chttp://data.ai|data.ai\u003E? I definitely sensed some cultural issues there when I started the interview process but got stood up at 5am for politics :rolling_on_the_floor_laughing:",
+            "ts": "1711307530.880899",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          }
+        ]
+      },
+      {
+        "id": "C06DKQJ48TZ|1707248556.923409",
+        "messages": [
+          {
+            "email": "michaela@some-address.ai",
+            "subtype": "channel_join",
+            "text": "\u003C@U06J697E08Y\u003E has joined the channel",
+            "ts": "1707248556.923409",
+            "type": "message",
+            "user": "U06J697E08Y"
+          }
+        ]
+      },
+      {
+        "id": "C06DKQJ48TZ|1706758832.621769",
+        "messages": [
+          {
+            "email": "jospehine@some-address.ai",
+            "subtype": "channel_join",
+            "text": "\u003C@U06DKQZ2J4F\u003E has joined the channel",
+            "ts": "1706758832.621769",
+            "type": "message",
+            "user": "U06DKQZ2J4F"
+          }
+        ]
+      },
+      {
+        "id": "C06DKQJ48TZ|1705371525.196009",
+        "messages": [
+          {
+            "email": "stephen@some-address.ai",
+            "subtype": "channel_join",
+            "text": "\u003C@U06E2R1AYCU\u003E has joined the channel",
+            "ts": "1705371525.196009",
+            "type": "message",
+            "user": "U06E2R1AYCU"
+          }
+        ]
+      },
+      {
+        "id": "C06DKQJ48TZ|1705370583.324639",
+        "messages": [
+          {
+            "email": "david@some-address.ai",
+            "subtype": "channel_join",
+            "text": "\u003C@U06EP4STTQ8\u003E has joined the channel",
+            "ts": "1705370583.324639",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          }
+        ]
+      }
+    ],
+    "updated": 1711731031163
+  }
+]
