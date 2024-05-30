@@ -44,7 +44,7 @@ class Weaviate(VDB):
             for key, references in self.postponded_references.items():
                 schema = self.schemas[key]
                 for reference in references:
-                    self.add_reference(schema, reference)
+                    self.add_reference(key, reference)
         return cls.instance    
     
     def sort_references_on_created(self, references):
@@ -78,9 +78,9 @@ class Weaviate(VDB):
             print("Schema may already exist ")
             print("                  ", schema_object['class'], e)
         
-    def add_reference(self, schema_object, reference) -> None:
-        print("Adding reference to " + schema_object['class'] + " for " + reference.name)
-        collection = self.collection(schema_object['class'])
+    def add_reference(self, key, reference) -> None:
+        print("Adding reference to ", key, " for " + reference.name)
+        collection = self.collection(key)
         collection.config.add_reference(reference)
 
     def upsert(self, obj, collection_key: WeaviateSchemas, id_property: str = None) -> bool:
@@ -98,12 +98,15 @@ class Weaviate(VDB):
         schema_object = WeaviateSchema.class_map[collection_key]
         reference_keys = [property.name for property in schema_object['references']]
         references = {key: metaObj[key] for key in reference_keys}
+        property_keys = [property.name for property in schema_object['properties']]
+        properties = {key: metaObj[key] for key in property_keys}
         split_text = utils.Utils.split(text)
         with collection.batch.dynamic() as batch:
             for value in split_text:
                 row = {
                         "text": value.page_content,
                     }
+                row.update(properties)
                 batch.add_object(
                     properties = row,
                     references = references,
