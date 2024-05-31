@@ -4,7 +4,7 @@ init:
 test:
 	poetry run coverage run -m pytest tests/unit/ && poetry run coverage report -m
 
-test-integration:
+test-it:
 	poetry run coverage run -m pytest tests/integration/ && poetry run coverage report -m
 
 run:

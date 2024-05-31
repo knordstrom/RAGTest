@@ -37,21 +37,25 @@ class TestSlackWeaviate:
             'port': str(port)
         }
     
-    def test_slack_model_create(self, service):
-        print("Testing Weaviate at ", service)
-        weave = w.Weaviate(port=service['port'], host=service['host'])
-        assert weave is not None
-
-        response = weave.client.collections.list_all(simple=False)
-
-        saved_map = {prop.name: prop.to_dict().get('dataType') for prop in response['SlackChannel'].properties}
-        code_map = {prop.name: [prop.dataType.value] for prop in WeaviateSchema.class_map[WeaviateSchemas.SLACK_CHANNEL]["properties"]}
+    def show_flat_properties_match(self, response, key: WeaviateSchemas):
+        map = WeaviateSchema.class_map[key]
+        saved_map = {prop.name: prop.to_dict().get('dataType') for prop in response[map['class']].properties}
+        code_map = {prop.name: [prop.dataType.value] for prop in map["properties"]}
 
         for key in saved_map:
             assert saved_map.get(key) == code_map.get(key)
 
         for key in code_map:
             assert saved_map.get(key) == code_map.get(key)
+
+    
+    def test_slack_model_create(self, service):
+        print("Testing Weaviate at ", service)
+        weave = w.Weaviate(port=service['port'], host=service['host'])
+        assert weave is not None
+
+        response = weave.client.collections.list_all(simple=False)
+        self.show_flat_properties_match(response, WeaviateSchemas.SLACK_CHANNEL)
 
     
     def test_slack_channel_save(self, service):
