@@ -42,6 +42,7 @@ class TestMessage(unittest.TestCase):
 
     def test_collate_schedule_response(self):
         response = Neo4j.collate_schedule_response(self.data)
+        print(response)
         assert len(response) == 2
         assert response[0]['person.name'] == 'Keith Nordstrom'
         assert response[0]['event.name'] == 'Kickoff Meeting'

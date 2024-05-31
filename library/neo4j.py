@@ -207,13 +207,17 @@ class Neo4j:
     @staticmethod
     def collate_schedule_response(records):
         def key(record):
-            return record['person.name'] + "||" + record['person.email'] + "||" + record['event.name'] + "||" + str(record['event.start']) + "||" + str(record['event.end'])
+            start = record['event.start'].strftime("%s")
+            end = record['event.end'].strftime("%s")
+            return record['person.name'] + "||" + record['person.email'] + "||" + record['event.name'] + "||" + str(start) + "||" + str(end)
 
         collated = {}
         for record in records:
             record_dict = {}
             k = key(record)
+            print("Key is: ", k)
             if k not in collated:
+                record_dict.update(record)
                 record_dict['attendees'] = []
                 record_dict['event.start'] = record['event.start'].isoformat()
                 record_dict['event.end'] = record['event.end'].isoformat()
@@ -226,5 +230,9 @@ class Neo4j:
                     'attending.status': record['attending.status']
                 })
 
+        print()
+        print("Collated is: ", collated)
+        print()
         response = list(collated.values())
+        print("Response is: ", response)
         return sorted(response, key=lambda x: x['event.start'])

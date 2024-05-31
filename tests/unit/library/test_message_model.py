@@ -7,7 +7,7 @@ import os
 
 class TestMessage(unittest.TestCase):
 
-    resource = os.path.dirname(__file__) + "/../resources/sample_email.json"
+    resource = os.path.dirname(__file__) + "/../../resources/sample_email.json"
     def test_message_structure(self):
         if os.path.exists(self.resource):
             with open(self.resource, "r") as email_json:

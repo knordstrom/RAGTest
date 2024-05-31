@@ -1,3 +1,4 @@
+import datetime
 import re
 from urllib.parse import urlparse, urlunparse
 import langchain_text_splitters as lang_splitter
@@ -37,3 +38,25 @@ class Utils:
         )
         # text_splitter = lang_splitter.SemanticChunker(GPT4AllEmbeddings())
         return text_splitter.create_documents([text])
+    
+    @staticmethod
+    def isoify(message, key):
+        if last_read := message.get(key):
+            val = float(last_read)
+            if val > 4070989133:
+                val = val/1000
+            message[key] = Utils.get_iso8601_timestamp(val)
+
+    @staticmethod
+    def array_keep_keys(arr, keys):
+        return [Utils.dict_keep_keys(d, keys) for d in arr]
+    
+    @staticmethod
+    def dict_keep_keys(d, keys):
+        return {k: v for k, v in d.items() if k in keys}
+    
+    @staticmethod
+    def get_iso8601_timestamp(seconds):
+        timestamp = datetime.datetime.fromtimestamp(seconds, datetime.timezone.utc)
+        return timestamp.isoformat()
+
