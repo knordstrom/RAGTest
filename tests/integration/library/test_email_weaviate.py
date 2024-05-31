@@ -43,6 +43,6 @@ class TestEmailWeaviate(IntegrationTestBase):
         assert weave is not None
 
         response = weave.client.collections.list_all(simple=False)
-        self.show_flat_properties_match(response, WeaviateSchemas.EMAIL)
-        self.show_flat_properties_match(response, WeaviateSchemas.EMAIL_TEXT)
+        self.show_nested_properties_match(response, WeaviateSchemas.EMAIL)
+        self.show_nested_properties_match(response, WeaviateSchemas.EMAIL_TEXT)
     

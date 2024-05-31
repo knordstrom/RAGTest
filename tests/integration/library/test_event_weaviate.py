@@ -43,6 +43,6 @@ class TestEventWeaviate(IntegrationTestBase):
         assert weave is not None
 
         response = weave.client.collections.list_all(simple=False)
-        self.show_flat_properties_match(response, WeaviateSchemas.EVENT)
-        self.show_flat_properties_match(response, WeaviateSchemas.EVENT_TEXT)
+        self.show_nested_properties_match(response, WeaviateSchemas.EVENT)
+        self.show_nested_properties_match(response, WeaviateSchemas.EVENT_TEXT)
     

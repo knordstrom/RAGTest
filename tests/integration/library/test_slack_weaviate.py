@@ -40,10 +40,10 @@ class TestSlackWeaviate(IntegrationTestBase):
         assert weave is not None
 
         response = weave.client.collections.list_all(simple=False)
-        self.show_flat_properties_match(response, WeaviateSchemas.SLACK_CHANNEL)
-        self.show_flat_properties_match(response, WeaviateSchemas.SLACK_MESSAGE)
-        self.show_flat_properties_match(response, WeaviateSchemas.SLACK_THREAD)
-        self.show_flat_properties_match(response, WeaviateSchemas.SLACK_MESSAGE_TEXT)
+        self.show_nested_properties_match(response, WeaviateSchemas.SLACK_CHANNEL)
+        self.show_nested_properties_match(response, WeaviateSchemas.SLACK_MESSAGE)
+        self.show_nested_properties_match(response, WeaviateSchemas.SLACK_THREAD)
+        self.show_nested_properties_match(response, WeaviateSchemas.SLACK_MESSAGE_TEXT)
     
 
     def test_slack_channel_save(self, service):
