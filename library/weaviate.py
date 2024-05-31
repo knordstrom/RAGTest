@@ -36,42 +36,30 @@ class Weaviate(VDB):
             self.host = host
             self.port = port
             self.url = host + ":" + port
-            for schema_entry in schemas:
-                key, schema = schema_entry
-                self.create_schema(key, schema)  
-                self.schemas[key] = schema 
-
-            for key, references in self.postponded_references.items():
-                schema = self.schemas[key]
-                for reference in references:
-                    self.add_reference(key, reference)
+            
+            self.create_schemas(schemas)
+            self.add_references(schemas)
         return cls.instance    
     
-    def sort_references_on_created(self, references):
-        valid_references = []
-        post_references = []
-        for reference in references:
-            if reference.target_collection in self.schemas:
-                valid_references.append(reference)
-            else:
-                post_references.append(reference)
-        return valid_references, post_references
+    def create_schemas(self, schemas) -> None:
+        for schema_entry in schemas:
+            key, schema = schema_entry
+            self.create_schema(key, schema)  
+            self.schemas[key] = schema 
+    
+    def add_references(self, schemas) -> None:
+        for schema_entry in schemas:
+            key, schema = schema_entry
+            for reference in schema.get('references', []):
+                self.add_reference(key, reference)
 
     def create_schema(self, key, schema_object) -> None:
         try:
             vectorizer = wvc.config.Configure.Vectorizer.text2vec_transformers() if schema_object['vectorizer'] else None
             properties = [property.name for property in schema_object['properties']]
             print("Creating new schema " + schema_object['class'] + " with vectorizer " + str(vectorizer), " properties ", properties)
-
-            valid_references, post_references = self.sort_references_on_created(schema_object.get('references', []))
-
-            if len(post_references) > 0:
-                self.postponded_references[key] = post_references
-                print("Postponding reference creation for ", schema_object['class'], ": ", [property.name for property in post_references])
-
             self.client.collections.create(schema_object['class'], 
                     properties = schema_object['properties'], 
-                    references = valid_references,
                     vectorizer_config = vectorizer                               
             )                         
         except w.exceptions.UnexpectedStatusCodeError as e:
