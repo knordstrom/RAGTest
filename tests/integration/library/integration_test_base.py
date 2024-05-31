@@ -2,10 +2,19 @@ import pytest
 import requests
 
 from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
-
+from weaviate.classes.query import Filter
 
 class IntegrationTestBase:
 
+    def truncate_collection_and_return(self, weave, key: WeaviateSchemas):
+        schema = WeaviateSchema.class_map[key]
+        c = weave.collection(key)
+        assert c is not None
+        c.data.delete_many(
+            where = Filter.by_property(schema['properties'][0].name).like("*"),
+        )
+
+        return c
 
     def retrieve_name_type_maps(self, db_property_list: list, code_property_list: list):
         saved_map = {prop.name: prop.data_type.value for prop in db_property_list}
