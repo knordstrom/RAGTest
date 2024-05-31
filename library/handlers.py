@@ -73,6 +73,7 @@ class Handlers:
 
         message_text_vdb = {
             'message_id': message_vdb['message_id'],
+            'thread_id': thread_id,
             'text': message['text'],
         }
 

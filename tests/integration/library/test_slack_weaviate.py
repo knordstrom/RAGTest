@@ -7,7 +7,7 @@ import library.handlers as h
 from weaviate.classes.query import Filter
 from requests.exceptions import ConnectionError
 
-from library.weaviate_schemas import WeaviateSchemas
+from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 
 class TestSlackWeaviate:
     def is_responsive(self, url):
@@ -36,6 +36,23 @@ class TestSlackWeaviate:
             'host': docker_ip,
             'port': str(port)
         }
+    
+    def test_slack_model_create(self, service):
+        print("Testing Weaviate at ", service)
+        weave = w.Weaviate(port=service['port'], host=service['host'])
+        assert weave is not None
+
+        response = weave.client.collections.list_all(simple=False)
+
+        saved_map = {prop.name: prop.to_dict().get('dataType') for prop in response['SlackChannel'].properties}
+        code_map = {prop.name: [prop.dataType.value] for prop in WeaviateSchema.class_map[WeaviateSchemas.SLACK_CHANNEL]["properties"]}
+
+        for key in saved_map:
+            assert saved_map.get(key) == code_map.get(key)
+
+        for key in code_map:
+            assert saved_map.get(key) == code_map.get(key)
+
     
     def test_slack_channel_save(self, service):
         print("Testing Weaviate at ", service)
