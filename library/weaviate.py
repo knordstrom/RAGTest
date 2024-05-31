@@ -93,13 +93,16 @@ class Weaviate(VDB):
             )
         return True
     
+    def get_value_map(self, obj, schema_object, collection):
+        reference_keys = [property.name for property in schema_object[collection]]
+        return {key: obj[key] for key in reference_keys}
+        
+    
     def upsert_text_vectorized(self, text: str, metaObj: dict, collection_key: WeaviateSchemas) -> bool:
         collection = self.collection(collection_key)
         schema_object = WeaviateSchema.class_map[collection_key]
-        reference_keys = [property.name for property in schema_object['references']]
-        references = {key: metaObj[key] for key in reference_keys}
-        property_keys = [property.name for property in schema_object['properties']]
-        properties = {key: metaObj[key] for key in property_keys}
+        references = self.get_value_map(metaObj, schema_object, 'references')
+        properties = self.get_value_map(metaObj, schema_object, 'properties')
         split_text = utils.Utils.split(text)
         with collection.batch.dynamic() as batch:
             for value in split_text:
