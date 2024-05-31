@@ -7,6 +7,8 @@ from weaviate.classes.query import Filter
 class IntegrationTestBase:
 
     def truncate_collection_and_return(self, weave, key: WeaviateSchemas):
+        """Truncates the values in a weaviate collection and returns it for use"""
+
         schema = WeaviateSchema.class_map[key]
         c = weave.collection(key)
         assert c is not None
@@ -17,18 +19,25 @@ class IntegrationTestBase:
         return c
 
     def retrieve_name_type_maps(self, db_property_list: list, code_property_list: list):
+        """Retrieve maps of name -> type for a list of properties from the database and the codebase"""
+
         saved_map = {prop.name: prop.data_type.value for prop in db_property_list}
         code_map = {prop.name: prop.dataType.value for prop in code_property_list}
         return saved_map, code_map
 
     
     def show_nested_properties_match(self, response, key: WeaviateSchemas):
+        """Show the properties of a weaviate collection are the same in code and in the database, 
+            leveraging a recursive bidirectional comparison"""
+
         map = WeaviateSchema.class_map[key]     
         print("Testing properties for ", map['class']) 
         self.recursive_show_properties_match(response[map['class']].properties, map["properties"])
         
 
     def recursive_show_properties_match(self, db_property_list: list, code_property_list: list, level=0):
+        """Recursively compare the properties of a weaviate collection are the same in code and in the database"""
+        
         saved_map, code_map = self.retrieve_name_type_maps(db_property_list, code_property_list)
 
         for key in saved_map:
