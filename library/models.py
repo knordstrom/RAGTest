@@ -124,12 +124,7 @@ class Message:
             if utils.Utils.is_invite(filename):
                 try:  
                     original = urlsafe_b64decode(attachment['data']).decode('utf-8')
-                    attachment['data'] = urlsafe_b64decode(attachment['data']).decode('utf-8')#EmailReplyParser.parse_reply()
-
-                    # print()
-                    # print("Attachment data", original)
-                    # print()
-
+                    attachment['data'] = urlsafe_b64decode(attachment['data']).decode('utf-8')
                     event = models.Event.create(attachment['data'])
                     events.append(event)
                 except Exception as e:
@@ -239,39 +234,3 @@ class Event:
                 "attendees": attendees,
                 "content": file
             }
-            
-
-    # @staticmethod
-    # def create(file: str) -> dict:
-    #     file = Event.repair_ics(file)
-    #     events = ics.Calendar(file).events
-        
-    #         # print("Event name", event.get('name'))
-    #         # print("Event description", event.get('description'), event.get('summary'))
-    #         # print("Event location", event.get('location'))
-    #         # print("Event begin", event.get('begin'), event.get('when'))
-    #         # print("Event end", event.end)
-    #         # print("Event organizer", event.organizer)
-    #         # print("Event status", event.status)
-    #         # print("Event attendees", event.attendees)
-
-    #     for component in events:
-    #         print("             Component", component)
-    #         attendees = []
-    #         for attendee in component.attendees: 
-    #             attendees.append(Event.extract_person(attendee))
-
-    #         print("Begin", component.begin)
-
-    #         return {
-    #             "event_id": component.uid,
-    #             "summary": component.name,
-    #             "description": component.description,
-    #             "location": component.location,
-    #             "start": str(component.begin),
-    #             "end": str(component.end),
-    #             "organizer": Event.extract_person(component.organizer),
-    #             "status": component.status,
-    #             "attendees": attendees,
-    #             "content": file
-    #         }
