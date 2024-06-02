@@ -16,6 +16,9 @@ class IntegrationTestBase:
             where = Filter.by_property(schema['properties'][0].name).like("*"),
         )
 
+        check = [x for x in c.iterator()]
+        assert len(check) == 0, "Collection " + schema['class'] + " was not properly truncated"
+        
         return c
 
     def retrieve_name_type_maps(self, db_property_list: list, code_property_list: list):
@@ -37,7 +40,7 @@ class IntegrationTestBase:
 
     def recursive_show_properties_match(self, db_property_list: list, code_property_list: list, level=0):
         """Recursively compare the properties of a weaviate collection are the same in code and in the database"""
-        
+
         saved_map, code_map = self.retrieve_name_type_maps(db_property_list, code_property_list)
 
         for key in saved_map:

@@ -1,14 +1,17 @@
 import datetime
 import re
 from base64 import urlsafe_b64decode
+from typing import Union
 from bs4 import BeautifulSoup
 from email_reply_parser import EmailReplyParser
+import icalendar
 import ics
-
+import recurring_ical_events
 from library import utils, models
 import ics
 
 from library import utils, models
+import re
 
 class Message:
 
@@ -120,11 +123,17 @@ class Message:
             filename = attachment['filename']
             if utils.Utils.is_invite(filename):
                 try:  
-                    attachment['data'] = EmailReplyParser.parse_reply(urlsafe_b64decode(attachment['data']).decode('utf-8'))
+                    original = urlsafe_b64decode(attachment['data']).decode('utf-8')
+                    attachment['data'] = urlsafe_b64decode(attachment['data']).decode('utf-8')#EmailReplyParser.parse_reply()
+
+                    # print()
+                    # print("Attachment data", original)
+                    # print()
+
                     event = models.Event.create(attachment['data'])
                     events.append(event)
                 except Exception as e:
-                    print("Error creating event from attachment " + str(attachment) + " with error " + str(e))
+                    print("Error creating event from attachment " + str(attachment) + " with error ", e)
 
         if len(events) > 0:
             print("Events found in message " + str(events))
@@ -142,8 +151,7 @@ class Message:
         new_message = Message.create_message(message)
 
         Message.try_get_body(message, new_message)
-        Message.try_get_attachments(message, new_message)     
-        Message.try_get_attachments(message, new_message)     
+        Message.try_get_attachments(message, new_message)      
 
         # check the headers to get the rest of the fields
         for header in message['payload']['headers']:
@@ -175,35 +183,95 @@ class Message:
 class Event:
 
     @staticmethod
-    def extract_person(component) -> dict:
+    def extract_person(component: Union[str,icalendar.vCalAddress]) -> dict:
+        if not component:
+            return None
+        elif type(component) == str:
+            email = component
+            name = component
+        else:
+            email = component.to_ical().decode('utf-8')
+            name = component.params.get('cn', '')
+
+        email = email.replace('mailto:', '')                                                                  
         return {
-            'name': component.common_name,
-            'email': component.email,
+            'name': name if name != '' else email,
+            'email': email,
         }
-
+    
     @staticmethod
-    def create(file: str) -> dict:
-        if not file:
-             file = ''
-        file.strip()
-        events = ics.Calendar(file).events
-
-        print("Calendar event found...")
-
-        for component in events:
+    def extract_attendees(event: icalendar.Event) -> list:
+        attendees = event.get('attendee')
+        if attendees is None:
             attendees = []
-            for attendee in component.attendees: 
-                attendees.append(Event.extract_person(attendee))
+        elif type(attendees) in [str, icalendar.vCalAddress]:
+            attendees = [Event.extract_person(attendees)]
+        else:
+            attendees = [Event.extract_person(attendee) for attendee in event.get('attendee', [])]
+        return attendees
+    
+    @staticmethod
+    def create(file:str) -> dict:
+        """Creates an event from an ics file using the icalendar library. Assumes a single event and returns the first if there are more"""
+
+        events_also = icalendar.Calendar.from_ical(file)
+
+        for event in recurring_ical_events.of(events_also).after(datetime.datetime.fromisoformat('19700101T00:00:00Z')):
+            attendees = Event.extract_attendees(event)
+
+            description = event.get('description', icalendar.vText(b'')).to_ical().decode('utf-8')
+            summary = event.get('summary', icalendar.vText(b'')).to_ical().decode('utf-8')
+
+            if description == '':
+                description = summary
+            elif summary == '':
+                summary = description
 
             return {
-                "event_id": component.uid,
-                "summary": component.name,
-                "description": component.description,
-                "location": component.location,
-                "start": str(component.begin),
-                "end": str(component.end),
-                "organizer": Event.extract_person(component.organizer),
-                "status": component.status,
+                "event_id": event.get('uid').to_ical().decode('utf-8'),
+                "summary": summary,
+                "description": description,
+                "location": event.get('location').to_ical().decode('utf-8') if event.get('location') else None,
+                "start": event.get('dtstart').dt.isoformat(),
+                "end": event.get('dtend').dt.isoformat(),
+                "organizer": Event.extract_person(event.get('organizer')),
+                "status": event.get('status').to_ical().decode('utf-8'),
                 "attendees": attendees,
                 "content": file
             }
+            
+
+    # @staticmethod
+    # def create(file: str) -> dict:
+    #     file = Event.repair_ics(file)
+    #     events = ics.Calendar(file).events
+        
+    #         # print("Event name", event.get('name'))
+    #         # print("Event description", event.get('description'), event.get('summary'))
+    #         # print("Event location", event.get('location'))
+    #         # print("Event begin", event.get('begin'), event.get('when'))
+    #         # print("Event end", event.end)
+    #         # print("Event organizer", event.organizer)
+    #         # print("Event status", event.status)
+    #         # print("Event attendees", event.attendees)
+
+    #     for component in events:
+    #         print("             Component", component)
+    #         attendees = []
+    #         for attendee in component.attendees: 
+    #             attendees.append(Event.extract_person(attendee))
+
+    #         print("Begin", component.begin)
+
+    #         return {
+    #             "event_id": component.uid,
+    #             "summary": component.name,
+    #             "description": component.description,
+    #             "location": component.location,
+    #             "start": str(component.begin),
+    #             "end": str(component.end),
+    #             "organizer": Event.extract_person(component.organizer),
+    #             "status": component.status,
+    #             "attendees": attendees,
+    #             "content": file
+    #         }

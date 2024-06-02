@@ -85,7 +85,7 @@ class TestMessage(unittest.TestCase):
         assert str(email_obj['body'])[0:32:1] == 'Looking forward to talking today'
         assert(email_obj.get('events')) != None
         assert(len(email_obj.get('events'))) != 0
-        assert(email_obj['events'][0]['content'][0:68:1]) == 'BEGIN:VCALENDAR\nMETHOD:REQUEST\nPRODID:Microsoft Exchange Server 2010'
+        assert(email_obj['events'][0]['content'][0:15:1]) == "BEGIN:VCALENDAR"
 
 
 
@@ -116,7 +116,7 @@ END:VCALENDAR
         event = models.Event.create(self.simple)
         assert event['event_id'] == '2gqc8j219jbeh97muvkte8bfl6@google.com'
         assert event['summary'] == '2nd Interview with Keith Nordstrom - CTO'
-        assert event['location'] == ''
+        assert event['location'] is None
         assert event['start'] == '2024-05-01T16:00:00+00:00'
         assert event['end'] == '2024-05-01T17:30:00+00:00'
         assert event['organizer']['name'] == 'The Man'
@@ -182,7 +182,7 @@ END:VCALENDAR"""
         event = models.Event.create(self.complex)
         assert event['event_id'] == '2gqc8j219jbeh97muvkte8bfl6@google.com'
         assert event['summary'] == '2nd Interview with Keith Nordstrom - CTO'
-        assert event['location'] == ''
+        assert event['location'] is None
         assert event['start'] == '2024-05-01T10:00:00-06:00'
         assert event['end'] == '2024-05-01T11:30:00-06:00'
         assert event['organizer'] == {'name': 'The Man', 'email': 'org@recruiter.com'}
