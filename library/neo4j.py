@@ -68,6 +68,8 @@ class Neo4j:
             session.run(query, start_node_value=start_node_value, end_node_value=end_node_value, rel_id=properties['id'], properties=properties)
 
     def process_events(self, events):
+        """Processes a list of Google API calendar events and adds them, plus their atttendees, to the Neo4j database."""
+
         person_list = []
         events_list = []
         attendance_list = []
