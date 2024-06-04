@@ -55,3 +55,6 @@ token.pickle
 token.json
 poetry.lock
 .env
+resources/slack_response.json
+slack_bot_token.json
+slack_token.json

@@ -7,6 +7,9 @@ test:
 test-it:
 	poetry run coverage run -m pytest tests/integration/ && poetry run coverage report -m
 
+test-all:
+	poetry run coverage run -m pytest tests/ && poetry run coverage report -m
+
 run:
 	poetry run flask --app api/main run --port=5010
 
