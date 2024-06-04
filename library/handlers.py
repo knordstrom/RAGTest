@@ -17,12 +17,12 @@ class Handlers:
         self.summarizer = Summarizer(g)
 
     def handle_email(self, email: dict):
-        if email['body'] == None or email['body'] == '':
+        if email.get('body', '') == '':
             email['body'] = email['subject']
         self.w.upsertChunkedText(email, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'body')
 
     def handle_event(self, event: dict):
-        if event.get('description') == None or event.get('description') == '':
+        if event.get('description', '') == '':
             event['description'] = event.get('summary', '')
         self.w.upsertChunkedText(event, WeaviateSchemas.EVENT_TEXT, WeaviateSchemas.EVENT, 'description')
 
@@ -33,7 +33,7 @@ class Handlers:
         summary = self.summarizer.summarize(text)
         document['text'] = text
         self.w.upsertChunkedText(document, WeaviateSchemas.DOCUMENT_TEXT, WeaviateSchemas.DOCUMENT, 'text')
-        self.w.upsert({'text': summary}, WeaviateSchemas.DOCUMENT_SUMMARY)
+        self.w.upsert({'text': summary}, document, WeaviateSchemas.DOCUMENT_SUMMARY, 'text')
 
     def get_file(self, document: dict):
         url = document['url']
@@ -88,7 +88,7 @@ class Handlers:
         channel_vdb = self.format_channel(slack)
         print("Channel properties:", channel_vdb)
 
-        self.w.upsert(channel_vdb, WeaviateSchemas.SLACK_CHANNEL)
+        self.w.upsert(channel_vdb, WeaviateSchemas.SLACK_CHANNEL, 'channel_id')
 
         threads = slack.get('threads', [])
         print("     Threads", len(threads))
@@ -111,10 +111,10 @@ class Handlers:
                 print('                            Message: ', messages_vdb[0])
                 print('                            Text: ', messages_text_vdb[0])
 
-                self.w.upsert(thread_vdb, WeaviateSchemas.SLACK_THREAD)
+                self.w.upsert(thread_vdb, WeaviateSchemas.SLACK_THREAD, 'thread_id')
                 for message_vdb, message_text_vdb in zip(messages_vdb, messages_text_vdb):
                     #TODO: upsert message_vdb
-                    self.w.upsert(message_vdb, WeaviateSchemas.SLACK_MESSAGE)
+                    self.w.upsert(message_vdb, WeaviateSchemas.SLACK_MESSAGE, 'message_id')
                     self.w.upsert_text_vectorized(message_text_vdb['text'], message_text_vdb, WeaviateSchemas.SLACK_MESSAGE_TEXT)
 
 

@@ -55,7 +55,7 @@ class Weaviate(VDB):
 
     def create_schema(self, key, schema_object) -> None:
         try:
-            vectorizer = wvc.config.Configure.Vectorizer.text2vec_transformers() if schema_object['vectorizer'] else None
+            vectorizer = wvc.config.Configure.Vectorizer.text2vec_transformers() if schema_object.get('vectorizer') else None
             properties = [property.name for property in schema_object['properties']]
             print("Creating new schema " + schema_object['class'] + " with vectorizer " + str(vectorizer), " properties ", properties)
             self.client.collections.create(schema_object['class'], 
@@ -78,12 +78,12 @@ class Weaviate(VDB):
             batch.add_object(
                     obj,
                     uuid = identifier
-            )
-        return True
+            )         
+            return True
     
     def get_value_map(self, obj, schema_object, collection):
         reference_keys = [property.name for property in schema_object[collection]]
-        return {key: obj[key] for key in reference_keys}
+        return {key: obj.get(key) for key in reference_keys if obj.get(key) is not None}
         
     
     def upsert_text_vectorized(self, text: str, metaObj: dict, collection_key: WeaviateSchemas) -> bool:
@@ -92,23 +92,25 @@ class Weaviate(VDB):
         references = self.get_value_map(metaObj, schema_object, 'references')
         properties = self.get_value_map(metaObj, schema_object, 'properties')
         split_text = utils.Utils.split(text)
+        
         with collection.batch.dynamic() as batch:
             for value in split_text:
                 row = {
                         "text": value.page_content,
                     }
                 row.update(properties)
-                batch.add_object(
+                identifier = w.util.generate_uuid5(value.page_content)
+                response = batch.add_object(
                     properties = row,
                     references = references,
-                    uuid = w.util.generate_uuid5(row)
-            )
+                    uuid = identifier
+                )
         return True
 
-    def upsertChunkedText(self, obj:dict, chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str) -> bool:
+    def upsertChunkedText(self, obj:dict, chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str, idProperty: str = None) -> bool:
         text = obj[splitOn]        
         del obj[splitOn]
-        meta = self.upsert(obj, metadata_collection_key) 
+        meta = self.upsert(obj, metadata_collection_key, idProperty) 
         text = self.upsert_text_vectorized(text, obj, chunked_collection_key)     
         return meta and text
     

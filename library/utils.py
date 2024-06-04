@@ -60,3 +60,9 @@ class Utils:
         timestamp = datetime.datetime.fromtimestamp(seconds, datetime.timezone.utc)
         return timestamp.isoformat()
 
+    @staticmethod
+    def string_multiply(s, n):
+        res = ""
+        for i in range(n):
+            res += s
+        return res

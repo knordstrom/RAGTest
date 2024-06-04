@@ -39,6 +39,8 @@ textextract = "^1.2.0"
 textract = "^1.6.5"
 slack-sdk = "^3.27.2"
 pytest-docker = "^3.1.1"
+icalendar = "^5.0.12"
+recurring-ical-events = "^2.2.1"
 
 
 [tool.poetry.group.dev.dependencies]
