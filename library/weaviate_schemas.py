@@ -230,7 +230,7 @@ class WeaviateSchema:
                 Property(name = "subtype", data_type=DataType.TEXT, description="A refinement on the 'type' propeerty of the message"),
                 Property(name = "ts", data_type=DataType.TEXT, description="Timestamp of the message"),
                 Property(name = "type", data_type=DataType.TEXT, description="Type of the message, usually 'message' or 'file'"),
-                Property(name="thread_id", data_type=DataType.TEXT, description="Unique identifier for the thread (target: SlackThread)"),
+                Property(name= "thread_id", data_type=DataType.TEXT, description="Unique identifier for the thread (target: SlackThread)"),
             ],
             "references": [
             ],

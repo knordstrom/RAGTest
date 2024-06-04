@@ -1430,6 +1430,21 @@ http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
 
 [[package]]
+name = "icalendar"
+version = "5.0.12"
+description = "iCalendar parser/generator"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "icalendar-5.0.12-py3-none-any.whl", hash = "sha256:d873bb859df9c6d0e597b16d247436e0f83f7ac1b90a06429b8393fe8afeba40"},
+    {file = "icalendar-5.0.12.tar.gz", hash = "sha256:73f9be68477722c98320621400943705dcfdbbc6c2b565253f72d3f87e514db8"},
+]
+
+[package.dependencies]
+python-dateutil = "*"
+pytz = "*"
+
+[[package]]
 name = "ics"
 version = "0.7.2"
 description = "Python icalendar (rfc5545) parser"
@@ -3376,6 +3391,23 @@ files = [
 cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
+name = "recurring-ical-events"
+version = "2.2.1"
+description = "A Python module which repeats ICalendar events by RRULE, RDATE and EXDATE."
+optional = false
+python-versions = "*"
+files = [
+    {file = "recurring_ical_events-2.2.1-py3-none-any.whl", hash = "sha256:9e8e0390e7cfe2e7425690e6b858eed635bf7560b44cb52260cd3466fec9cec5"},
+    {file = "recurring_ical_events-2.2.1.tar.gz", hash = "sha256:ecfb9d97c39df31248de6fbc3abd7e226c9721bd7a7db525d9c8f90ce81f15c0"},
+]
+
+[package.dependencies]
+icalendar = ">=5.0.9,<6.0.0"
+python-dateutil = ">=2.8.1"
+pytz = ">=2023.3"
+x-wr-timezone = ">=0.0.5,<1.0.0"
+
+[[package]]
 name = "regex"
 version = "2024.5.15"
 description = "Alternative regular expression module, to replace re."
@@ -4032,6 +4064,21 @@ MarkupSafe = ">=2.1.1"
 watchdog = ["watchdog (>=2.3)"]
 
 [[package]]
+name = "x-wr-timezone"
+version = "0.0.7"
+description = "A Python module and program to convert calendars using X-WR-TIMEZONE to standard ones."
+optional = false
+python-versions = "*"
+files = [
+    {file = "x_wr_timezone-0.0.7-py3-none-any.whl", hash = "sha256:0b5e16f677c8f51ce41087a0b3d4f786c5fdcf78af4f8a75d4d960107dcb6d3a"},
+    {file = "x_wr_timezone-0.0.7.tar.gz", hash = "sha256:ccbaae164a52086535fd2eb1dced164a5250acc83a672fbb044d11e81a268965"},
+]
+
+[package.dependencies]
+icalendar = "*"
+pytz = "*"
+
+[[package]]
 name = "xlrd"
 version = "1.2.0"
 description = "Library for developers to extract data from Microsoft Excel (tm) spreadsheet files"
@@ -4159,4 +4206,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "138cc1e2410a92201b8b06ea5778b2df8d38c215be6f4f4e8e0b5cc8c7bee31a"
+content-hash = "1b2039dd983ff6bd57eee75debb2f90c74d7b526c9ab87889880a231108ee674"
