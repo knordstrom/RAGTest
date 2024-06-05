@@ -92,10 +92,13 @@ class Weaviate(VDB):
                 required_wait = (1 / 50) * 2
                 sleep_time = max(required_wait - elapsed_time, 0)
                 time.sleep(sleep_time)
+            failed_objs_a = collection.batch.failed_objects  # Get failed objects from the batch import
+            failed_refs_a = collection.batch.failed_references
+            print("failed_objs_a: ", failed_objs_a)
+            print("failed_refs_a: ", failed_refs_a)
         except w.exceptions.WeaviateClosedClientError as e:
-            print("ive reached this exception part")
             self.reset_client()
-            if attempts < 2:
+            if attempts < 1:
                 self.upsert(obj, collection_key, id_property, attempts+1)
             else:
                 raise e

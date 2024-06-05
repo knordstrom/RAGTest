@@ -51,7 +51,6 @@ def write_doc_to_vdb(docs):
         g = Groq(api_key=os.getenv("GROQ_API_KEY"))
         w = weaviate.Weaviate(db, db_port)
         handler = h.Handlers(w, g)
-        # print("type(docs): ", type(docs))
         print("number of received documents: ", len(docs))
         count = 0
         for doc in docs:
@@ -77,6 +76,7 @@ def kafka_listen(default_topic: str, group: str, endpoint: callable):
         consumer = KafkaConsumer(bootstrap_servers=kafka, 
                                 group_id=group,
                                 value_deserializer=lambda v: json.loads(v.decode('utf-8')),
+                                max_poll_records=10,
                                 api_version="7.3.2")
         consumer.subscribe(topics=[topic])
         print("Subscribed to " + topic + ", waiting for messages...")
