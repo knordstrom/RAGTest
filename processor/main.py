@@ -9,6 +9,7 @@ import traceback
 import warnings
 from library import neo4j
 from datetime import datetime
+from groq import Groq
 
 warnings.simplefilter("ignore", ResourceWarning)
 
@@ -41,13 +42,31 @@ def write_to_neo4j(events):
     graph.connect()
     graph.process_events(events)
 
-def print_document(docs):
-    i = 1
-    for doc in docs:
-        print(f"document {i}")
-        print(doc.value)
-        i += 1
-    print("Received all documents")
+def write_doc_to_vdb(docs):
+    db = "docker-weaviate-1"
+    db_port = "8080"
+    print("Writing to VDB at " + db + ":" + db_port + " ... " + str(len(docs)))
+    w = None
+    try:
+        g = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        w = weaviate.Weaviate(db, db_port)
+        handler = h.Handlers(w, g)
+        # print("type(docs): ", type(docs))
+        print("number of received documents: ", len(docs))
+        count = 0
+        for doc in docs:
+            handler.handle_document(doc.value)
+            doc_id = doc.value.get("document_id")
+            doc_type = doc.value.get("doc_type")
+            count += 1
+            print(f"count: {count}")
+            print(f"document added {doc_id} of type {doc_type}")
+            print("printing count of doc summary")    
+            print(w.count(weaviate.WeaviateSchemas.DOCUMENT_SUMMARY))
+    finally:
+        if w is not None:
+            w.close()
+
 
 
 def kafka_listen(default_topic: str, group: str, endpoint: callable):
@@ -101,7 +120,7 @@ def start_kafka_calendar():
     kafka_listen("calendar", "calendar_processor", write_to_neo4j)
 
 def start_kafka_documents():
-    kafka_listen("documents", "document_processor", print_document)
+    kafka_listen("documents", "document_processor", write_doc_to_vdb)
 
 if __name__ == '__main__':
     start()

@@ -191,8 +191,7 @@ class Gmail(GmailServiceProvider):
                 .list(q = self.MIME_TYPE[type],
                     corpora='user',
                     includeItemsFromAllDrives=True,
-                    supportsAllDrives=True,
-                    pageSize=1)
+                    supportsAllDrives=True)
                 .execute()
             )
             items = results.get("files", [])
@@ -214,8 +213,18 @@ class Gmail(GmailServiceProvider):
                 fields = 'id, name, mimeType, owners, lastModifyingUser, viewersCanCopyContent, createdTime, \
                 modifiedTime, viewedByMeTime, sharedWithMeTime, permissions'
                 file_metadata = service.files().get(fileId=file_id, fields=fields, supportsAllDrives=True).execute()
-                metadata[doc] = file_metadata
+                file_metadata_cleaned = self.rename_id_field(file_metadata)
+                metadata[doc] = file_metadata_cleaned
         return metadata
+    
+    def rename_id_field(self, file_metadata):
+            file_metadata["metadata_id"] = file_metadata["id"]
+            del file_metadata["id"]
+            if "permissions" in file_metadata:
+                for d in file_metadata["permissions"]:
+                    d["permission_id"] = d["id"]
+                    del d["id"] 
+            return file_metadata
 
     def extract_content(self, doc_body):
         content = []
@@ -236,6 +245,7 @@ class Gmail(GmailServiceProvider):
                 document = service.documents().get(documentId=doc).execute()
                 text = self.extract_content(document.get('body'))
                 doc_structure["text"] = text
+                doc_structure["document_id"] = doc
                 doc_info[doc] = doc_structure
         return doc_info
 
@@ -254,6 +264,7 @@ class Gmail(GmailServiceProvider):
                 parser = document_parser.PdfParser()
                 doc = parser.parse(pdf_dict[pdf_doc])
                 pdf_doc_structure["text"] = doc
+                pdf_doc_structure["document_id"] = pdf_doc
                 pdf_doc_info[pdf_doc] = pdf_doc_structure
         return pdf_doc_info
                 
@@ -272,6 +283,7 @@ class Gmail(GmailServiceProvider):
                 parser = document_parser.DocxParser()
                 doc = parser.parse(docx_dict[docx])
                 docx_structure["text"] = doc
+                docx_structure["document_id"] = docx
                 docx_info[docx] = docx_structure
         return docx_info                
 

@@ -114,14 +114,14 @@ class WeaviateSchema:
         "class": "Document",
         "properties": [
             Property(name="document_id", data_type=DataType.TEXT),
-         #   Property(name="metadata", data_type=DataType.OBJECT, nestedProperties=(
-                Property(name="some_id", data_type=DataType.TEXT),
+           Property(name="metadata", data_type=DataType.OBJECT, nested_properties=[
+                Property(name="metadata_id", data_type=DataType.TEXT),
                 Property(name="name", data_type=DataType.TEXT),
                 Property(name="mimeType", data_type=DataType.TEXT),
                 Property(name="viewedByMeTime", data_type=DataType.DATE),
                 Property(name="createdTime", data_type=DataType.DATE),
                 Property(name="modifiedTime", data_type=DataType.DATE),
-                Property(name="owners", data_type=DataType.OBJECT_ARRAY, nestedProperties=[
+                Property(name="owners", data_type=DataType.OBJECT_ARRAY, nested_properties=[
                     Property(name="kind", data_type=DataType.TEXT),
                     Property(name="displayName", data_type=DataType.TEXT),
                     Property(name="photoLink", data_type=DataType.TEXT),
@@ -129,18 +129,18 @@ class WeaviateSchema:
                     Property(name="permissionId", data_type=DataType.TEXT),
                     Property(name="emailAddress", data_type=DataType.TEXT)
                 ]),
-                Property(name="lastModifyingUser", data_type=DataType.OBJECT, nestedProperties=(
+                Property(name="lastModifyingUser", data_type=DataType.OBJECT, nested_properties=[
                     Property(name="kind", data_type=DataType.TEXT),
                     Property(name="displayName", data_type=DataType.TEXT),
                     Property(name="photoLink", data_type=DataType.TEXT),
                     Property(name="me", data_type=DataType.BOOL),
                     Property(name="permissionId", data_type=DataType.TEXT),
                     Property(name="emailAddress", data_type=DataType.TEXT)
-                )),
+            ]),
                 Property(name="viewersCanCopyContent", data_type=DataType.BOOL),
                 Property(name="permissions", data_type=DataType.OBJECT_ARRAY, nested_properties=[
                     Property(name="kind", data_type=DataType.TEXT),
-                    Property(name="some_id", data_type=DataType.TEXT),
+                    Property(name="permission_id", data_type=DataType.TEXT),
                     Property(name="type", data_type=DataType.TEXT),
                     Property(name="emailAddress", data_type=DataType.TEXT),
                     Property(name="role", data_type=DataType.TEXT),
@@ -148,8 +148,8 @@ class WeaviateSchema:
                     Property(name="photoLink", data_type=DataType.TEXT),
                     Property(name="deleted", data_type=DataType.BOOL),
                     Property(name="pendingOwner", data_type=DataType.BOOL)
-                ]),
-           # )),
+        ]),
+        ]),
             Property(name="doc_type", data_type=DataType.TEXT),
         ],
         "references": [

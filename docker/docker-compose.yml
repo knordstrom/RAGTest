@@ -94,6 +94,7 @@ services:
       KAFKA_BROKER: "kafka1:29092"
       KAFKA_TOPIC: "documents"
       PYTHONUNBUFFERED: 1
+      GROQ_API_KEY: "${GROQ_API_KEY}"
       
   # api:
   #   image: context-api:0.1.1
