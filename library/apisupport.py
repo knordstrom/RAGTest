@@ -3,8 +3,6 @@ import json
 import os
 import uuid
 from kafka import KafkaProducer
-import context
-
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
 import library.neo4j as neo
@@ -60,6 +58,26 @@ class APISupport:
             count += 1
         producer.flush()
         print("Wrote ", count, " items to Kafka on channel ", channel)
+
+    
+    @staticmethod
+    def write_to_kafka_docs(doc_info: dict) -> None:
+        producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092', 
+                                 api_version="7.3.2", 
+                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+        count = 0
+        
+        for doc in doc_info:
+            count += 1
+            if doc == None:
+                print("There are no documents")
+                continue
+            producer.send('documents', value = doc_info[doc])
+
+    
+        producer.flush()
+        print("Wrote " + str(count) + " documents info to Kafka")
+
 
     # retrieve person node from neo4j
         #    retrieve associated people

@@ -56,4 +56,4 @@ COPY library/vdb.py library/weaviate.py library/utils.py library/models.py libra
 
 RUN ls -la
 
-CMD ["poetry", "run", "event_processor"]
+CMD ["poetry", "run", "document_processor"]

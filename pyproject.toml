@@ -9,6 +9,7 @@ packages = [{include = "library"}, {include = "processor"}]
 [tool.poetry.scripts]
 processor = "processor.main:start"
 event_processor = "processor.main:start_kafka_calendar"
+document_processor = "processor.main:start_kafka_documents"
 
 [tool.poetry.dependencies]
 python = "^3.11"

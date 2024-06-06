@@ -27,13 +27,11 @@ class Handlers:
         self.w.upsertChunkedText(event, WeaviateSchemas.EVENT_TEXT, WeaviateSchemas.EVENT, 'description')
 
     def handle_document(self, document: dict, filename: str = None):
-        if filename == None:
-            filename = self.get_file(document)
-        text = DocumentParser.retrieve(filename)
+        text = document.get("text")
         summary = self.summarizer.summarize(text)
-        document['text'] = text
         self.w.upsertChunkedText(document, WeaviateSchemas.DOCUMENT_TEXT, WeaviateSchemas.DOCUMENT, 'text')
-        self.w.upsert({'text': summary}, document, WeaviateSchemas.DOCUMENT_SUMMARY, 'text')
+        self.w.upsert({'text': summary, 
+        'document_id': document.get('document_id')}, WeaviateSchemas.DOCUMENT_SUMMARY)
 
     def get_file(self, document: dict):
         url = document['url']
