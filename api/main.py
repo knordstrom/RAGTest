@@ -136,7 +136,7 @@ def documents() -> str:
         print("Creds " + app.root_path + '/../resources/gmail_creds.json')
         doc_info = Gmail(email, app.root_path + '/../resources/gmail_creds.json').get_doc_info()
         print("doc_info: ", doc_info)
-        APISupport.write_to_kafka_docs(doc_info)
+        APISupport.write_docs_to_kafka(doc_info)
         return doc_info
 
     except HttpError as error:

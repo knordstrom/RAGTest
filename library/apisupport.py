@@ -41,6 +41,10 @@ class APISupport:
         APISupport.write_to_kafka(events, 'calendar')
 
     @staticmethod
+    def write_docs_to_kafka(doc_info: list[dict]) -> None:
+        APISupport.write_to_kafka(doc_info, 'documents')
+
+    @staticmethod
     def write_to_kafka(items: list[dict], channel: str, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
         producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
                                  api_version="7.3.2", 
@@ -59,24 +63,6 @@ class APISupport:
         producer.flush()
         print("Wrote ", count, " items to Kafka on channel ", channel)
 
-    
-    @staticmethod
-    def write_to_kafka_docs(doc_info: dict) -> None:
-        producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092', 
-                                 api_version="7.3.2", 
-                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-        count = 0
-        
-        for doc in doc_info:
-            count += 1
-            if doc == None:
-                print("There are no documents")
-                continue
-            producer.send('documents', value = doc_info[doc])
-
-    
-        producer.flush()
-        print("Wrote " + str(count) + " documents info to Kafka")
 
 
     # retrieve person node from neo4j
