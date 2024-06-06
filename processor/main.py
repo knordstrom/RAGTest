@@ -52,16 +52,17 @@ def write_doc_to_vdb(docs):
         w = weaviate.Weaviate(db, db_port)
         handler = h.Handlers(w, g)
         print("number of received documents: ", len(docs))
-        count = 0
         for doc in docs:
             handler.handle_document(doc.value)
             doc_id = doc.value.get("document_id")
             doc_type = doc.value.get("doc_type")
-            count += 1
-            print(f"count: {count}")
             print(f"document added {doc_id} of type {doc_type}")
-            print("printing count of doc summary")    
-            print(w.count(weaviate.WeaviateSchemas.DOCUMENT_SUMMARY))
+        count_doc_summary = w.count(weaviate.WeaviateSchemas.DOCUMENT_SUMMARY)
+        count_doc = w.count(weaviate.WeaviateSchemas.DOCUMENT)
+        count_doc_text = w.count(weaviate.WeaviateSchemas.DOCUMENT_TEXT)   
+        print(f"number of entries in document summary: {count_doc_summary}")
+        print(f"number of entries in document: {count_doc}")
+        print(f"number of entries in document text: {count_doc_text}")
     finally:
         if w is not None:
             w.close()

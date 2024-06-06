@@ -31,8 +31,7 @@ class Handlers:
         summary = self.summarizer.summarize(text)
         self.w.upsertChunkedText(document, WeaviateSchemas.DOCUMENT_TEXT, WeaviateSchemas.DOCUMENT, 'text')
         self.w.upsert({'text': summary, 
-        'document_id': document.get('document_id'),
-        'document_text_id': document.get('document_id')}, WeaviateSchemas.DOCUMENT_SUMMARY)
+        'document_id': document.get('document_id')}, WeaviateSchemas.DOCUMENT_SUMMARY)
 
     def get_file(self, document: dict):
         url = document['url']

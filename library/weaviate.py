@@ -8,7 +8,6 @@ from library import utils
 import weaviate.classes as wvc
 from weaviate.classes.config import Property, DataType
 from library.weaviate_schemas import WeaviateSchemas, WeaviateSchema
-import time
 
 class Weaviate(VDB):
 
@@ -31,7 +30,6 @@ class Weaviate(VDB):
         
     
     def collection(self, key: WeaviateSchemas) -> object:
-        print("key: ", key)
         schema = self.schemas[key]
         return self.client.collections.get(schema['class'])
     
@@ -82,16 +80,11 @@ class Weaviate(VDB):
         identifier = w.util.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
         
         try: 
-            start_time = time.time()
             with collection.batch.rate_limit(requests_per_minute=5) as batch:
                 batch.add_object(
                         obj,
                         uuid = identifier
                 )
-                elapsed_time = time.time() - start_time
-                required_wait = (1 / 50) * 2
-                sleep_time = max(required_wait - elapsed_time, 0)
-                time.sleep(sleep_time)
             failed_objs_a = collection.batch.failed_objects  # Get failed objects from the batch import
             failed_refs_a = collection.batch.failed_references
             print("failed_objs_a: ", failed_objs_a)
@@ -106,7 +99,7 @@ class Weaviate(VDB):
     
     def get_value_map(self, obj, schema_object, collection):
         reference_keys = [property.name for property in schema_object[collection]]
-        return {key: obj[key] for key in reference_keys}
+        return {key: obj.get(key) for key in reference_keys if obj.get(key) is not None}
 
     # private method
     def _upsert_sub_batches(self, collection, sbs, properties, references, attempts=0):
@@ -148,10 +141,7 @@ class Weaviate(VDB):
     
     def upsertChunkedText(self, obj:dict, chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str) -> bool:
         text = obj[splitOn]        
-        # del obj[splitOn]
-        # this was causing an issue at line 94 of this file in upsert_text_vectorized
-        # specifically obj[key] for key in reference_keys where it tried to find
-        # text in the obj but text was deleted
+        del obj[splitOn]
         meta = self.upsert(obj=obj, collection_key=metadata_collection_key) 
         text = self.upsert_text_vectorized(text, obj, chunked_collection_key)     
         return meta and text

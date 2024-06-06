@@ -180,7 +180,6 @@ class WeaviateSchema:
             "properties": [
                 Property(name = "text", data_type=DataType.TEXT),
                 Property(name = "document_id", data_type=DataType.TEXT, description="The weaviate ID of the document this text is associated with (target: Document)"),
-                Property(name = "document_text_id", data_type=DataType.TEXT, description="The weaviate ID of the document text this summary is associated with (target: DocumentText)"),
             ],
             "references": [
             ],

@@ -6,7 +6,6 @@ from os import abort
 import flask
 from library.apisupport import APISupport
 from googleapiclient.errors import HttpError
-# import context
 from library.gmail import Gmail
 import library.weaviate as weaviate
 import warnings
