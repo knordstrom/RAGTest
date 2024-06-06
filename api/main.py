@@ -6,7 +6,6 @@ from os import abort
 import flask
 from library.apisupport import APISupport
 from googleapiclient.errors import HttpError
-import context
 from library.gmail import Gmail
 import library.weaviate as weaviate
 import warnings
@@ -55,7 +54,7 @@ def calendar() -> str:
     count = require(['n'], int)
 
     try:
-        now = datetime.datetime.now(datetime.UTC).isoformat()
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         print("Getting the upcoming " + str(count) + " events")
         print("Creds " + app.root_path + '/../resources/gmail_creds.json')
         events = Gmail(email, app.root_path + '/../resources/gmail_creds.json').events(now, count)
@@ -80,6 +79,25 @@ def require(keys: list[str], type = str) -> str:
             return value
     keys = "' or '".join(keys)
     flask.abort(400, f"Missing required parameter '{keys}'")
+
+@app.route('/documents', methods=['GET'])
+def documents() -> str:
+    email: str = require(['email', 'e'])
+
+    try:
+        # now = datetime.datetime.now(datetime.UTC).isoformat()
+        print("Getting your documents")
+        print("Creds " + app.root_path + '/../resources/gmail_creds.json')
+        doc_info = Gmail(email, app.root_path + '/../resources/gmail_creds.json').get_doc_info()
+        print("doc_info: ", doc_info)
+        APISupport.write_to_kafka_docs(doc_info)
+        return doc_info
+
+    except HttpError as error:
+        print(f"An error occurred: {error}")
+        flask.abort(400, f"An HTTP error occurred '{error}'")
+
+
 
 if __name__ == '__main__':
     app.run()

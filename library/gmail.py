@@ -2,7 +2,7 @@ import datetime
 import enum
 import os
 import pickle
-from library import models
+from library import models, document_parser
 
 # Gmail API utils
 from googleapiclient.discovery import build
@@ -19,6 +19,8 @@ from email.mime.audio import MIMEAudio
 from email.mime.base import MIMEBase
 from mimetypes import guess_type as guess_mime_type
 import os
+from googleapiclient.http import MediaIoBaseDownload
+import json
 
 # interface for the Gmail API wrapper
 class GmailServiceProvider:
@@ -81,6 +83,8 @@ class GoogleSchemas(enum.Enum):
 
     GMAIL = 'gmail'
     CALENDAR = 'calendar'
+    DRIVE = 'drive'
+    DOCUMENTS = 'docs'
 
     @staticmethod
     def v(schema):
@@ -88,12 +92,21 @@ class GoogleSchemas(enum.Enum):
             return 'v1'
         if schema == GoogleSchemas.CALENDAR:
             return 'v3'
+        if schema == GoogleSchemas.DRIVE:
+            return 'v3'
+        if schema == GoogleSchemas.DOCUMENTS:
+            return 'v1'
         return None    
     
 # Realization of the Gmail API interface
 class Gmail(GmailServiceProvider):
     # Request all access (permission to read/send/receive emails, manage the inbox, and more)
-    SCOPES = ['https://mail.google.com/', "https://www.googleapis.com/auth/calendar.readonly"]
+    SCOPES = ['https://mail.google.com/', 'https://www.googleapis.com/auth/calendar.readonly',
+            'https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/documents.readonly']
+
+    MIME_TYPE = {"pdf": "mimeType='application/pdf'",
+                "docx": "mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'",
+                "google_doc": "mimeType='application/vnd.google-apps.document'"}
 
     def service(self, google_schema: GoogleSchemas):
         credentials = self.__authenticate()
@@ -169,3 +182,142 @@ class Gmail(GmailServiceProvider):
 
             if len(attachments) > 0:
                 message['attachments'] = attachments
+
+
+    def get_document_ids(self, type):
+        with self.service(GoogleSchemas.DRIVE) as service:
+            results = (
+                service.files()
+                .list(q = self.MIME_TYPE[type],
+                    corpora='user',
+                    includeItemsFromAllDrives=True,
+                    supportsAllDrives=True)
+                .execute()
+            )
+            items = results.get("files", [])
+
+            if not items:
+                print("No files found.")
+                return
+            doc_ids = {}
+            for item in items:
+                doc_ids[item['id']] = item['name']
+        return doc_ids
+
+    def get_file_metadata(self, doc_id_name):
+        metadata = {}
+        doc_ids = list(doc_id_name.keys())
+        with self.service(GoogleSchemas.DRIVE) as service:
+            for doc in doc_ids:
+                file_id = doc
+                fields = 'id, name, mimeType, owners, lastModifyingUser, viewersCanCopyContent, createdTime, \
+                modifiedTime, viewedByMeTime, sharedWithMeTime, permissions'
+                file_metadata = service.files().get(fileId=file_id, fields=fields, supportsAllDrives=True).execute()
+                file_metadata_cleaned = self.rename_id_field(file_metadata)
+                metadata[doc] = file_metadata_cleaned
+        return metadata
+    
+    def rename_id_field(self, file_metadata):
+            file_metadata["metadata_id"] = file_metadata["id"]
+            del file_metadata["id"]
+            if "permissions" in file_metadata:
+                for d in file_metadata["permissions"]:
+                    d["permission_id"] = d["id"]
+                    del d["id"] 
+            return file_metadata
+
+    def extract_content(self, doc_body):
+        content = []
+        for element in doc_body.get('content', []):
+            if 'paragraph' in element:
+                for para_element in element['paragraph'].get('elements', []):
+                    if 'textRun' in para_element:
+                        content.append(para_element['textRun']['content'])
+        return ''.join(content)
+
+    def get_gdocs_content(self, doc_ids_name):
+        doc_ids = list(doc_ids_name.keys())
+        with self.service(GoogleSchemas.DOCUMENTS) as service:
+            doc_info = {}
+            for doc in doc_ids:
+            # Retrieve the documents contents from the Docs service.
+                doc_structure = {}
+                document = service.documents().get(documentId=doc).execute()
+                text = self.extract_content(document.get('body'))
+                doc_structure["text"] = text
+                doc_structure["document_id"] = doc
+                doc_info[doc] = doc_structure
+        return doc_info
+
+    def get_pdf_content(self, pdf_dict):
+        with self.service(GoogleSchemas.DRIVE) as service:
+            pdf_doc_info = {}
+            for pdf_doc in pdf_dict.keys():
+                pdf_doc_structure = {}
+                request = service.files().get_media(fileId=pdf_doc)
+                fh = open(pdf_dict[pdf_doc], 'wb')
+                downloader = MediaIoBaseDownload(fh, request)
+                done = False
+                while done is False:
+                    status, done = downloader.next_chunk()
+                    print("Download %d%%." % int(status.progress() * 100))
+                parser = document_parser.PdfParser()
+                doc = parser.parse(pdf_dict[pdf_doc])
+                pdf_doc_structure["text"] = doc
+                pdf_doc_structure["document_id"] = pdf_doc
+                pdf_doc_info[pdf_doc] = pdf_doc_structure
+        return pdf_doc_info
+                
+    def get_docx_content(self, docx_dict):
+        with self.service(GoogleSchemas.DRIVE) as service:
+            docx_info = {}
+            for docx in docx_dict.keys():
+                docx_structure = {}
+                request = service.files().get_media(fileId=docx)
+                fh = open(docx_dict[docx], 'wb')
+                downloader = MediaIoBaseDownload(fh, request)
+                done = False
+                while done is False:
+                    status, done = downloader.next_chunk()
+                    print("Download %d%%." % int(status.progress() * 100))
+                parser = document_parser.DocxParser()
+                doc = parser.parse(docx_dict[docx])
+                docx_structure["text"] = doc
+                docx_structure["document_id"] = docx
+                docx_info[docx] = docx_structure
+        return docx_info                
+
+    def get_doc_info(self):
+        # obtain document and pdf ids from google drive
+        gdoc_ids_name = self.get_document_ids(type="google_doc")
+        docx_ids_name = self.get_document_ids(type="docx")
+        pdf_ids_name = self.get_document_ids(type="pdf")
+        # ingest document and pdf file metadata
+        gdoc_metadata = self.get_file_metadata(gdoc_ids_name)
+        docx_metadata = self.get_file_metadata(docx_ids_name)
+        pdf_metadata = self.get_file_metadata(pdf_ids_name)
+        # ingest document and pdf content 
+        gdoc_info = self.get_gdocs_content(gdoc_ids_name)
+        docx_info = self.get_docx_content(docx_ids_name)
+        pdf_info = self.get_pdf_content(pdf_ids_name)
+
+        doc_info = {} 
+        # add gdoc information to the overall doc_info to write to kafka
+        for gdoc in gdoc_ids_name.keys():
+            doc_info[gdoc] = gdoc_info[gdoc]
+            doc_info[gdoc]["metadata"] = gdoc_metadata[gdoc]
+            doc_info[gdoc]["doc_type"] = "google_doc"
+        # add gdoc information to the overall doc_info to write to kafka
+        for docx in docx_ids_name.keys():
+            doc_info[docx] = docx_info[docx]
+            doc_info[docx]["metadata"] = docx_metadata[docx]
+            doc_info[docx]["doc_type"] = "docx"
+        # add pdf information to the overall doc_info to write to kafka
+        for pdf_doc in pdf_ids_name.keys():
+            doc_info[pdf_doc] = pdf_info[pdf_doc]
+            doc_info[pdf_doc]["metadata"] = pdf_metadata[pdf_doc]
+            doc_info[pdf_doc]["doc_type"] = "pdf"
+        return doc_info
+
+
+

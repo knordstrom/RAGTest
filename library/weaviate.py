@@ -24,6 +24,10 @@ class Weaviate(VDB):
                 port=self.port,
             )
         return self._client
+
+    def reset_client(self):
+        self._client = None
+        
     
     def collection(self, key: WeaviateSchemas) -> object:
         schema = self.schemas[key]
@@ -71,46 +75,74 @@ class Weaviate(VDB):
         collection = self.collection(key)
         collection.config.add_reference(reference)
 
-    def upsert(self, obj, collection_key: WeaviateSchemas, id_property: str = None) -> bool:
+    def upsert(self, obj, collection_key: WeaviateSchemas, id_property: str = None, attempts=0) -> bool:
         collection = self.collection(collection_key)   
         identifier = w.util.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
-        with collection.batch.dynamic() as batch:
-            batch.add_object(
-                    obj,
-                    uuid = identifier
-            )         
-            return True
+        
+        try: 
+            with collection.batch.rate_limit(requests_per_minute=5) as batch:
+                batch.add_object(
+                        obj,
+                        uuid = identifier
+                )
+            failed_objs_a = collection.batch.failed_objects  # Get failed objects from the batch import
+            failed_refs_a = collection.batch.failed_references
+            print("failed_objs_a: ", failed_objs_a)
+            print("failed_refs_a: ", failed_refs_a)
+        except w.exceptions.WeaviateClosedClientError as e:
+            self.reset_client()
+            if attempts < 1:
+                self.upsert(obj, collection_key, id_property, attempts+1)
+            else:
+                raise e
+        return True
     
     def get_value_map(self, obj, schema_object, collection):
         reference_keys = [property.name for property in schema_object[collection]]
         return {key: obj.get(key) for key in reference_keys if obj.get(key) is not None}
-        
+
+    # private method
+    def _upsert_sub_batches(self, collection, sbs, properties, references, attempts=0):
+            count = 0
+            for sub_batch in sbs:
+                with collection.batch.dynamic() as batch:
+                        for value in sub_batch:
+                            row = {"text": value.page_content}
+                            row.update(properties)
+                            batch.add_object(
+                                properties=row,
+                                references=references,
+                                uuid=w.util.generate_uuid5(row)
+                            )
+                        count += 1
+            return count
     
-    def upsert_text_vectorized(self, text: str, metaObj: dict, collection_key: WeaviateSchemas) -> bool:
+            
+    
+    def upsert_text_vectorized(self, text: str, metaObj: dict, collection_key: WeaviateSchemas, attempts=0) -> bool:
         collection = self.collection(collection_key)
         schema_object = WeaviateSchema.class_map[collection_key]
         references = self.get_value_map(metaObj, schema_object, 'references')
         properties = self.get_value_map(metaObj, schema_object, 'properties')
         split_text = utils.Utils.split(text)
-        
-        with collection.batch.dynamic() as batch:
-            for value in split_text:
-                row = {
-                        "text": value.page_content,
-                    }
-                row.update(properties)
-                identifier = w.util.generate_uuid5(value.page_content)
-                response = batch.add_object(
-                    properties = row,
-                    references = references,
-                    uuid = identifier
-                )
+        SUB_BATCH_SIZE = 50
+        sub_batches = [split_text[i:i + SUB_BATCH_SIZE] for i in range(0, len(split_text), SUB_BATCH_SIZE)]
+        upserted_count = 0
+        try:
+            upserted_count = self._upsert_sub_batches(collection, sub_batches, properties, references)
+        except w.exceptions.WeaviateClosedClientError as e:
+            self.reset_client()
+            if attempts < 1:
+                self._upsert_sub_batches(collection, sub_batches[upserted_count:len(sub_batches)-1], properties, references, attempts+1)
+            else:
+                raise e
+            
         return True
-
-    def upsertChunkedText(self, obj:dict, chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str, idProperty: str = None) -> bool:
+    
+    def upsertChunkedText(self, obj:dict, chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str) -> bool:
         text = obj[splitOn]        
         del obj[splitOn]
-        meta = self.upsert(obj, metadata_collection_key, idProperty) 
+        meta = self.upsert(obj=obj, collection_key=metadata_collection_key) 
         text = self.upsert_text_vectorized(text, obj, chunked_collection_key)     
         return meta and text
     
