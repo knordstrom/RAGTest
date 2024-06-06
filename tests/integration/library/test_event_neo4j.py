@@ -17,7 +17,7 @@ class WithValue:
     def __init__(self, value):
         self.value = value
 
-class TestEventWeaviate(IntegrationTestBase):
+class TestEventNeo4j(IntegrationTestBase):
     
     def is_responsive(self, url):
         try:

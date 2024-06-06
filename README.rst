@@ -46,7 +46,7 @@ Run tests
 Slack
 ^^^^^
 
-Leveraging the slack API to reetrieve conversational context requires management of multiple tokens and thus, at the moment, a bit of manual work, as 
+Leveraging the slack API to retrieve conversational context requires management of multiple tokens and thus, at the moment, a bit of manual work, as 
 handling multiple hand-rolled refresh token and token storage processes is out of scope for this POC. Slack's API also requires a valid https endpoint to
 receive token requests, so the process is a bit more involved than the gmail API.
 
