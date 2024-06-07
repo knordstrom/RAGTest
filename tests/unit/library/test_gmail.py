@@ -1,11 +1,11 @@
 #import and create pytest tests for the GmailLogic class in library
 from library import models    
-from library.gmail import GmailLogic, GmailServiceProvider
+from library.gsuite import GmailLogic, GSuiteServiceProvider
 import pytest
 import unittest
 
 
-class TestGmail(GmailServiceProvider):
+class TestGmail(GSuiteServiceProvider):
     __test__ = False
     def __init__(self, totalMessages = 1000):
         self.totalMessages = totalMessages

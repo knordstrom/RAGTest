@@ -1,6 +1,6 @@
 import ast
 from library import models    
-from library.gmail import GmailLogic, GmailServiceProvider
+from library.gsuite import GmailLogic, GSuiteServiceProvider
 import pytest
 import unittest
 import os
