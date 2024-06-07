@@ -23,6 +23,7 @@ Setup
   #. Download credentials from the google cloud console at https://console.cloud.google.com/apis/credentials and place them in the `resources` folder as `gmail_creds.json`
   #. Set your GROQ key as an environment variable `GROQ_API_KEY`. You can also do this through a .env file in the root folder of the project
   #. Run the flask app with `make run` or `flask --app api/main run --port=5010` 
+  #. Follow the temporary instructions for downloading conversations from slack's API and storing them in the weaviate server (see below under Slack)
 
 Usage
 -----
@@ -41,3 +42,25 @@ Run tests
 ^^^^^^^^^
 
   *. Run `pytest` in the root directory using `make test` or `poetry run pytest`
+
+Slack
+^^^^^
+
+Leveraging the slack API to retrieve conversational context requires management of multiple tokens and thus, at the moment, a bit of manual work, as 
+handling multiple hand-rolled refresh token and token storage processes is out of scope for this POC. Slack's API also requires a valid https endpoint to
+receive token requests, so the process is a bit more involved than the gmail API.
+
+For the near future, this means that only people with access to a slack app being used will be able to use slack conversations. Steps:
+
+  #. In order to set up an https proxy, use ngrok:
+    #. Follow instructions at https://ngrok.com/docs/guides/getting-started/
+    #. Login to the slack apps console at https://api.slack.com/apps
+  #. Visit https://127.0.0.1:5010/slack, which will forward you to authenticate with slack
+  #. This will take you through an OAuth flow in which you will acknowledge the permissions the app is requesting
+  #. However, due to the fact the code currently handles the "bot" token incorrectly, it is probably you will need to visit the app's settings in the slack API console 
+    #. Both tokens are available for copy in the interface exposed by slack under "OAuth & Permissions"
+    #. Copy the "bot" token and paste it into the `access_token` property `slack_bot_token.json` file that should be created in the root folder of this project
+    #. You should also update the expiration date in the `slack_bot_token.json` file to the date being proposed in the slack settings
+  #. If you have further problems with auth, the "user" token is also available in the slack app settings
+  #. Once auth is ironed out, make another request to https://127.0.0.1:5010/slack to retrieve the conversations
+  #. Run `python processor/slack_processor.py` from the command line in the root directory to process the conversations and store them in weaviate

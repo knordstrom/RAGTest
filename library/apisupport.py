@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import uuid
 from kafka import KafkaProducer
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
@@ -28,60 +29,41 @@ class APISupport:
             g.close()
 
     @staticmethod
-    def write_to_kafka_cal(events: dict) -> None:
-        producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
-                                 api_version="7.3.2", 
-                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-        count = 0
-        
-        for event in events:
-            count += 1
-            if event == None:
-                print("There are no events")
-                continue
-            producer.send('calendar', value = event)
-
-    
-        producer.flush()
-        print("Wrote " + str(count) + " calendar events to Kafka")
-
+    def write_emails_to_kafka(emails: list[dict]) -> None:
+        APISupport.write_to_kafka(emails, 'emails',  lambda item: str(item['to'][0]))
 
     @staticmethod
-    def write_to_kafka(emails: list[dict]) -> None:
+    def write_slack_to_kafka(slacks: list[dict]) -> None:
+        APISupport.write_to_kafka(slacks, 'slack', lambda item: str(item['name']))
+
+    @staticmethod
+    def write_cal_to_kafka(events: list[dict]) -> None:
+        APISupport.write_to_kafka(events, 'calendar')
+
+    @staticmethod
+    def write_docs_to_kafka(doc_info: list[dict]) -> None:
+        APISupport.write_to_kafka(doc_info, 'documents')
+
+    @staticmethod
+    def write_to_kafka(items: list[dict], channel: str, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
         producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
                                  api_version="7.3.2", 
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
         count = 0
-        for email in emails:
-            if email == None:
-                print("Email with no entries found " + str(email) + "...")
+        for item in items:
+            if item == None:
+                print("Item with no entries found ", item,  "for write to", channel)
                 continue
             
-            ks = str(email['to'][0])
+            ks = key_function(item)
             key = bytearray().extend(map(ord, ks))
             
-            producer.send('emails', key = key, value = email)
+            producer.send(channel, key = key, value = item)
             count += 1
         producer.flush()
-        print("Wrote " + str(count) + " emails to Kafka")
-    
-    @staticmethod
-    def write_to_kafka_docs(doc_info: dict) -> None:
-        producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092', 
-                                 api_version="7.3.2", 
-                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-        count = 0
-        
-        for doc in doc_info:
-            count += 1
-            if doc == None:
-                print("There are no documents")
-                continue
-            producer.send('documents', value = doc_info[doc])
+        print("Wrote ", count, " items to Kafka on channel ", channel)
 
-    
-        producer.flush()
-        print("Wrote " + str(count) + " documents info to Kafka")
+
 
     # retrieve person node from neo4j
         #    retrieve associated people
@@ -167,4 +149,3 @@ class APISupport:
             "Context": emails,
             
         }
-    

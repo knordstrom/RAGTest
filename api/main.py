@@ -1,13 +1,18 @@
+import ast
 import datetime
+import json
 import os
 from dateutil import parser as dateparser
 
 from os import abort
+import dotenv
 import flask
 from library.apisupport import APISupport
 from googleapiclient.errors import HttpError
 from library.gmail import Gmail
+from library.slack import Slack, SlackAuthException
 import library.weaviate as weaviate
+from library.weaviate_schemas import WeaviateSchemas
 import warnings
 import os.path
 
@@ -16,6 +21,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+
+from flask import Flask, request
 
 warnings.simplefilter("ignore", ResourceWarning)
 
@@ -33,7 +40,7 @@ def email() -> str:
     email = require(['email', 'e'])
     count = flask.request.args.get('n', None, int)
     mapped: list = APISupport.read_last_emails(email, app.root_path + '/../resources/gmail_creds.json', count = count)
-    APISupport.write_to_kafka(mapped)
+    APISupport.write_emails_to_kafka(mapped)
     return mapped
 
 
@@ -58,13 +65,52 @@ def calendar() -> str:
         print("Getting the upcoming " + str(count) + " events")
         print("Creds " + app.root_path + '/../resources/gmail_creds.json')
         events = Gmail(email, app.root_path + '/../resources/gmail_creds.json').events(now, count)
-        APISupport.write_to_kafka_cal(events)
+        APISupport.write_cal_to_kafka(events)
         return events
 
     except HttpError as error:
         print(f"An error occurred: {error}")
         flask.abort(400, f"An HTTP error occurred '{error}'")
 
+@app.route('/slack', methods=['GET'])
+def slack() -> str:
+    s = Slack()
+    creds = s.check_auth()
+    if creds:
+        print("Creds valid or expired", creds.valid, creds.expired, creds.expiry)
+    if not creds or not creds.valid or creds.expired:
+        if creds:
+            print("Redirecting to auth", creds.valid, creds.expired, creds.expiry)
+        return flask.redirect(s.auth_target({'destination': '/slack'}))
+    try:
+        conversations = s.read_conversations()
+        with open(app.root_path + '/../resources/slack_response.json', 'w') as file:
+            json.dump(conversations, file)
+        APISupport.write_slack_to_kafka(conversations)
+    except SlackAuthException as error:
+        return flask.redirect(s.auth_target({'destination': '/slack'}))
+    
+    return conversations
+
+@app.route('/slack/auth/start', methods=['GET'])
+def slack_auth() -> str:
+    destination = request.args.get('destination', '/slack')
+    s = Slack()
+    creds = s.check_auth()
+    if not creds or not creds.valid:
+        return flask.redirect(s.auth_target({'destination': destination}))
+    else:
+        return flask.redirect(destination)
+    
+
+@app.route("/slack/auth/finish", methods=["GET", "POST"])
+def slack_auth_finish():
+    # Retrieve the auth code and state from the request params
+    auth_code = require(["code"])
+    received_state = ast.literal_eval(request.args.get("state","{'destination':'/slack'}"))
+    s = Slack()
+    result = s.finish_auth(auth_code)
+    return flask.redirect(received_state.get('destination', '/slack'))
 
 def to_date_time(date: str, name: str) -> datetime:
     try:
@@ -90,14 +136,12 @@ def documents() -> str:
         print("Creds " + app.root_path + '/../resources/gmail_creds.json')
         doc_info = Gmail(email, app.root_path + '/../resources/gmail_creds.json').get_doc_info()
         print("doc_info: ", doc_info)
-        APISupport.write_to_kafka_docs(doc_info)
+        APISupport.write_docs_to_kafka(doc_info)
         return doc_info
 
     except HttpError as error:
         print(f"An error occurred: {error}")
         flask.abort(400, f"An HTTP error occurred '{error}'")
-
-
 
 if __name__ == '__main__':
     app.run()

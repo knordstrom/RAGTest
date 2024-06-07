@@ -139,7 +139,7 @@ class Weaviate(VDB):
             
         return True
     
-    def upsertChunkedText(self, obj:dict, chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str) -> bool:
+    def upsert_chunked_text(self, obj:dict, chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str) -> bool:
         text = obj[splitOn]        
         del obj[splitOn]
         meta = self.upsert(obj=obj, collection_key=metadata_collection_key) 

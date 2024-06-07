@@ -19,17 +19,17 @@ class Handlers:
     def handle_email(self, email: dict):
         if email.get('body', '') == '':
             email['body'] = email['subject']
-        self.w.upsertChunkedText(email, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'body')
+        self.w.upsert_chunked_text(email, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'body')
 
     def handle_event(self, event: dict):
         if event.get('description', '') == '':
             event['description'] = event.get('summary', '')
-        self.w.upsertChunkedText(event, WeaviateSchemas.EVENT_TEXT, WeaviateSchemas.EVENT, 'description')
+        self.w.upsert_chunked_text(event, WeaviateSchemas.EVENT_TEXT, WeaviateSchemas.EVENT, 'description')
 
     def handle_document(self, document: dict, filename: str = None):
         text = document.get("text")
         summary = self.summarizer.summarize(text)
-        self.w.upsertChunkedText(document, WeaviateSchemas.DOCUMENT_TEXT, WeaviateSchemas.DOCUMENT, 'text')
+        self.w.upsert_chunked_text(document, WeaviateSchemas.DOCUMENT_TEXT, WeaviateSchemas.DOCUMENT, 'text')
         self.w.upsert({'text': summary, 
         'document_id': document.get('document_id')}, WeaviateSchemas.DOCUMENT_SUMMARY)
 
