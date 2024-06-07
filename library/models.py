@@ -22,7 +22,7 @@ class Message:
             "history_id": message.get('historyId'),
             "thread_id": message.get('threadId'),
             "labels": message.get('labelIds'),
-            "date": str(datetime.datetime.fromtimestamp(int(message.get('internalDate')) / 1000)),
+            "date": datetime.datetime.fromtimestamp(int(message.get('internalDate')) / 1000).astimezone().isoformat(),
             "to": [],
             "cc": [],
             "bcc": [],
@@ -78,7 +78,7 @@ class Message:
                 email = re.findall(r'(?<=<)(.*?)(?=>)', to)[0]
                 new_message['to'].append({'name': name, 'email': email})
             except:
-                new_message['to'].append({'name': None, 'email': to})
+                new_message['to'].append({'name': to, 'email': to})
 
     @staticmethod
     def try_get_cc(header: dict, new_message: dict):
@@ -90,7 +90,7 @@ class Message:
                 email = re.findall(r'(?<=<)(.*?)(?=>)', to)[0]
                 new_message['to'].append({'name': name, 'email': email})
             except:
-                new_message['to'].append({'name': None, 'email': to})
+                new_message['to'].append({'name': to, 'email': to})
 
     @staticmethod
     def try_get_bcc(header: dict, new_message: dict):
@@ -102,7 +102,7 @@ class Message:
                 email = re.findall(r'(?<=<)(.*?)(?=>)', to)[0]
                 new_message['to'].append({'name': name, 'email': email})
             except:
-                new_message['to'].append({'name': None, 'email': to})
+                new_message['to'].append({'name': to, 'email': to})
 
     @staticmethod
     def try_get_from(header: dict, new_message: dict):
@@ -113,7 +113,7 @@ class Message:
 
             new_message['from'] = {'email': email, 'name': name}
         except:
-            new_message['from'] = val
+            new_message['from'] = {'email': val, 'name': val}
 
     @staticmethod
     def try_get_attachments(message: dict, new_message: dict):
