@@ -47,7 +47,7 @@ def documents() -> str:
         temp_folder = create_temporary_folder()
         doc_info = GSuite(email, gsuite_retrieval.root_path + '/../resources/gmail_creds.json', temp_folder).get_doc_info()
         print("doc_info: ", doc_info.keys())
-        APISupport.write_docs_to_kafka(doc_info) #, DataSources.GOOGLE
+        APISupport.write_docs_to_kafka(doc_info.values()) #, DataSources.GOOGLE
         return doc_info
 
     except HttpError as error:
