@@ -42,8 +42,8 @@ class APISupport:
         APISupport.write_to_kafka(events, 'calendar')
 
     @staticmethod
-    def write_docs_to_kafka(doc_info: list[dict]) -> None:
-        APISupport.write_to_kafka(doc_info, 'documents')
+    def write_docs_to_kafka(doc_info: dict) -> None:  
+        APISupport.write_to_kafka(doc_info.values(), 'documents')
 
     @staticmethod
     def write_to_kafka(items: list[dict], channel: str, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
