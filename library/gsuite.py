@@ -112,9 +112,10 @@ class GSuite(GSuiteServiceProvider):
         credentials = self.__authenticate()
         return build(google_schema.value, GoogleSchemas.v(google_schema), credentials=credentials)
 
-    def __init__(self, email, creds):
+    def __init__(self, email, creds, docs_folder:str = "."):
         self.email = email
         self.creds = creds
+        self.docs_folder = docs_folder
 
     def __authenticate(self):
         creds = None
@@ -243,81 +244,67 @@ class GSuite(GSuiteServiceProvider):
             for doc in doc_ids:
             # Retrieve the documents contents from the Docs service.
                 doc_structure = {}
+
                 document = service.documents().get(documentId=doc).execute()
                 text = self.extract_content(document.get('body'))
+
                 doc_structure["text"] = text
+                doc_structure["document_id"] = doc
+                doc_info[doc] = doc_structure
+        return doc_info
+    
+    def get_3p_content(self, doc_dict: dict, parser: document_parser.DocumentParser):
+
+        print(" Getting 3p content for ", doc_dict.keys())
+        with self.service(GoogleSchemas.DRIVE) as service:
+            doc_info = {}
+            for doc in doc_dict.keys():
+                doc_structure = {}
+
+                request = service.files().get_media(fileId=doc)
+                target = os.path.join(self.docs_folder, doc_dict[doc])
+                print("File target will be", target)
+                fh = open(target, 'wb')
+                downloader = MediaIoBaseDownload(fh, request)
+                done = False
+                while done is False:
+                    status, done = downloader.next_chunk()
+                    print("Download %d%%." % int(status.progress() * 100))
+                doc = parser.parse(target)
+
+                doc_structure["text"] = doc
                 doc_structure["document_id"] = doc
                 doc_info[doc] = doc_structure
         return doc_info
 
     def get_pdf_content(self, pdf_dict):
-        with self.service(GoogleSchemas.DRIVE) as service:
-            pdf_doc_info = {}
-            for pdf_doc in pdf_dict.keys():
-                pdf_doc_structure = {}
-                request = service.files().get_media(fileId=pdf_doc)
-                fh = open(pdf_dict[pdf_doc], 'wb')
-                downloader = MediaIoBaseDownload(fh, request)
-                done = False
-                while done is False:
-                    status, done = downloader.next_chunk()
-                    print("Download %d%%." % int(status.progress() * 100))
-                parser = document_parser.PdfParser()
-                doc = parser.parse(pdf_dict[pdf_doc])
-                pdf_doc_structure["text"] = doc
-                pdf_doc_structure["document_id"] = pdf_doc
-                pdf_doc_info[pdf_doc] = pdf_doc_structure
-        return pdf_doc_info
+        return self.get_3p_content(pdf_dict, document_parser.PdfParser())
                 
     def get_docx_content(self, docx_dict):
-        with self.service(GoogleSchemas.DRIVE) as service:
-            docx_info = {}
-            for docx in docx_dict.keys():
-                docx_structure = {}
-                request = service.files().get_media(fileId=docx)
-                fh = open(docx_dict[docx], 'wb')
-                downloader = MediaIoBaseDownload(fh, request)
-                done = False
-                while done is False:
-                    status, done = downloader.next_chunk()
-                    print("Download %d%%." % int(status.progress() * 100))
-                parser = document_parser.DocxParser()
-                doc = parser.parse(docx_dict[docx])
-                docx_structure["text"] = doc
-                docx_structure["document_id"] = docx
-                docx_info[docx] = docx_structure
-        return docx_info                
+        return self.get_3p_content(docx_dict, document_parser.DocxParser())             
 
-    def get_doc_info(self):
-        # obtain document and pdf ids from google drive
-        gdoc_ids_name = self.get_document_ids(type="google_doc")
-        docx_ids_name = self.get_document_ids(type="docx")
-        pdf_ids_name = self.get_document_ids(type="pdf")
-        # ingest document and pdf file metadata
+    def compile_info(self, document_type: str, content_callback: callable) -> dict:
+        print("Compiling info for", document_type)
+        gdoc_ids_name = self.get_document_ids(type=document_type)
         gdoc_metadata = self.get_file_metadata(gdoc_ids_name)
-        docx_metadata = self.get_file_metadata(docx_ids_name)
-        pdf_metadata = self.get_file_metadata(pdf_ids_name)
-        # ingest document and pdf content 
-        gdoc_info = self.get_gdocs_content(gdoc_ids_name)
-        docx_info = self.get_docx_content(docx_ids_name)
-        pdf_info = self.get_pdf_content(pdf_ids_name)
-
+        gdoc_info = content_callback(gdoc_ids_name)
+        print("     gdoc_info: ", gdoc_info.keys())
         doc_info = {} 
-        # add gdoc information to the overall doc_info to write to kafka
         for gdoc in gdoc_ids_name.keys():
+            print("         gdoc id name: ", gdoc)
+            if gdoc not in gdoc_info:
+                print("Skipping ", gdoc, " as no content found in", gdoc_info.keys())
+                continue
             doc_info[gdoc] = gdoc_info[gdoc]
             doc_info[gdoc]["metadata"] = gdoc_metadata[gdoc]
-            doc_info[gdoc]["doc_type"] = "google_doc"
-        # add gdoc information to the overall doc_info to write to kafka
-        for docx in docx_ids_name.keys():
-            doc_info[docx] = docx_info[docx]
-            doc_info[docx]["metadata"] = docx_metadata[docx]
-            doc_info[docx]["doc_type"] = "docx"
-        # add pdf information to the overall doc_info to write to kafka
-        for pdf_doc in pdf_ids_name.keys():
-            doc_info[pdf_doc] = pdf_info[pdf_doc]
-            doc_info[pdf_doc]["metadata"] = pdf_metadata[pdf_doc]
-            doc_info[pdf_doc]["doc_type"] = "pdf"
+            doc_info[gdoc]["doc_type"] = document_type
+        return doc_info
+
+    def get_doc_info(self):
+        doc_info = {}
+        doc_info.update(self.compile_info("google_doc", self.get_gdocs_content))
+        doc_info.update(self.compile_info("docx", self.get_docx_content))
+        doc_info.update(self.compile_info("pdf", self.get_pdf_content))
         return doc_info
 
 
