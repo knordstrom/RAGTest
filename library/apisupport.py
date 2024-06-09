@@ -42,7 +42,7 @@ class APISupport:
         APISupport.write_to_kafka(events, 'calendar')
 
     @staticmethod
-    def write_docs_to_kafka(doc_info: list[dict]) -> None:  
+    def write_docs_to_kafka(doc_info: list[dict]) -> None:
         APISupport.write_to_kafka(doc_info, 'documents')
 
     @staticmethod
