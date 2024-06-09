@@ -22,7 +22,7 @@ class Message:
             "history_id": message.get('historyId'),
             "thread_id": message.get('threadId'),
             "labels": message.get('labelIds'),
-            "date": str(datetime.datetime.fromtimestamp(int(message.get('internalDate')) / 1000)),
+            "date": datetime.datetime.fromtimestamp(int(message.get('internalDate')) / 1000).astimezone().isoformat(),
             "to": [],
             "cc": [],
             "bcc": [],
@@ -69,51 +69,26 @@ class Message:
             pass
 
     @staticmethod
-    def try_get_to(header: dict, new_message: dict):
+    def get_participant_list(header: dict, new_message: dict, key: str):
         val = header['value']
         tos = val.split(',')
         for to in tos:
-            try:
-                name = to[:to.index('<')].strip()
-                email = re.findall(r'(?<=<)(.*?)(?=>)', to)[0]
-                new_message['to'].append({'name': name, 'email': email})
-            except:
-                new_message['to'].append({'name': None, 'email': to})
-
-    @staticmethod
-    def try_get_cc(header: dict, new_message: dict):
-        val = header['value']
-        tos = val.split(',')
-        for to in tos:
-            try:
-                name = to[:to.index('<')].strip()
-                email = re.findall(r'(?<=<)(.*?)(?=>)', to)[0]
-                new_message['to'].append({'name': name, 'email': email})
-            except:
-                new_message['to'].append({'name': None, 'email': to})
-
-    @staticmethod
-    def try_get_bcc(header: dict, new_message: dict):
-        val = header['value']
-        tos = val.split(',')
-        for to in tos:
-            try:
-                name = to[:to.index('<')].strip()
-                email = re.findall(r'(?<=<)(.*?)(?=>)', to)[0]
-                new_message['to'].append({'name': name, 'email': email})
-            except:
-                new_message['to'].append({'name': None, 'email': to})
+            new_message[key].append(Message.get_participant(to))
 
     @staticmethod
     def try_get_from(header: dict, new_message: dict):
         val = header['value']
+        new_message['from'] = Message.get_participant(val)
+
+    @staticmethod
+    def get_participant(val: str) -> dict:
         try:
             name = val[:val.index('<')].strip()
             email = re.findall(r'(?<=<)(.*?)(?=>)', val)[0]
 
-            new_message['from'] = {'email': email, 'name': name}
+            return {'email': email, 'name': name}
         except:
-            new_message['from'] = val
+            return {'email': val, 'name': val}
 
     @staticmethod
     def try_get_attachments(message: dict, new_message: dict):
@@ -152,15 +127,15 @@ class Message:
         for header in message['payload']['headers']:
             # get name and emails of the recipients
             if header['name'] == 'To':
-                Message.try_get_to(header, new_message)
+                Message.get_participant_list(header, new_message, 'to')
 
             # get names and emails of cc
             if header['name'] == 'Cc':
-                Message.try_get_cc(header, new_message)
+                Message.get_participant_list(header, new_message, 'cc')
 
             # get names and emails of bcc
             if header['name'] == 'Bcc':
-                Message.try_get_bcc(header, new_message)
+                Message.get_participant_list(header, new_message, 'bcc')
 
             #  get the subject
             if header['name'] == 'Subject':

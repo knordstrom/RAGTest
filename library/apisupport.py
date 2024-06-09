@@ -2,11 +2,12 @@ import datetime
 import json
 import os
 import uuid
+import flask
 from kafka import KafkaProducer
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
 import library.neo4j as neo
-from library.gmail import Gmail, GmailLogic
+from library.gsuite import GSuite, GmailLogic
 
 from groq import Groq
 from dotenv import load_dotenv
@@ -17,7 +18,7 @@ class APISupport:
     @staticmethod
     def read_last_emails(email: str, creds: str, count = None) -> list[dict]:
         try:
-            g: Gmail = Gmail(email, creds)
+            g: GSuite = GSuite(email, creds)
             gm: GmailLogic = GmailLogic(g)
             ids = gm.get_emails(count)
             mapped = []
@@ -149,3 +150,12 @@ class APISupport:
             "Context": emails,
             
         }
+
+    @staticmethod
+    def require(keys: list[str], type = str) -> str:
+        for key in keys:
+            value = flask.request.args.get(key, type=type)
+            if value is not None:         
+                return value
+        keys = "' or '".join(keys)
+        flask.abort(400, f"Missing required parameter '{keys}'")

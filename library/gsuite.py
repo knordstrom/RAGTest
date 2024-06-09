@@ -23,7 +23,7 @@ from googleapiclient.http import MediaIoBaseDownload
 import json
 
 # interface for the Gmail API wrapper
-class GmailServiceProvider:
+class GSuiteServiceProvider:
 
     def service(self):
         pass
@@ -41,7 +41,7 @@ class GmailServiceProvider:
 # Dependency Injectable Gmail methods
 class GmailLogic:
     count = 0
-    def __init__(self, gmail: GmailServiceProvider):
+    def __init__(self, gmail: GSuiteServiceProvider):
         self.gmail = gmail
 
     def get_emails(self, count = None) -> list:
@@ -99,7 +99,7 @@ class GoogleSchemas(enum.Enum):
         return None    
     
 # Realization of the Gmail API interface
-class Gmail(GmailServiceProvider):
+class GSuite(GSuiteServiceProvider):
     # Request all access (permission to read/send/receive emails, manage the inbox, and more)
     SCOPES = ['https://mail.google.com/', 'https://www.googleapis.com/auth/calendar.readonly',
             'https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/documents.readonly']
@@ -128,6 +128,7 @@ class Gmail(GmailServiceProvider):
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
+                print("INstalling creds", self.creds)
                 flow = InstalledAppFlow.from_client_secrets_file(
                     self.creds, self.SCOPES
                 )
