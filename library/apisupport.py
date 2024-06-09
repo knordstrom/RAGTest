@@ -4,6 +4,7 @@ import os
 import uuid
 import flask
 from kafka import KafkaProducer
+from library.enums.data_sources import DataSources
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
 import library.neo4j as neo
@@ -30,28 +31,29 @@ class APISupport:
             g.close()
 
     @staticmethod
-    def write_emails_to_kafka(emails: list[dict]) -> None:
-        APISupport.write_to_kafka(emails, 'emails',  lambda item: str(item['to'][0]))
+    def write_emails_to_kafka(emails: list[dict], provider: DataSources) -> None:
+        APISupport.write_to_kafka(emails, 'emails', provider,  lambda item: str(item['to'][0]))
 
     @staticmethod
     def write_slack_to_kafka(slacks: list[dict]) -> None:
-        APISupport.write_to_kafka(slacks, 'slack', lambda item: str(item['name']))
+        APISupport.write_to_kafka(slacks, 'slack', DataSources.SLACK, lambda item: str(item['name']))
 
     @staticmethod
-    def write_cal_to_kafka(events: list[dict]) -> None:
-        APISupport.write_to_kafka(events, 'calendar')
+    def write_cal_to_kafka(events: list[dict], provider: DataSources) -> None:
+        APISupport.write_to_kafka(events, 'calendar', provider)
 
     @staticmethod
-    def write_docs_to_kafka(doc_info: list[dict]) -> None:
-        APISupport.write_to_kafka(doc_info, 'documents')
+    def write_docs_to_kafka(doc_info: dict, provider: DataSources) -> None:  
+        APISupport.write_to_kafka(doc_info.values(), 'documents',  provider)
 
     @staticmethod
-    def write_to_kafka(items: list[dict], channel: str, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
+    def write_to_kafka(items: list[dict], channel: str, provider: DataSources, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
         producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
                                  api_version="7.3.2", 
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
         count = 0
         for item in items:
+            item['provider'] = provider.value
             if item == None:
                 print("Item with no entries found ", item,  "for write to", channel)
                 continue

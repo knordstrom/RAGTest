@@ -47,6 +47,7 @@ class WeaviateSchema:
                     Property(name ="name", data_type = DataType.TEXT)
                 ]),
                 Property(name ="date", data_type=DataType.DATE),
+                Property(name ="provider", data_type=DataType.TEXT),
             ],          
 
     }),
@@ -59,6 +60,7 @@ class WeaviateSchema:
                 Property(name = "text", data_type=DataType.TEXT),
                 Property(name = "email_id", data_type=DataType.TEXT, description="The weaviate ID of the email this text is associated with (target: Email)"),
                 Property(name = "thread_id", data_type=DataType.TEXT, description="An identifier for the thread this email is part of (target: Email)"),              
+                Property(name = "ordinal", data_type=DataType.INT, description="The order of this text in the email"),
             ],
             "references": [     
 
@@ -86,6 +88,7 @@ class WeaviateSchema:
                 Property(name="thread_id", data_type=DataType.TEXT, description="(target: Email)"),
                 Property(name="name", data_type=DataType.TEXT, description="(target: Event)"),
                 Property(name="description", data_type=DataType.TEXT, description="(target: Event)"),
+                Property(name ="provider", data_type=DataType.TEXT),
             ],
             "references": [
                 
@@ -102,6 +105,7 @@ class WeaviateSchema:
             "properties": [
                 Property(name = "text", data_type=DataType.TEXT),
                 Property(name = "event_id", data_type=DataType.TEXT, description="The weaviate ID of the event this text is associated with (target: Event)"),
+                Property(name = "ordinal", data_type=DataType.INT, description="The order of this text in the email"),
             ],
             "references": [
 
@@ -148,7 +152,8 @@ class WeaviateSchema:
                     Property(name="photoLink", data_type=DataType.TEXT),
                     Property(name="deleted", data_type=DataType.BOOL),
                     Property(name="pendingOwner", data_type=DataType.BOOL)
-        ]),
+            ]),
+            Property(name ="provider", data_type=DataType.TEXT),
         ]),
             Property(name="doc_type", data_type=DataType.TEXT),
         ],
@@ -165,6 +170,7 @@ class WeaviateSchema:
             "properties": [
                 Property(name = "text", data_type=DataType.TEXT),
                 Property(name = "document_id", data_type=DataType.TEXT, description="The weaviate ID of the document this text is associated with (target: Document)"),
+                Property(name = "ordinal", data_type=DataType.INT, description="The order of this text in the email"),
             ],
             "references": [
             ],
@@ -198,6 +204,7 @@ class WeaviateSchema:
             Property(name = "is_shared", data_type=DataType.BOOL, description="Is the channel shared?"),
             Property(name = "num_members", data_type=DataType.INT, description="Number of members in the channel"),
             Property(name = "updated", data_type=DataType.DATE, description="Last updated timestamp"),
+            Property(name ="provider", data_type=DataType.TEXT),
         ],
 
         "references": [
@@ -246,6 +253,7 @@ class WeaviateSchema:
                 Property(name = "text", data_type=DataType.TEXT, description="Text content of this chunk of the message"),
                 Property(name = "message_id", data_type=DataType.TEXT, description="Unique identifier for the message (target: SlackMessage)"),
                 Property(name = "thread_id", data_type=DataType.TEXT, description="Unique identifier for the thread (target: SlackThread)"),
+                Property(name = "ordinal", data_type=DataType.INT, description="The order of this text in the email"),
             ],
             "references": [
             ],

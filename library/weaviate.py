@@ -8,6 +8,7 @@ from library import utils
 import weaviate.classes as wvc
 from weaviate.classes.config import Property, DataType
 from library.weaviate_schemas import WeaviateSchemas, WeaviateSchema
+from weaviate.classes.query import Filter
 
 class Weaviate(VDB):
 
@@ -101,18 +102,29 @@ class Weaviate(VDB):
         reference_keys = [property.name for property in schema_object[collection]]
         return {key: obj.get(key) for key in reference_keys if obj.get(key) is not None}
 
+
+    def truncate_collection(self, key: WeaviateSchemas) -> None:
+        schema = WeaviateSchema.class_map[key]
+        c = self.collection(key)
+        c.data.delete_many(
+            where = Filter.by_property(schema['properties'][0].name).like("*"),
+        )
+
     # private method
     def _upsert_sub_batches(self, collection, sbs, properties, references, attempts=0):
             count = 0
             for sub_batch in sbs:
                 with collection.batch.dynamic() as batch:
-                        for value in sub_batch:
-                            row = {"text": value.page_content}
+                        for i, value in enumerate(sub_batch):
+                            row = {"text": value.page_content, "ordinal": i}
                             row.update(properties)
+                            identifier = w.util.generate_uuid5(row)
+                            print("Upserting ", identifier, "with properties", properties)
+
                             batch.add_object(
                                 properties=row,
                                 references=references,
-                                uuid=w.util.generate_uuid5(row)
+                                uuid=identifier
                             )
                         count += 1
             return count

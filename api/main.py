@@ -9,12 +9,14 @@ import warnings
 
 from api.gsuite_retrieval import gsuite_retrieval
 from slack_retrieval import slack_retrieval
+from reference import reference
 
 warnings.simplefilter("ignore", ResourceWarning)
 
 app = flask.Flask(__name__)
 app.register_blueprint(gsuite_retrieval)
 app.register_blueprint(slack_retrieval)
+app.register_blueprint(reference)
 
 require = APISupport.require
 
