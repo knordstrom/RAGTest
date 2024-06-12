@@ -51,11 +51,13 @@ class APISupport:
     @staticmethod
     def write_to_kafka(items: list[dict], topic_channel: KafkaTopics, provider: DataSources, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
         channel = topic_channel.value
+        APISupport.write_to_kafka(emails, 'emails', provider,  lambda item: str(item['to'][0]))
         producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
                                  api_version="7.3.2", 
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
         count = 0
-        for item in items:        
+        for item in items:
+            item['provider'] = provider.value
             if item == None:
                 print("Item with no entries found ", item,  "for write to", channel)
                 continue
@@ -67,8 +69,6 @@ class APISupport:
             count += 1
         producer.flush()
         print("Wrote ", count, " items to Kafka on channel ", channel)
-
-
 
     # retrieve person node from neo4j
         #    retrieve associated people
