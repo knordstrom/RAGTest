@@ -17,7 +17,7 @@ def email() -> str:
     email = require(['email', 'e'])
     count = flask.request.args.get('n', None, int)
     mapped: list = APISupport.read_last_emails(email, gsuite_retrieval.root_path + '/../resources/gmail_creds.json', count = count)
-    APISupport.write_emails_to_kafka(mapped) #, DataSources.GOOGLE
+    APISupport.write_emails_to_kafka(mapped, DataSources.GOOGLE) 
     return mapped
 
 @gsuite_retrieval.route('/data/gsuite/calendar', methods=['GET'])
@@ -30,7 +30,7 @@ def calendar() -> str:
         print("Getting the upcoming " + str(count) + " events")
         print("Creds " + gsuite_retrieval.root_path + '/../resources/gmail_creds.json')
         events = GSuite(email, gsuite_retrieval.root_path + '/../resources/gmail_creds.json').events(now, count)
-        APISupport.write_cal_to_kafka(events) #, DataSources.GOOGLE
+        APISupport.write_cal_to_kafka(events, DataSources.GOOGLE) 
         return events
 
     except HttpError as error:
@@ -47,7 +47,7 @@ def documents() -> str:
         temp_folder = create_temporary_folder()
         doc_info = GSuite(email, gsuite_retrieval.root_path + '/../resources/gmail_creds.json', temp_folder).get_doc_info()
         print("doc_info: ", doc_info.keys())
-        APISupport.write_docs_to_kafka(doc_info.values()) #, DataSources.GOOGLE
+        APISupport.write_docs_to_kafka([x for x in doc_info.values()], DataSources.GOOGLE) 
         return doc_info
 
     except HttpError as error:

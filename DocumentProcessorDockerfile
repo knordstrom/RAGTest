@@ -52,7 +52,7 @@ RUN poetry install
 
 COPY processor/main.py processor/context.py ./processor/
 COPY library/vdb.py library/weaviate.py library/utils.py library/models.py library/handlers.py library/document_parser.py  ./library/
-COPY library/neo4j.py library/weaviate_schemas.py library/slack.py library/processor_support.py ./library/
+COPY library/neo4j.py library/weaviate_schemas.py library/slack.py library/processor_support.py library/promptmanager.py ./library/
 
 
 RUN ls -la

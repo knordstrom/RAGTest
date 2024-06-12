@@ -5,7 +5,7 @@ import uuid
 import flask
 from kafka import KafkaProducer
 from library.enums.data_sources import DataSources
-from library.promptteams import PromptManager
+from library.promptmanager import PromptManager
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
 import library.neo4j as neo
@@ -44,8 +44,8 @@ class APISupport:
         APISupport.write_to_kafka(events, 'calendar', provider)
 
     @staticmethod
-    def write_docs_to_kafka(doc_info: dict, provider: DataSources) -> None:  
-        APISupport.write_to_kafka(doc_info.values(), 'documents',  provider)
+    def write_docs_to_kafka(docs: list[dict], provider: DataSources) -> None:  
+        APISupport.write_to_kafka(docs, 'documents',  provider)
 
     @staticmethod
     def write_to_kafka(items: list[dict], channel: str, provider: DataSources, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
