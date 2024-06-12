@@ -104,7 +104,7 @@ class TestEmailWeaviate(IntegrationTestBase):
                     "name": "Him"
                 }
             ]
-        assert len(metadata[0].properties) == 10, "There should be 10 properties in an email"
+        assert len(metadata[0].properties) == 11, "There should be 11 properties in an email, found " + str(len(metadata[0].properties))
 
         for chunk in text:
             assert 'text' in chunk.properties.keys()

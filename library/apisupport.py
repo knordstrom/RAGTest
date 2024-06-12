@@ -5,6 +5,7 @@ import uuid
 import flask
 from kafka import KafkaProducer
 from library.enums.data_sources import DataSources
+from library.promptteams import PromptManager
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
 import library.neo4j as neo
@@ -83,17 +84,9 @@ class APISupport:
         schedule = n.get_schedule(email, start_time, end_time)
         print("Schedule was ", str(schedule))
 
-        prompt = '''### Instruction:
-        You are a helpful administrative assistant for the person with the email {email} and you are giving them a briefing
-        on what they have to do during the specified time period. In answering the question, please consider the following schedule.
+        prompt = PromptManager().get_latest_prompt_template('APISupport.create_briefings_for')
 
-        ### Schedule: {Context}
-        ### Question: Given the schedule for {email} from {start_time} to {end_time},
-        please describe it succinctly and truthfully. In this description, please point out which attendees will be attending and which have declined the event. 
-        A schedule may be empty if there are no events scheduled.
-        
-        ### Response:
-        '''
+        print("Prompt is ", prompt)
 
         context = {
             'email': email,
@@ -149,7 +142,10 @@ class APISupport:
         return {
             "Question": question,
             "Response": response,
-            "Context": emails,
+            "Context": {
+                "emails": emails,
+                
+            },
             
         }
 

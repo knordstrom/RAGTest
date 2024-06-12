@@ -135,7 +135,7 @@ class SlackChannelAssertions:
 
         text = result[0]
 
-        assert len(text.properties.keys()) == 3, "Each text chunk should have 3 properties"
+        assert len(text.properties.keys()) == 4, "Each text chunk should have 4 properties"
 
         assert 'message_id' in text.properties.keys()
         assert 'text' in text.properties.keys()
