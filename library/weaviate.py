@@ -8,6 +8,8 @@ from library import utils
 import weaviate.classes as wvc
 from weaviate.classes.config import Property, DataType
 from library.weaviate_schemas import WeaviateSchemas, WeaviateSchema
+from weaviate.classes.query import Filter
+from weaviate.collections.classes.grpc import Sort
 
 class Weaviate(VDB):
 
@@ -28,7 +30,6 @@ class Weaviate(VDB):
     def reset_client(self):
         self._client = None
         
-    
     def collection(self, key: WeaviateSchemas) -> object:
         schema = self.schemas[key]
         return self.client.collections.get(schema['class'])
@@ -101,24 +102,33 @@ class Weaviate(VDB):
         reference_keys = [property.name for property in schema_object[collection]]
         return {key: obj.get(key) for key in reference_keys if obj.get(key) is not None}
 
+
+    def truncate_collection(self, key: WeaviateSchemas) -> None:
+        schema = WeaviateSchema.class_map[key]
+        c = self.collection(key)
+        c.data.delete_many(
+            where = Filter.by_property(schema['properties'][0].name).like("*"),
+        )
+
     # private method
     def _upsert_sub_batches(self, collection, sbs, properties, references, attempts=0):
             count = 0
             for sub_batch in sbs:
                 with collection.batch.dynamic() as batch:
-                        for value in sub_batch:
-                            row = {"text": value.page_content}
+                        for i, value in enumerate(sub_batch):
+                            row = {"text": value.page_content, "ordinal": i}
                             row.update(properties)
+                            identifier = w.util.generate_uuid5(row)
+                            print("Upserting ", identifier, "with properties", properties)
+
                             batch.add_object(
                                 properties=row,
                                 references=references,
-                                uuid=w.util.generate_uuid5(row)
+                                uuid=identifier
                             )
                         count += 1
             return count
-    
-            
-    
+ 
     def upsert_text_vectorized(self, text: str, metaObj: dict, collection_key: WeaviateSchemas, attempts=0) -> bool:
         collection = self.collection(collection_key)
         schema_object = WeaviateSchema.class_map[collection_key]
@@ -165,5 +175,107 @@ class Weaviate(VDB):
 
         return response
     
+    def get_email_by_id(self, email_id: str) -> dict:
+        results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
+            filters=Filter.by_property("email_id").equal(email_id),
+        )
+        if len(results.objects)>0:
+            text_results = self.collection(WeaviateSchemas.EMAIL_TEXT).query.fetch_objects(
+                filters=Filter.by_property("email_id").equal(email_id),
+                sort=Sort.by_property(name="ordinal", ascending=True),
+            )
+            print("Results", len(results.objects), " with text ", len(text_results.objects), "(",[x.uuid for x in text_results.objects],")")
+            response = results.objects[0].properties
+            response['text'] = [x.properties.get('text') for x in text_results.objects]
+            return response
+        return None
+
+    def get_emails(self):
+        return [x.properties for x in self.collection(WeaviateSchemas.EMAIL).iterator()]
+    
+    def get_thread_by_id(self, thread_id: str):
+        results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
+            filters=Filter.by_property("thread_id").equal(thread_id),
+        )
+        if len(results.objects)>0:
+            return results.objects[0].properties
+        return None
+    
+    def get_slack_message_by_id(self, message_id: str):
+        results = self.collection(WeaviateSchemas.SLACK_MESSAGE).query.fetch_objects(
+            filters=Filter.by_property("message_id").equal(message_id),
+        )
+        if len(results.objects)>0:
+            text_results = self.collection(WeaviateSchemas.SLACK_MESSAGE_TEXT).query.fetch_objects(
+                filters=Filter.by_property("message_id").equal(message_id),
+                sort=Sort.by_property(name="ordinal", ascending=True),
+            )
+            print("Results", len(results.objects), " with text ", len(text_results.objects), "(",[x.uuid for x in text_results.objects],")")
+            response = results.objects[0].properties
+            response['text'] = [x.properties.get('text') for x in text_results.objects]
+            return response
+        return None
+    
+    def get_slack_messages(self):
+        return [x.properties for x in self.collection(WeaviateSchemas.SLACK_MESSAGE).iterator()]
+    
+
+    def get_slack_thread_by_id(self, thread_id: str):
+        results = self.collection(WeaviateSchemas.SLACK_THREAD).query.fetch_objects(
+            filters=Filter.by_property("thread_id").equal(thread_id),
+        )
+        if len(results.objects)>0:
+            return results.objects[0].properties
+        return None
+    
+    def get_slack_thread_messages_by_id(self, thread_id: str):
+        results = self.collection(WeaviateSchemas.SLACK_THREAD).query.fetch_objects(
+            filters=Filter.by_property("thread_id").equal(thread_id),
+        )
+        if len(results.objects)>0:
+            thread = [x.properties for x in results.objects][0]
+            message_results = self.collection(WeaviateSchemas.SLACK_MESSAGE).query.fetch_objects(
+                filters=Filter.by_property("thread_id").equal(thread_id),
+                sort=Sort.by_property(name="ts", ascending=True),
+            )
+            message_text_results = self.collection(WeaviateSchemas.SLACK_MESSAGE_TEXT).query.fetch_objects(
+                filters=Filter.by_property("thread_id").equal(thread_id),
+            )
+
+            values = {}
+            for text in message_text_results.objects:
+                values[text.properties.get('message_id')] = text.properties.get('text')
+
+            for message in message_results.objects:
+                message.properties['text'] = values.get(message.properties.get('message_id'))
+            
+            thread['messages'] = [x.properties for x in message_results.objects]
+
+            return thread
+        return None
+    
+    def get_document_by_id(self, document_id: str):
+        results = self.collection(WeaviateSchemas.DOCUMENT).query.fetch_objects(
+            filters=Filter.by_property("document_id").equal(document_id),
+        )
+        if len(results.objects)>0:
+            text_results = self.collection(WeaviateSchemas.DOCUMENT_TEXT).query.fetch_objects(
+                filters=Filter.by_property("document_id").equal(document_id),
+                sort=Sort.by_property(name="ordinal", ascending=True),
+            )
+            summary_results = self.collection(WeaviateSchemas.DOCUMENT_SUMMARY).query.fetch_objects(
+                filters=Filter.by_property("document_id").equal(document_id),
+            )
+
+            print("Results", len(results.objects), " with text ", len(text_results.objects), "(",[x.uuid for x in text_results.objects],")")
+            response = results.objects[0].properties
+            response['text'] = [x.properties.get('text') for x in text_results.objects]
+            response['summary'] = [x.properties.get('summary') for x in summary_results.objects][0] if len(summary_results.objects)>0 else {}
+            return response
+        return None
+    
+    def get_documents(self):
+        return [x.properties for x in self.collection(WeaviateSchemas.DOCUMENT).iterator()]
+
     def close(self):       
         self.client.close()

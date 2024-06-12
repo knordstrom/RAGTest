@@ -104,13 +104,27 @@ class TestEmailWeaviate(IntegrationTestBase):
                     "name": "Him"
                 }
             ]
-        assert len(metadata[0].properties) == 10, "There should be 10 properties in an email"
+        assert len(metadata[0].properties) == 11, "There should be 11 properties in an email, found " + str(len(metadata[0].properties))
 
         for chunk in text:
             assert 'text' in chunk.properties.keys()
             assert chunk.properties.get('email_id') == "abcdef"
             assert chunk.properties.get('thread_id') == "mnopqr"
 
+    def test_writing_email_text_is_idempotent(self, service):
+        weave = w.Weaviate(port=service['port'], host=service['host'])
+        assert weave is not None
+        _, texts = self.prepare_email_collections(weave)
+
+        text_to_insert = """On Fri, Jun 7, 2024 at 10:17AM David Starck via groups.io \u003Cdstarck=\nInfuse.us@groups.io\u003E wrote:\n-=-=-=-=-=-=-=-=-=-=-=-\nGroups.io Links: You receive all messages sent to this group.\nView/Reply Online (#8620): https://ctolunches.groups.io/g/worldwide/message/8620\nMute This Topic: https://groups.io/mt/106524657/6925688\nGroup Owner: worldwide+owner@ctolunches.groups.io\nUnsubscribe: https://ctolunches.groups.io/g/worldwide/unsub [keith@madsync.com]\n-=-=-=-=-=-=-=-=-=-=-=-
+                                     
+     I believe at this point if I had to only develop for iOS I'd still pick\nReact Native. Partially because I'm very familiar with the toolset, and I\ndon't particularly like iOS development. Swift is moving in the right\ndirection, but the pragmatist in me would choose RN, because if I did\ndecide to pull in Android it's not that much additional work to make sure\nit's shipping on both platforms. It's also, as David mentioned, cheaper to\nresource.\n\nI'm not sure I'd ever build an app for Android only at this point. iOS\nholds a good portion of the US market share, and in the apps I've built it\nends up being closer to 70% or more. I'd need a very strong reason to even\nconsider it.\n\nI will call out my least favorite thing about RN, which is managing\ndependencies. It's fine if you keep it up to date frequently, but bit rot\nis real... I've had a nightmare of a time with a handful of older apps that\nwent multiple years without maintenance."""
+
+        for i in range(3):
+            weave.upsert_text_vectorized(text_to_insert, {'email_id': 'ok', 'thread_id':'still ok'}, WeaviateSchemas.EMAIL_TEXT)  
+            vals = [t for t in texts.iterator()]
+            assert len(vals) == 2, f"There should be 2 text chunks saved on iteration {i}"
+        
 
     def prepare_email_collections(self, weave):
         emails = self.truncate_collection_and_return(weave, WeaviateSchemas.EMAIL)

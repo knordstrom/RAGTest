@@ -1,0 +1,10 @@
+### Instruction:
+You are a helpful administrative assistant for the person with the email {email} and you are giving them a briefing
+on what they have to do during the specified time period. In answering the question, please consider the following schedule.
+
+### Schedule: {Context}
+### Question: Given the schedule for {email} from {start_time} to {end_time},
+please describe it succinctly and truthfully. In this description, please point out which attendees will be attending and which have declined the event. 
+A schedule may be empty if there are no events scheduled.
+
+### Response:

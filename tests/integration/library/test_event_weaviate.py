@@ -68,7 +68,6 @@ class TestEventWeaviate(IntegrationTestBase):
 
             print(email_obj.get('events', []))
             handler = h.Handlers(weave)
-
             
             handler.handle_event(email_obj['events'][0])
             saved_texts = [t for t in texts.iterator()]
@@ -80,10 +79,9 @@ class TestEventWeaviate(IntegrationTestBase):
             print("Event ", saved_events[0])
             print("Text ", saved_texts[0])
 
-            
-    
+
     def prepare_event_collections(self, weave):
-        event = weave.collection(WeaviateSchemas.EVENT)
-        text = weave.collection(WeaviateSchemas.EVENT_TEXT)
+        event = self.truncate_collection_and_return(weave, WeaviateSchemas.EVENT)
+        text = self.truncate_collection_and_return(weave, WeaviateSchemas.EVENT_TEXT)
         return event, text
     
