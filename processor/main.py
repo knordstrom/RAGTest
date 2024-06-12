@@ -1,19 +1,20 @@
 import json
+from groq import Groq
 from kafka import KafkaConsumer, TopicPartition
 import os
 from library import neo4j
+from library.processor_support import ProcessorSupport
 import library.weaviate as weaviate
-from library.weaviate_schemas import WeaviateSchemas
+import library.handlers as h
 import library.handlers as h
 import traceback
 import warnings
 from library import neo4j
 from datetime import datetime
-from groq import Groq
 
 warnings.simplefilter("ignore", ResourceWarning)
 
-def write_to_vdb(mapped: list) -> None:
+def write_emails_to_vdb(mapped: list) -> None:
     db = os.getenv("VECTOR_DB_HOST", "127.0.0.1")
     db_port = os.getenv("VECTOR_DB_PORT", "8080")
     print("Writing to VDB at " + db + ":" + db_port + " ... " + str(len(mapped)))
@@ -28,23 +29,24 @@ def write_to_vdb(mapped: list) -> None:
             print("=> Considering email " + str(j) + " of " + str(len(mapped)) + "...")
             handler.handle_email(email)
 
+            #TODO: transform each event to Google API event dict and write them to NEO4J
             for event in events:
-                print("Upserting event " + str(event) + " on from " + str(email['from']))
+                print("Upserting event " + str(event) + " on from " + str(email['from']))              
                 handler.handle_event(event) # , email['from']
                     
-        print(w.count(WeaviateSchemas.EMAIL))
+        print(w.count(weaviate.WeaviateSchemas.EMAIL))
     finally:
         if w is not None:
             w.close()
 
-def write_to_neo4j(events):
+def write_events_to_neo4j(events):
     graph = neo4j.Neo4j()
     graph.connect()
     graph.process_events(events)
 
 def write_doc_to_vdb(docs):
-    db = "docker-weaviate-1"
-    db_port = "8080"
+    db = os.getenv("VECTOR_DB_HOST", "127.0.0.1")
+    db_port = os.getenv("VECTOR_DB_PORT", "8080")
     print("Writing to VDB at " + db + ":" + db_port + " ... " + str(len(docs)))
     w = None
     try:
@@ -67,61 +69,14 @@ def write_doc_to_vdb(docs):
         if w is not None:
             w.close()
 
-
-
-def kafka_listen(default_topic: str, group: str, endpoint: callable):
-    kafka = os.getenv("KAFKA_BROKER", "127.0.0.1:9092")
-    topic = os.getenv("KAFKA_TOPIC", default_topic)
-    print("Starting processor at " + kafka + " on topic " + topic + " ...")
-    try:
-        consumer = KafkaConsumer(bootstrap_servers=kafka, 
-                                group_id=group,
-                                value_deserializer=lambda v: json.loads(v.decode('utf-8')),
-                                max_poll_records=10,
-                                api_version="7.3.2")
-        consumer.subscribe(topics=[topic])
-        print("Subscribed to " + topic + ", waiting for messages...")
-        count = 0
-
-        key: TopicPartition = TopicPartition(topic=topic, partition=0)
-        partitions = None
-        message = None
-        while partitions == None or len(partitions) == 0:
-            partitions = consumer.partitions_for_topic(topic)
-            print("Waiting for partitions... have " + str(partitions))
-        
-        while True:
-            print("Tick")
-            try:
-                message = consumer.poll(timeout_ms=2000)
-            except Exception as e:
-                print("Error: " + str(e))
-                continue
-
-            if message is None or message == {}:  
-                continue
-            else:
-                count += 1
-                print("Received message " + str(count) + ":" + str(message))
-                print()
-
-                endpoint(message[key])
-                print(" ... written to VDB")
-            
-            consumer.commit()
-
-    finally:
-        print("Closing consumer")
-        consumer.close()
-
 def start():
-    kafka_listen("emails", "email_processor", write_to_vdb)
+    ProcessorSupport.kafka_listen("emails", "email_processor", write_emails_to_vdb)
 
 def start_kafka_calendar():
-    kafka_listen("calendar", "calendar_processor", write_to_neo4j)
+    ProcessorSupport.kafka_listen("calendar", "calendar_processor", write_events_to_neo4j)
 
 def start_kafka_documents():
-    kafka_listen("documents", "document_processor", write_doc_to_vdb)
+    ProcessorSupport.kafka_listen("documents", "document_processor", write_doc_to_vdb)
 
 if __name__ == '__main__':
     start()

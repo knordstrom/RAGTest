@@ -1,3 +1,4 @@
+import groq
 from library.slack import Slack
 from library.utils import Utils
 import library.weaviate as weaviate
@@ -132,15 +133,33 @@ key points, and any action items in no more than 5 sentences:
             'document': text
         }
 
-        chat_completion = self.client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt.format(**context),
-                }
-            ],
-            model="llama3-8b-8192",
-            temperature=0.01,
-            max_tokens=2000,
-        )
-        return chat_completion.choices[0].message.content
+        content = prompt.format(**context)
+
+        # default has been to use "llama3-8b-8192", however this model only allows 8kb of content rather than 32kb
+        # mixtral is rate limited so we use it sparingly
+        # tokens cover ~4 bytes, so we check if the content is greater than 4*8192
+        model = "mixtral-8x7b-32768" if len(content) > 4*8192 else "llama3-8b-8192"
+
+
+        print("     * Summarizing '" + text[:100] + " of length " + str(len(text)) + " using model " + model + " ...")
+        try:
+            chat_completion = self.client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": content,
+                    }
+                ],
+
+                model=model, 
+                temperature=0.01,
+                max_tokens=2000,
+            )
+            print("          ... summary complete")
+            print("                                 >>>>>", chat_completion.choices[0].message.content[:10000])
+            return chat_completion.choices[0].message.content
+        except groq.RateLimitError as e:
+            print("Rate limit error: ", e)
+            return "Rate limit error, content too long to summarize."
+
+        
