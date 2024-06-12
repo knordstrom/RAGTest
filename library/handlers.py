@@ -1,4 +1,5 @@
 import groq
+from library.promptmanager import PromptManager
 from library.slack import Slack
 from library.utils import Utils
 import library.weaviate as weaviate
@@ -123,11 +124,7 @@ class Summarizer:
         self.client = client
 
     def summarize(self, text: str) -> str:
-        prompt = """
-You are a chief of staff for a vice president of engineering. Please briefly summarize the following document, including its purpose, 
-key points, and any action items in no more than 5 sentences:
-{document}
-"""
+        prompt = PromptManager().get_latest_prompt_template("Summarizer.summarize")
 
         context = {
             'document': text
