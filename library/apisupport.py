@@ -4,6 +4,9 @@ import os
 import uuid
 import flask
 from kafka import KafkaProducer
+from library.enums.data_sources import DataSources
+from library.enums.kafka_topics import KafkaTopics
+from library.promptmanager import PromptManager
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
 import library.neo4j as neo
@@ -30,32 +33,33 @@ class APISupport:
             g.close()
 
     @staticmethod
-    def write_emails_to_kafka(emails: list[dict]) -> None:
-        APISupport.write_to_kafka(emails, 'emails',  lambda item: str(item['to'][0]))
+    def write_emails_to_kafka(emails: list[dict], provider: DataSources) -> None:
+        APISupport.write_to_kafka(emails, KafkaTopics.EMAILS, provider,  lambda item: str(item['to'][0]))
 
     @staticmethod
     def write_slack_to_kafka(slacks: list[dict]) -> None:
-        APISupport.write_to_kafka(slacks, 'slack', lambda item: str(item['name']))
+        APISupport.write_to_kafka(slacks, KafkaTopics.SLACK, DataSources.SLACK, lambda item: str(item['name']))
 
     @staticmethod
-    def write_cal_to_kafka(events: list[dict]) -> None:
-        APISupport.write_to_kafka(events, 'calendar')
+    def write_cal_to_kafka(events: list[dict], provider: DataSources) -> None:
+        APISupport.write_to_kafka(events, KafkaTopics.CALENDAR, provider)
 
     @staticmethod
-    def write_docs_to_kafka(doc_info: list[dict]) -> None:
-        APISupport.write_to_kafka(doc_info, 'documents')
+    def write_docs_to_kafka(docs: list[dict], provider: DataSources) -> None:  
+        APISupport.write_to_kafka(docs, KafkaTopics.DOCUMENTS,  provider)
 
     @staticmethod
-    def write_to_kafka(items: list[dict], channel: str, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
+    def write_to_kafka(items: list[dict], topic_channel: KafkaTopics, provider: DataSources, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
+        channel = topic_channel.value
         producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
                                  api_version="7.3.2", 
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
         count = 0
-        for item in items:
+        for item in items:        
             if item == None:
                 print("Item with no entries found ", item,  "for write to", channel)
                 continue
-            
+            item['provider'] = provider.value
             ks = key_function(item)
             key = bytearray().extend(map(ord, ks))
             
@@ -81,17 +85,9 @@ class APISupport:
         schedule = n.get_schedule(email, start_time, end_time)
         print("Schedule was ", str(schedule))
 
-        prompt = '''### Instruction:
-        You are a helpful administrative assistant for the person with the email {email} and you are giving them a briefing
-        on what they have to do during the specified time period. In answering the question, please consider the following schedule.
+        prompt = PromptManager().get_latest_prompt_template('APISupport.create_briefings_for')
 
-        ### Schedule: {Context}
-        ### Question: Given the schedule for {email} from {start_time} to {end_time},
-        please describe it succinctly and truthfully. In this description, please point out which attendees will be attending and which have declined the event. 
-        A schedule may be empty if there are no events scheduled.
-        
-        ### Response:
-        '''
+        print("Prompt is ", prompt)
 
         context = {
             'email': email,
@@ -147,7 +143,10 @@ class APISupport:
         return {
             "Question": question,
             "Response": response,
-            "Context": emails,
+            "Context": {
+                "emails": emails,
+                
+            },
             
         }
 

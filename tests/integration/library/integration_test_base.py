@@ -6,17 +6,39 @@ from weaviate.classes.query import Filter
 
 class IntegrationTestBase:
 
+    def get_truncation_property(self, schema: dict) -> str:
+        property = schema['properties'][0].name
+        if not "id" in property:
+            print("Property", property," is not id, searching for id property")
+            for prop in schema['properties']:
+                print("Checking property ", prop.name)
+                if "id" in prop.name:
+                    property = prop.name
+                    breakproperty = schema['properties'][0].name
+        if not "id" in property:
+            print("Property", property," is not id, searching for id property")
+            for prop in schema['properties']:
+                print("Checking property ", prop.name)
+                if "id" in prop.name:
+                    property = prop.name
+                    break
+        return property
+    
     def truncate_collection_and_return(self, weave, key: WeaviateSchemas):
         """Truncates the values in a weaviate collection and returns it for use"""
-
         schema = WeaviateSchema.class_map[key]
         c = weave.collection(key)
         assert c is not None
+
+        property = self.get_truncation_property(schema)
+        print("Truncating collection ", schema['class'], " on property ", property)
         c.data.delete_many(
-            where = Filter.by_property(schema['properties'][0].name).like("*"),
+            where = Filter.by_property(property).like("*"),
         )
 
-        check = [x for x in c.iterator()]
+        check = [x for x in weave.collection(key).iterator()]
+
+        print("Check len was ", len(check))
         assert len(check) == 0, "Collection " + schema['class'] + " was not properly truncated"
         
         return c

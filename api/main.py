@@ -1,7 +1,9 @@
+import ast
 import datetime
 from dateutil import parser as dateparser
 
 from os import abort
+import dotenv
 import flask
 from library.apisupport import APISupport
 import library.weaviate as weaviate
@@ -9,23 +11,27 @@ import warnings
 
 from api.gsuite_retrieval import gsuite_retrieval
 from slack_retrieval import slack_retrieval
+from reference import reference
 
 warnings.simplefilter("ignore", ResourceWarning)
 
 app = flask.Flask(__name__)
 app.register_blueprint(gsuite_retrieval)
 app.register_blueprint(slack_retrieval)
+app.register_blueprint(reference)
 
 require = APISupport.require
 
 @app.route('/ask', methods=['GET'])
 def ask() -> str:
+    """Ask Weaviate a question. Will leverage [email] for context."""
     query = require(['query', 'q'])
     count = flask.request.args.get('n', None, int)
     return APISupport.perform_ask(query, weaviate.WeaviateSchemas.EMAIL_TEXT, context_limit = count)
 
 @app.route('/briefs', methods=['GET'])
 def briefs() -> str:
+    """Create briefings for a user."""
     email: str = require(['email', 'e'])
     print("Email", email)
     start_time: datetime = to_date_time(require(['start']), 'start')

@@ -1,4 +1,5 @@
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from library.promptmanager import PromptManager
 from library.weaviate import VDB
 from langchain.chains.llm import LLMChain
 from langchain_community.llms import GPT4All
@@ -24,15 +25,7 @@ class LLM:
         print("Context " + mail_context)
 
         # LANGCHAIN IMPLEMENTATION
-        template='''### Instruction:
-        Question: {Question}
-        Context: {Context}
-
-        You are a chief of staff for the person asking the question given the Context. 
-        Please provide a response to the question in no more than 5 sentences. If the answer is not contained in Context,
-        please respond with "I do not know the answer to that question."
-
-        ### Response:'''
+        template = PromptManager().get_latest_prompt_template('LLM.query')
         
         return self.query_with_template(template, {'Question': question, 'Context':mail_context})
         

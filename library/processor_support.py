@@ -1,9 +1,40 @@
+import datetime
 import json
 import os
 from library import weaviate
 from kafka import KafkaConsumer, TopicPartition
 
+from library.enums.kafka_topics import KafkaTopics
+
 class ProcessorSupport:
+
+    def email_event_to_graph_event(email_event: dict) -> dict:
+        event = {
+            'id': email_event.get('event_id'),
+            'location': email_event.get('location'),
+            'description': email_event.get('description'),
+            'summary': email_event.get('summary'),
+            'status': email_event.get('status')
+        }
+
+        event['creator'] = {
+            'email': email_event.get('organizer', {}).get('email')
+        }
+        event['organizer'] = event["creator"]
+        event['attendees'] = [{"email": e.get("email")} for e in email_event.get('attendees', [])]
+
+        start_date = datetime.datetime.fromisoformat(email_event.get('start'))
+        end_date = datetime.datetime.fromisoformat(email_event.get('end'))
+
+        event['start'] = {
+            "dateTime": start_date.isoformat(),
+            "timeZone": "Etc/UTC" #start_date.tzname()
+        }
+        event['end'] = {
+            "dateTime": end_date.isoformat(),
+            "timeZone":  "Etc/UTC" #end_date.tzname()
+        }
+        return event
 
     @staticmethod
     def write_to_vdb(mapped: list, endpoint: callable) -> None:
@@ -21,9 +52,9 @@ class ProcessorSupport:
                 w.close()
 
     @staticmethod
-    def kafka_listen(default_topic: str, group: str, endpoint: callable):
+    def kafka_listen(default_topic: KafkaTopics, group: str, endpoint: callable):
         kafka = os.getenv("KAFKA_BROKER", "127.0.0.1:9092")
-        topic = os.getenv("KAFKA_TOPIC", default_topic)
+        topic = os.getenv("KAFKA_TOPIC", default_topic.value)
         print("Starting processor at " + kafka + " on topic " + topic + " ...")
         try:
             consumer = KafkaConsumer(bootstrap_servers=kafka, 
