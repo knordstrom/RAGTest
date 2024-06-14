@@ -6,6 +6,7 @@ import flask
 from kafka import KafkaProducer
 from library.enums.data_sources import DataSources
 from library.enums.kafka_topics import KafkaTopics
+from library.enums.kafka_topics import KafkaTopics
 from library.promptmanager import PromptManager
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
@@ -35,17 +36,21 @@ class APISupport:
     @staticmethod
     def write_emails_to_kafka(emails: list[dict], provider: DataSources) -> None:
         APISupport.write_to_kafka(emails, KafkaTopics.EMAILS, provider,  lambda item: str(item['to'][0]))
+        APISupport.write_to_kafka(emails, KafkaTopics.EMAILS, provider,  lambda item: str(item['to'][0]))
 
     @staticmethod
     def write_slack_to_kafka(slacks: list[dict]) -> None:
+        APISupport.write_to_kafka(slacks, KafkaTopics.SLACK, DataSources.SLACK, lambda item: str(item['name']))
         APISupport.write_to_kafka(slacks, KafkaTopics.SLACK, DataSources.SLACK, lambda item: str(item['name']))
 
     @staticmethod
     def write_cal_to_kafka(events: list[dict], provider: DataSources) -> None:
         APISupport.write_to_kafka(events, KafkaTopics.CALENDAR, provider)
+        APISupport.write_to_kafka(events, KafkaTopics.CALENDAR, provider)
 
     @staticmethod
     def write_docs_to_kafka(docs: list[dict], provider: DataSources) -> None:  
+        APISupport.write_to_kafka(docs, KafkaTopics.DOCUMENTS,  provider)
         APISupport.write_to_kafka(docs, KafkaTopics.DOCUMENTS,  provider)
 
     @staticmethod
@@ -60,6 +65,7 @@ class APISupport:
             if item == None:
                 print("Item with no entries found ", item,  "for write to", channel)
                 continue
+            item['provider'] = provider.value
             item['provider'] = provider.value
             ks = key_function(item)
             key = bytearray().extend(map(ord, ks))
