@@ -45,6 +45,7 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 RUN mkdir -p /app/processor
 RUN mkdir -p /app/library
+RUN mkdir -p /app/library/enums
 RUN mkdir -p /app/api
 COPY pyproject.toml ./
 RUN poetry lock --no-update
@@ -53,6 +54,7 @@ RUN poetry install
 COPY processor/main.py processor/context.py ./processor/
 COPY library/vdb.py library/weaviate.py library/utils.py library/models.py library/handlers.py library/document_parser.py  ./library/
 COPY library/neo4j.py library/weaviate_schemas.py library/slack.py library/processor_support.py library/promptmanager.py ./library/
+COPY library/enums/*.py ./library/enums/
 
 
 RUN ls -la

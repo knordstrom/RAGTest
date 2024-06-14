@@ -2,6 +2,7 @@ import unittest
 import os
 
 from library.models import Event
+from library.processor_support import ProcessorSupport
 
 class TestEventExtracts(unittest.TestCase):
 
@@ -108,4 +109,62 @@ class TestEventExtracts(unittest.TestCase):
             assert len(event.get('attendees')) == 2
             assert {'name': 'Gary Bresien', 'email': 'gary@recruiter.com'} in event.get('attendees')
             assert {'name': 'keith@myhouse.com', 'email': 'keith@myhouse.com'} in event.get('attendees')
+
+    def test_gsuite_event_from_ics(self):
+        graph_event = ProcessorSupport.email_event_to_graph_event(self.ics_event_dict)
+        for k in self.gsuite_event_dict.keys():
+            assert graph_event.get(k) == self.gsuite_event_dict[k], f"Key {k} does not match"
+
+    ics_event_dict =  {
+            "event_id":  "_6oq3ac1l69j32or1c5i3ep1g64pjgchm60pjcopb6or3ccpk6kpmadb274rm6chgccsmae1ocdh36chd74oj8d346ksmcbbgc5p78rj5e906atj5dpq2soridtn6upjp5phmur8",
+            "summary": "Keith Nordstrom and Linda Coaching Meeting",
+            "description": "\n\n\nDear Keith,\n\nThis is to confirm a meeting with your Randstad RiseSmart Coach has been \nscheduled.\n\n\n\nTopic: Uncover Your Opportunities \nLocation: +1 303-555-5555 \nWhen: 06/13/2024, 3:00 PM \nDuration: 30minute(s) \n\n\nTopic(s) to be discussed:\n\n\n * Uncover Your Opportunities \n\n\nWe request 24-hours' notice if you need to cancel or reschedule this meeting. \nIf you need to make changes, please log into your Randstad RiseSmart account\nhttps://apps.coach.com/secure/dashboard/show\n\n\n\n\nBest regards,\nYour Randstad RiseSmart Team \n\n\n\nIf you encounter any issues, please email our support team. \n(mailto:user.support@coach.com) \n\n\n2024 Randstad RiseSmart, Inc. All Rights Reserved\n",
+            "location": "+1 303-555-5555",
+            "start":  "2024-06-13T15:00:00-06:00",
+            "end": "2024-06-13T15:30:00-06:00",
+            "organizer": {
+                "email": "linda@coach.net",
+                "name": "Linda Jones"
+            },
+            "status": "confirmed",
+            "attendees": [{
+                "email": "keith@me.com",
+                "name": "Keith Nordstrom",
+            },
+            {
+                "email": "linda@coach.net",
+                "name": "Linda Jones"
+            }],
+            "content": ""
+        }
+
+    gsuite_event_dict = {
+        "attendees": [
+            {
+                "email": "keith@me.com",
+            },
+            {
+                "email": "linda@coach.net",
+            }
+        ],
+        "creator": {
+            "email": "linda@coach.net"
+        },
+        "description": "\n\n\nDear Keith,\n\nThis is to confirm a meeting with your Randstad RiseSmart Coach has been \nscheduled.\n\n\n\nTopic: Uncover Your Opportunities \nLocation: +1 303-555-5555 \nWhen: 06/13/2024, 3:00 PM \nDuration: 30minute(s) \n\n\nTopic(s) to be discussed:\n\n\n * Uncover Your Opportunities \n\n\nWe request 24-hours' notice if you need to cancel or reschedule this meeting. \nIf you need to make changes, please log into your Randstad RiseSmart account\nhttps://apps.coach.com/secure/dashboard/show\n\n\n\n\nBest regards,\nYour Randstad RiseSmart Team \n\n\n\nIf you encounter any issues, please email our support team. \n(mailto:user.support@coach.com) \n\n\n2024 Randstad RiseSmart, Inc. All Rights Reserved\n",
+        "end": {
+            "dateTime": "2024-06-13T15:30:00-06:00",
+            "timeZone": "Etc/UTC"
+        },
+        "id": "_6oq3ac1l69j32or1c5i3ep1g64pjgchm60pjcopb6or3ccpk6kpmadb274rm6chgccsmae1ocdh36chd74oj8d346ksmcbbgc5p78rj5e906atj5dpq2soridtn6upjp5phmur8",
+        "location": "+1 303-555-5555",
+        "organizer": {
+            "email": "linda@coach.net"
+        },
+        "start": {
+            "dateTime": "2024-06-13T15:00:00-06:00",
+            "timeZone": "Etc/UTC"
+        },
+        "status": "confirmed",
+        "summary": "Keith Nordstrom and Linda Coaching Meeting",
+    }
 

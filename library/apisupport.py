@@ -5,6 +5,7 @@ import uuid
 import flask
 from kafka import KafkaProducer
 from library.enums.data_sources import DataSources
+from library.enums.kafka_topics import KafkaTopics
 from library.promptmanager import PromptManager
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
@@ -33,22 +34,24 @@ class APISupport:
 
     @staticmethod
     def write_emails_to_kafka(emails: list[dict], provider: DataSources) -> None:
-        APISupport.write_to_kafka(emails, 'emails', provider,  lambda item: str(item['to'][0]))
+        APISupport.write_to_kafka(emails, KafkaTopics.EMAILS, provider,  lambda item: str(item['to'][0]))
 
     @staticmethod
     def write_slack_to_kafka(slacks: list[dict]) -> None:
-        APISupport.write_to_kafka(slacks, 'slack', DataSources.SLACK, lambda item: str(item['name']))
+        APISupport.write_to_kafka(slacks, KafkaTopics.SLACK, DataSources.SLACK, lambda item: str(item['name']))
 
     @staticmethod
     def write_cal_to_kafka(events: list[dict], provider: DataSources) -> None:
-        APISupport.write_to_kafka(events, 'calendar', provider)
+        APISupport.write_to_kafka(events, KafkaTopics.CALENDAR, provider)
 
     @staticmethod
     def write_docs_to_kafka(docs: list[dict], provider: DataSources) -> None:  
-        APISupport.write_to_kafka(docs, 'documents',  provider)
+        APISupport.write_to_kafka(docs, KafkaTopics.DOCUMENTS,  provider)
 
     @staticmethod
-    def write_to_kafka(items: list[dict], channel: str, provider: DataSources, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
+    def write_to_kafka(items: list[dict], topic_channel: KafkaTopics, provider: DataSources, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
+        channel = topic_channel.value
+        APISupport.write_to_kafka(emails, 'emails', provider,  lambda item: str(item['to'][0]))
         producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
                                  api_version="7.3.2", 
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
@@ -58,7 +61,7 @@ class APISupport:
             if item == None:
                 print("Item with no entries found ", item,  "for write to", channel)
                 continue
-            
+            item['provider'] = provider.value
             ks = key_function(item)
             key = bytearray().extend(map(ord, ks))
             
@@ -66,8 +69,6 @@ class APISupport:
             count += 1
         producer.flush()
         print("Wrote ", count, " items to Kafka on channel ", channel)
-
-
 
     # retrieve person node from neo4j
         #    retrieve associated people

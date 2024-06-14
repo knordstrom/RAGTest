@@ -3,9 +3,10 @@ from groq import Groq
 from kafka import KafkaConsumer, TopicPartition
 import os
 from library import neo4j
+from library.enums.kafka_topics import KafkaTopics
 from library.processor_support import ProcessorSupport
 import library.weaviate as weaviate
-import library.handlers as h
+from library.weaviate_schemas import WeaviateSchemas
 import library.handlers as h
 import traceback
 import warnings
@@ -29,12 +30,16 @@ def write_emails_to_vdb(mapped: list) -> None:
             print("=> Considering email " + str(j) + " of " + str(len(mapped)) + "...")
             handler.handle_email(email)
 
-            #TODO: transform each event to Google API event dict and write them to NEO4J
+            graph_events = []
             for event in events:
                 print("Upserting event " + str(event) + " on from " + str(email['from']))              
                 handler.handle_event(event) # , email['from']
+                graph_events.append(ProcessorSupport.email_event_to_graph_event(event))
+            
+            if len(graph_events) > 0:
+                write_events_to_neo4j(graph_events)
                     
-        print(w.count(weaviate.WeaviateSchemas.EMAIL))
+        print(w.count(WeaviateSchemas.EMAIL))
     finally:
         if w is not None:
             w.close()
@@ -70,13 +75,13 @@ def write_doc_to_vdb(docs):
             w.close()
 
 def start():
-    ProcessorSupport.kafka_listen("emails", "email_processor", write_emails_to_vdb)
+    ProcessorSupport.kafka_listen(KafkaTopics.EMAILS, "email_processor", write_emails_to_vdb)
 
 def start_kafka_calendar():
-    ProcessorSupport.kafka_listen("calendar", "calendar_processor", write_events_to_neo4j)
+    ProcessorSupport.kafka_listen(KafkaTopics.CALENDAR, "calendar_processor", write_events_to_neo4j)
 
 def start_kafka_documents():
-    ProcessorSupport.kafka_listen("documents", "document_processor", write_doc_to_vdb)
+    ProcessorSupport.kafka_listen(KafkaTopics.DOCUMENTS, "document_processor", write_doc_to_vdb)
 
 if __name__ == '__main__':
     start()
