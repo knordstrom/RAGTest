@@ -51,7 +51,6 @@ class APISupport:
     @staticmethod
     def write_to_kafka(items: list[dict], topic_channel: KafkaTopics, provider: DataSources, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
         channel = topic_channel.value
-        APISupport.write_to_kafka(emails, 'emails', provider,  lambda item: str(item['to'][0]))
         producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
                                  api_version="7.3.2", 
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
@@ -148,6 +147,20 @@ class APISupport:
                 
             },
             
+        }
+    
+    @staticmethod
+    def get_calendar_between(email: str, start_time: datetime, end_time: datetime) -> dict:
+        n = neo.Neo4j()
+        n.connect()
+        print("Getting calendar for " + email + " from " + start_time.isoformat() + " to " + end_time.isoformat())
+        events = n.get_schedule(email, start_time, end_time)
+        print("Events were ", str(events))
+        return {
+            "email": email,
+            "start_time": start_time.isoformat(),
+            "end_time": end_time.isoformat(),
+            "events": events
         }
 
     @staticmethod

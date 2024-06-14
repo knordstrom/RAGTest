@@ -6,6 +6,10 @@ from kafka import KafkaConsumer, TopicPartition
 
 from library.enums.kafka_topics import KafkaTopics
 
+class EventRecordWrapper:
+    def __init__(self, value: dict):
+        self.value = value
+
 class ProcessorSupport:
 
     def email_event_to_graph_event(email_event: dict) -> dict:
@@ -34,7 +38,7 @@ class ProcessorSupport:
             "dateTime": end_date.isoformat(),
             "timeZone":  "Etc/UTC" #end_date.tzname()
         }
-        return event
+        return EventRecordWrapper(event)
 
     @staticmethod
     def write_to_vdb(mapped: list, endpoint: callable) -> None:
@@ -74,7 +78,7 @@ class ProcessorSupport:
             while True:
                 print("Tick")
                 try:
-                    message = consumer.poll(timeout_ms=2000)
+                    message: dict = consumer.poll(timeout_ms=2000)
                 except Exception as e:
                     print("Error: " + str(e))
                     continue

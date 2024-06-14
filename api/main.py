@@ -41,6 +41,14 @@ def briefs() -> str:
     end_time: datetime = to_date_time(flask.request.args.get('end',default = plus12.isoformat()), 'end')
     return APISupport.create_briefings_for(email, start_time, end_time)
 
+@app.route('/schedule', methods=['GET'])
+def schedule() -> str:
+    """Retrieves the schedule for a user."""
+    email: str = require(['email', 'e'])
+    start_time: datetime = to_date_time(require(['start']), 'start')
+    end_time: datetime = to_date_time(require(['end']), 'end')
+    return APISupport.get_calendar_between(email, start_time, end_time)
+
 def to_date_time(date: str, name: str) -> datetime:
     try:
        return dateparser.parse(date)

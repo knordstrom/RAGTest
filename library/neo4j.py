@@ -4,6 +4,46 @@ from neo4j import GraphDatabase
 import os
 import hashlib
 
+from library.utils import Utils
+
+class EventPersonRelationships:
+    attendance_map = {}
+    person_map = {}
+    organizer_map = {}
+
+    @property
+    def attendance_list(self):
+        return list(self.attendance_map.values())
+    
+    @property
+    def person_list(self):
+        return list(self.person_map.values())
+    
+    def attendee_id(self, email):
+        sha256 = hashlib.sha256()
+        sha256.update(email.encode('utf-8'))
+        return sha256.hexdigest()
+    
+    def add_attendee(self, person_email, event_id, status, name):
+        attendee_id = self.attendee_id(person_email)
+        attend_rel_id = attendee_id + event_id
+        invited_rel_id = event_id + attendee_id
+
+        attendee = {
+            "id": attendee_id,
+            "email": person_email,
+            "name": name,
+        }
+        rel_dict = {
+            "person_email": person_email,
+            "event_id": event_id,
+            "status": status,
+            "attend_rel_id": attend_rel_id,
+            "invited_rel_id": invited_rel_id
+        }
+        self.attendance_map[attend_rel_id] = rel_dict
+        self.person_map[attendee_id] = attendee
+
 class Neo4j:
 
     def __init__(self, host = None, port = None, protocol = "neo4j", user = None, password = None):
@@ -36,14 +76,15 @@ class Neo4j:
     def get_schedule(self, email: str, start_time: datetime, end_time: datetime) -> dict:
         query = """
         MATCH (person:Person {email: $email})
-        MATCH (event:Event)-[invite:ATTENDS]-(person)
+        MATCH (event:Event)-[invite:INVITED]-(person)
         MATCH (attendee:Person)-[attending:ATTENDS]-(event)
-        WHERE event.end >= datetime($start_time) AND event.start <= datetime($end_time)
-        RETURN DISTINCT person.name, person.email, event.name, event.description, event.start, event.end, invite.status, attendee.name, attendee.email, attending.status
+        MATCH (event)-[r:ORGANIZED_BY]-(organizer:Person)
+        WHERE datetime(event.end) >= datetime($start_time) AND datetime(event.start) <= datetime($end_time)
+        RETURN DISTINCT person.name, person.email, event.name, event.description, event.start, event.end, event.recurring_id, invite.status, attendee.name, attendee.email, attending.status, organizer.name, organizer.email
         """
         print("Querying Neo4j with: " + query)
         with self.driver.session() as session:
-            results = session.run(query, email=email, start_time=start_time.isoformat(), end_time=end_time.isoformat())
+            results = session.run(query, email=email, start_time=start_time.astimezone().isoformat(), end_time=end_time.astimezone().isoformat())
             print("Results were", results)
             return Neo4j.collate_schedule_response(results)
 
@@ -64,22 +105,22 @@ class Neo4j:
         MERGE (start)-[r:{rel_type} {{id: $rel_id}}]->(end)
         ON CREATE SET r += $properties
         """
+        print(f"Creating relationship: {rel_type} between {start_node_label} {start_node_value} and {end_node_label} {end_node_value}")
         with self.driver.session() as session:
             session.run(query, start_node_value=start_node_value, end_node_value=end_node_value, rel_id=properties['id'], properties=properties)
 
     def process_events(self, events):
         """Processes a list of Google API calendar events and adds them, plus their atttendees, to the Neo4j database."""
 
-        person_list = []
         events_list = []
-        attendance_list = []
+        relationships = EventPersonRelationships()
 
         for record in events:
             event = record.value
             event_dict = self.extract_event_info(event)
             events_list.append(event_dict)
-            self.extract_attendees_info(event, event_dict, person_list, attendance_list)
-        self.add_to_db(person_list, events_list, attendance_list)
+            self.extract_attendees_info(event, event_dict, relationships)
+        self.add_to_db(events_list, relationships)
 
     def extract_event_info(self, event):
         event_dict = {
@@ -93,70 +134,94 @@ class Neo4j:
         }
         return event_dict
 
-    def extract_attendees_info(self, event, event_dict, person_list, attendance_list):
+    def extract_attendees_info(self, event: dict, event_dict: dict, relationships: EventPersonRelationships):
         for item in event.get("attendees", []):
             email = item.get("email", "")
-            sha256 = hashlib.sha256()
-            sha256.update(email.encode('utf-8'))
-            attendee_id = sha256.hexdigest()
-            attend_rel_id = attendee_id + event_dict["id"]
-            invited_rel_id = event_dict["id"] + attendee_id
+            relationships.add_attendee(email, event_dict["id"], item.get("responseStatus", "Unknown"), item.get("displayName", email))
+        relationships.organizer_map[event_dict["id"]] = event.get("organizer", {})
 
-            attendee = {
-                "id": attendee_id,
-                "email": email,
-                "name": item.get("displayName", email),
-            }
-            rel_dict = {
-                "person_email": email,
-                "event_id": event_dict["id"],
-                "status": item.get("responseStatus"),
-                "attend_rel_id": attend_rel_id,
-                "invited_rel_id": invited_rel_id
-            }
-            attendance_list.append(rel_dict)
-            person_list.append(attendee)
-
-    def add_to_db(self, person_list, events_list, attendance_list):
-        for person in person_list:
+    def add_to_db(self, events_list, relationships: EventPersonRelationships):
+        for person in relationships.person_list:
             self.merge_node("Person", "id", person)
 
         for event in events_list:
             self.merge_node("Event", "id", event)
 
-        for attend in attendance_list:
+        for attend in relationships.attendance_list:
             self.create_relationship("Person", "email", attend['person_email'], "ATTENDS", "Event", "id", attend['event_id'], {"id": attend["attend_rel_id"], "status": attend["status"]})
             self.create_relationship("Event", "id", attend['event_id'], "INVITED", "Person", "email", attend['person_email'], {"id": attend["invited_rel_id"], "status": attend["status"]})
 
+        for event_id, organizer in relationships.organizer_map.items():
+            self.create_relationship("Person", "email", organizer['email'], "ORGANIZES", "Event", "id", event_id, {"id": 'organize' + event_id + organizer['email']})
+            self.create_relationship("Event", "id", event_id, "ORGANIZED_BY", "Person", "email", organizer['email'], {"id": 'organize' + event_id + organizer['email']})
+            
+            
     @staticmethod
     def collate_schedule_response(records):
         def key(record):
-            start = record['event.start'].strftime("%s")
-            end = record['event.end'].strftime("%s")
-            return record['person.name'] + "||" + record['person.email'] + "||" + record['event.name'] + "||" + str(start) + "||" + str(end)
+            print("    -> Key for record", record)
+            t1 = record['event.start'] if type(record['event.start']) == datetime else datetime.fromisoformat(record['event.start'])
+            t2 = record['event.end'] if type(record['event.end']) == datetime else datetime.fromisoformat(record['event.end'])
+            start = t1.strftime("%s")
+            end = t2.strftime("%s")
+            return record['person.name'] + "||" + record['person.email'] + "||" + str(record['event.name']) + "||" + str(start) + "||" + str(end)
 
         collated = {}
         for record in records:
-            record_dict = {}
             k = key(record)
-            print("Key is: ", k)
-            if k not in collated:
-                record_dict.update(record)
-                record_dict['attendees'] = []
-                record_dict['event.start'] = record['event.start'].isoformat()
-                record_dict['event.end'] = record['event.end'].isoformat()
-                collated[k] = record_dict
-                
+            print("Processing record: ", record)
+            print("     => Key is: ", k)
+            if k not in collated:              
+                collated[k] = Neo4j.create_new_record(record)              
             if record['attendee.email'] != record['person.email']:
-                collated[k]['attendees'].append({
-                    'name': record['attendee.name'],
-                    'email': record['attendee.email'],
-                    'attending.status': record['attending.status']
-                })
+                collated[k]['attendees'].append(Neo4j.create_attendee(record))
 
         print()
         print("Collated is: ", collated)
         print()
-        response = list(collated.values())
-        print("Response is: ", response)
-        return sorted(response, key=lambda x: x['event.start'])
+        return Neo4j.finalize_schedule_response(list(collated.values()))
+    
+
+    @staticmethod
+    def create_attendee(record: dict) -> dict :
+        return {
+                    'name': record['attendee.name'],
+                    'email': record['attendee.email'],
+                    'attending.status': record['attending.status']
+                }
+
+    @staticmethod
+    def create_new_record(record: dict) -> dict:
+        record_dict = {}
+        record_dict.update(record)
+        record_dict['attendees'] = []
+        Utils.rename_key(record_dict, 'event.start', 'start', lambda x: x.isoformat() if type(x) == datetime else x)
+        Utils.rename_key(record_dict, 'event.end', 'end', lambda x: x.isoformat() if type(x) == datetime else x)
+        Utils.rename_key(record_dict, 'event.description', 'description')
+        Utils.rename_key(record_dict, 'event.name', 'name')
+        Utils.rename_key(record_dict, 'event.location', 'location')
+        return record_dict
+    
+    @staticmethod
+    def finalize_schedule_response(response):
+        for item in response:
+            item['person'] = {
+                'name': item['person.name'],
+                'email': item['person.email'],
+                'status': item['invite.status'] 
+            }
+            item['organizer'] = {
+                'name': item['organizer.name'],
+                'email': item['organizer.email'],
+            }
+            
+            del item['person.name']
+            del item['person.email']
+            del item['organizer.name']
+            del item['organizer.email']
+            del item['attendee.name']
+            del item['attendee.email']
+            del item['attending.status']
+            del item['invite.status']
+        return sorted(response, key=lambda x: x['start'])
+    

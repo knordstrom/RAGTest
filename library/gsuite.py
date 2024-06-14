@@ -286,6 +286,9 @@ class GSuite(GSuiteServiceProvider):
     def compile_info(self, document_type: str, content_callback: callable) -> dict:
         print("Compiling info for", document_type)
         gdoc_ids_name = self.get_document_ids(type=document_type)
+        if not gdoc_ids_name:
+            print("Missing gdocs name for ", document_type)
+            return {}
         gdoc_metadata = self.get_file_metadata(gdoc_ids_name)
         gdoc_info = content_callback(gdoc_ids_name)
         print("     gdoc_info: ", gdoc_info.keys())

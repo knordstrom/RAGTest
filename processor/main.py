@@ -44,7 +44,7 @@ def write_emails_to_vdb(mapped: list) -> None:
         if w is not None:
             w.close()
 
-def write_events_to_neo4j(events):
+def write_events_to_neo4j(events: list):
     graph = neo4j.Neo4j()
     graph.connect()
     graph.process_events(events)

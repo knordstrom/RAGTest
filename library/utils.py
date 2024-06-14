@@ -66,3 +66,9 @@ class Utils:
         for i in range(n):
             res += s
         return res
+
+    @staticmethod
+    def rename_key(d:dict, old_key:str, new_key:str, transform: callable = lambda x: x) -> dict:
+        if old_key in d:
+            d[new_key] = transform(d.pop(old_key))
+        return d
