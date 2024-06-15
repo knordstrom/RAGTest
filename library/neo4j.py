@@ -159,21 +159,20 @@ class Neo4j:
     @staticmethod
     def collate_schedule_response(records):
         def key(record):
-            print("    -> Key for record", record)
-            t1 = record['event.start'] if type(record['event.start']) == datetime else datetime.fromisoformat(record['event.start'])
-            t2 = record['event.end'] if type(record['event.end']) == datetime else datetime.fromisoformat(record['event.end'])
+            t1 = datetime.fromisoformat(record['event.start']) if type(record['event.start']) == str  else record['event.start']
+            t2 = datetime.fromisoformat(record['event.end']) if type(record['event.end']) == str else record['event.end']
             start = t1.strftime("%s")
             end = t2.strftime("%s")
-            return record['person.name'] + "||" + record['person.email'] + "||" + str(record['event.name']) + "||" + str(start) + "||" + str(end)
+            return record['person.email'] + "||" + str(record['event.name']) + "||" + str(start) + "||" + str(end)
 
         collated = {}
         for record in records:
             k = key(record)
-            print("Processing record: ", record)
-            print("     => Key is: ", k)
-            if k not in collated:              
+            if k not in collated:   
+                print("     => Key is: ", k)       
                 collated[k] = Neo4j.create_new_record(record)              
             if record['attendee.email'] != record['person.email']:
+                print("             Adding attendee", record['attendee.email'], record['event.name'], record['attending.status'], 'to', k)
                 collated[k]['attendees'].append(Neo4j.create_attendee(record))
 
         print()
@@ -187,7 +186,7 @@ class Neo4j:
         return {
                     'name': record['attendee.name'],
                     'email': record['attendee.email'],
-                    'attending.status': record['attending.status']
+                    'status': record['attending.status']
                 }
 
     @staticmethod
@@ -215,13 +214,9 @@ class Neo4j:
                 'email': item['organizer.email'],
             }
             
-            del item['person.name']
-            del item['person.email']
-            del item['organizer.name']
-            del item['organizer.email']
-            del item['attendee.name']
-            del item['attendee.email']
-            del item['attending.status']
-            del item['invite.status']
+            for k in ['person.name', 'person.email', 'organizer.name', 'organizer.email', 'attendee.name', 'attendee.email', 
+                      'attending.status', 'invite.status']:
+                item.pop(k)
+
         return sorted(response, key=lambda x: x['start'])
     

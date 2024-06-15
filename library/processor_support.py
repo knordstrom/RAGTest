@@ -58,7 +58,6 @@ class ProcessorSupport:
 
     @staticmethod
     def kafka_listen(default_topic: KafkaTopics, group: str, endpoint: callable):
-    def kafka_listen(default_topic: KafkaTopics, group: str, endpoint: callable):
         kafka = os.getenv("KAFKA_BROKER", "127.0.0.1:9092")
         topic = os.getenv("KAFKA_TOPIC", default_topic.value)
         topic = os.getenv("KAFKA_TOPIC", default_topic.value)
