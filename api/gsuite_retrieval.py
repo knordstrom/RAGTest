@@ -1,5 +1,6 @@
 import datetime
 import json
+import dotenv
 import flask
 
 from library.apisupport import APISupport
@@ -11,12 +12,15 @@ import os
 
 gsuite_retrieval = flask.Blueprint('gsuite_retrieval', __name__)
 require = APISupport.require
+dotenv.load_dotenv()
+
+creds = gsuite_retrieval.root_path + '/../' + os.getenv('GSUITE_CREDS_FILE', 'resources/gmail_creds.json')
 
 @gsuite_retrieval.route('/data/gsuite/email', methods=['GET'])
 def email() -> str:
     email = require(['email', 'e'])
     count = flask.request.args.get('n', None, int)
-    mapped: list = APISupport.read_last_emails(email, gsuite_retrieval.root_path + '/../resources/gmail_creds.json', count = count)
+    mapped: list = APISupport.read_last_emails(email, creds, count = count)
     APISupport.write_emails_to_kafka(mapped, DataSources.GOOGLE) 
     return mapped
 
@@ -28,8 +32,8 @@ def calendar() -> str:
     try:
         now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         print("Getting the upcoming " + str(count) + " events")
-        print("Creds " + gsuite_retrieval.root_path + '/../resources/gmail_creds.json')
-        events = GSuite(email, gsuite_retrieval.root_path + '/../resources/gmail_creds.json').events(now, count)
+        print("Creds " + creds)
+        events = GSuite(email, creds).events(now, count)
         APISupport.write_cal_to_kafka(events, DataSources.GOOGLE) 
         return events
 
@@ -43,9 +47,9 @@ def documents() -> str:
     try:
         # now = datetime.datetime.now(datetime.UTC).isoformat()
         print("Getting your documents")
-        print("Creds " + gsuite_retrieval.root_path + '/../resources/gmail_creds.json')
+        print("Creds " + creds)
         temp_folder = create_temporary_folder()
-        doc_info = GSuite(email, gsuite_retrieval.root_path + '/../resources/gmail_creds.json', temp_folder).get_doc_info()
+        doc_info = GSuite(email, creds, temp_folder).get_doc_info()
         print("doc_info: ", doc_info.keys())
         APISupport.write_docs_to_kafka([x for x in doc_info.values()], DataSources.GOOGLE) 
         return doc_info

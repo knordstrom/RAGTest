@@ -1,10 +1,15 @@
 import datetime
+import datetime
 import json
 import os
 from library import weaviate
 from kafka import KafkaConsumer, TopicPartition
 
 from library.enums.kafka_topics import KafkaTopics
+
+class EventRecordWrapper:
+    def __init__(self, value: dict):
+        self.value = value
 
 class ProcessorSupport:
 
@@ -34,7 +39,7 @@ class ProcessorSupport:
             "dateTime": end_date.isoformat(),
             "timeZone":  "Etc/UTC" #end_date.tzname()
         }
-        return event
+        return EventRecordWrapper(event)
 
     @staticmethod
     def write_to_vdb(mapped: list, endpoint: callable) -> None:
@@ -55,6 +60,7 @@ class ProcessorSupport:
     def kafka_listen(default_topic: KafkaTopics, group: str, endpoint: callable):
         kafka = os.getenv("KAFKA_BROKER", "127.0.0.1:9092")
         topic = os.getenv("KAFKA_TOPIC", default_topic.value)
+        topic = os.getenv("KAFKA_TOPIC", default_topic.value)
         print("Starting processor at " + kafka + " on topic " + topic + " ...")
         try:
             consumer = KafkaConsumer(bootstrap_servers=kafka, 
@@ -74,7 +80,7 @@ class ProcessorSupport:
             while True:
                 print("Tick")
                 try:
-                    message = consumer.poll(timeout_ms=2000)
+                    message: dict = consumer.poll(timeout_ms=2000)
                 except Exception as e:
                     print("Error: " + str(e))
                     continue

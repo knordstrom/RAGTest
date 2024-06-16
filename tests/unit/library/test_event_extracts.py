@@ -2,7 +2,7 @@ import unittest
 import os
 
 from library.models import Event
-from library.processor_support import ProcessorSupport
+from library.processor_support import EventRecordWrapper, ProcessorSupport
 
 class TestEventExtracts(unittest.TestCase):
 
@@ -111,9 +111,9 @@ class TestEventExtracts(unittest.TestCase):
             assert {'name': 'keith@myhouse.com', 'email': 'keith@myhouse.com'} in event.get('attendees')
 
     def test_gsuite_event_from_ics(self):
-        graph_event = ProcessorSupport.email_event_to_graph_event(self.ics_event_dict)
+        graph_event: EventRecordWrapper = ProcessorSupport.email_event_to_graph_event(self.ics_event_dict)
         for k in self.gsuite_event_dict.keys():
-            assert graph_event.get(k) == self.gsuite_event_dict[k], f"Key {k} does not match"
+            assert graph_event.value.get(k) == self.gsuite_event_dict[k], f"Key {k} does not match"
 
     ics_event_dict =  {
             "event_id":  "_6oq3ac1l69j32or1c5i3ep1g64pjgchm60pjcopb6or3ccpk6kpmadb274rm6chgccsmae1ocdh36chd74oj8d346ksmcbbgc5p78rj5e906atj5dpq2soridtn6upjp5phmur8",

@@ -70,20 +70,22 @@ class TestEventNeo4j(IntegrationTestBase):
             print("       ---", saved)
 
 
-        assert len(result) == 6    # 2 events and 2 people
+        assert len(result) == 8    # 2 events and 2 people
         assert len(events) == 2
         assert 'linda@yourhouse.com' in emails.keys()
         assert 'keith@myhouse.com' in emails.keys()
         assert len(events) == 2
         assert 'Stay at Holiday Inn Express & Suites Grand Junction' in events.keys()
         assert 'Keith Nordstrom and Linda Coaching Meeting' in events.keys()
-        assert len(items) == 6
+        assert len(items) == 8
         assert 'keith@myhouse.com ATTENDS Stay at Holiday Inn Express & Suites Grand Junction' in items
         assert 'keith@myhouse.com ATTENDS Keith Nordstrom and Linda Coaching Meeting' in items
         assert 'linda@yourhouse.com ATTENDS Keith Nordstrom and Linda Coaching Meeting' in items
         assert 'Stay at Holiday Inn Express & Suites Grand Junction INVITED keith@myhouse.com' in items
         assert 'Keith Nordstrom and Linda Coaching Meeting INVITED keith@myhouse.com' in items
         assert 'Keith Nordstrom and Linda Coaching Meeting INVITED linda@yourhouse.com' in items
+        assert 'linda@yourhouse.com ORGANIZES Keith Nordstrom and Linda Coaching Meeting' in items
+        assert 'Keith Nordstrom and Linda Coaching Meeting ORGANIZED_BY linda@yourhouse.com' in items
     
     event1 = {"attendees":[{"email":"keith@myhouse.com","responseStatus":"accepted","self":True}],
                "created":"2024-05-31T18:53:21.000Z",
