@@ -129,7 +129,7 @@ class Neo4j:
             "recurring_id": event.get("recurringEventId", ""),
             "start": event["start"].get("dateTime", event["start"].get("date")),
             "end": event["end"].get("dateTime", event["end"].get("date")),
-            "summary": event.get("summary", ""),
+            "name": event.get("summary", ""),
             "description": event.get("description", "")
         }
         return event_dict
@@ -197,6 +197,7 @@ class Neo4j:
         Utils.rename_key(record_dict, 'event.start', 'start', lambda x: x.isoformat() if type(x) == datetime else x)
         Utils.rename_key(record_dict, 'event.end', 'end', lambda x: x.isoformat() if type(x) == datetime else x)
         Utils.rename_key(record_dict, 'event.description', 'description')
+        Utils.rename_key(record_dict, 'event.recurring_id', 'recurring_id')
         Utils.rename_key(record_dict, 'event.name', 'name')
         Utils.rename_key(record_dict, 'event.location', 'location')
         return record_dict

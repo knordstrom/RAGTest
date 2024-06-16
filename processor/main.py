@@ -32,7 +32,8 @@ def write_emails_to_vdb(mapped: list) -> None:
 
             graph_events = []
             for event in events:
-                print("Upserting event " + str(event) + " on from " + str(email['from']))              
+                print("Upserting event " + str(event) + " on from " + str(email['from']))     
+                event['source'] = 'email'      
                 handler.handle_event(event) # , email['from']
                 graph_events.append(ProcessorSupport.email_event_to_graph_event(event))
             

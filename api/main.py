@@ -6,6 +6,7 @@ from os import abort
 import dotenv
 import flask
 from library.apisupport import APISupport
+from library.briefing_support import BriefingSupport
 import library.weaviate as weaviate
 import warnings 
 
@@ -32,14 +33,17 @@ def ask() -> str:
 @app.route('/briefs', methods=['GET'])
 def briefs() -> str:
     """Create briefings for a user."""
+    certainty = flask.request.args.get('certainty', None, float)
+    if certainty is not None:
+        if certainty < 0 or certainty > 100:
+            flask.abort(400, "Confidence must be a percentage value between 0 and 100.")
+        else:
+            certainty = certainty / 100
     email: str = require(['email', 'e'])
-    print("Email", email)
     start_time: datetime = to_date_time(require(['start']), 'start')
-    print("Start time", start_time, type(start_time))
     plus12 = start_time + datetime.timedelta(hours=12)
-    print("Start time plus12", plus12, type(plus12))
     end_time: datetime = to_date_time(flask.request.args.get('end',default = plus12.isoformat()), 'end')
-    return APISupport.create_briefings_for(email, start_time, end_time)
+    return BriefingSupport.create_briefings_for(email, start_time, end_time, certainty = certainty)
 
 @app.route('/schedule', methods=['GET'])
 def schedule() -> str:

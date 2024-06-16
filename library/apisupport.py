@@ -8,6 +8,7 @@ from library.enums.data_sources import DataSources
 from library.enums.kafka_topics import KafkaTopics
 from library.enums.kafka_topics import KafkaTopics
 from library.promptmanager import PromptManager
+from library.utils import Utils
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
 import library.neo4j as neo
@@ -16,6 +17,7 @@ from library.gsuite import GSuite, GmailLogic
 from groq import Groq
 from dotenv import load_dotenv
 
+from library.weaviate_schemas import WeaviateSchemas
 
 class APISupport:
 
@@ -73,45 +75,7 @@ class APISupport:
             producer.send(channel, key = key, value = item)
             count += 1
         producer.flush()
-        print("Wrote ", count, " items to Kafka on channel ", channel)
-
-    # retrieve person node from neo4j
-        #    retrieve associated people
-        #    retrieve associated events
-        # rerieve email chains that are
-        #    1. associated with the person
-        #    2. pertinent to the event
-    @staticmethod
-    def create_briefings_for(email: str, start_time: datetime, end_time: datetime) -> dict:
-        n = neo.Neo4j()
-        n.connect()
-
-        print("Getting schedule for " + email + " from " + start_time.isoformat() + " to " + end_time.isoformat())
-        schedule = n.get_schedule(email, start_time, end_time)
-        print("Schedule was ", str(schedule))
-
-        prompt = PromptManager().get_latest_prompt_template('APISupport.create_briefings_for')
-
-        print("Prompt is ", prompt)
-
-        context = {
-            'email': email,
-            'start_time': start_time.isoformat(),
-            'end_time': end_time.isoformat(),
-            'Context': str(schedule)
-        }
-
-        load_dotenv()
-
-        chat_completion = GroqClient(os.getenv('GROQ_API_KEY'), max_tokens=2000).query(prompt, context)
-
-        return {
-            "Context": schedule,
-            "email": email,
-            "start_time": start_time.isoformat(),
-            "end_time": end_time.isoformat(),
-            "text": chat_completion
-        }
+        print("Wrote ", count, " items to Kafka on channel ", channel)    
     
     @staticmethod
     def perform_ask(question, key, context_limit = 5, max_tokens=2000):
@@ -149,10 +113,8 @@ class APISupport:
             "Question": question,
             "Response": response,
             "Context": {
-                "emails": emails,
-                
-            },
-            
+                "emails": emails,               
+            },            
         }
     
     @staticmethod
