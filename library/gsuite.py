@@ -159,6 +159,7 @@ class GSuite(GSuiteServiceProvider):
                 .list(
                     calendarId="primary",
                     timeMin=now,
+                    eventTypes="default",
                     maxResults=count,
                     singleEvents=True,
                     orderBy="startTime",
@@ -166,6 +167,8 @@ class GSuite(GSuiteServiceProvider):
                 .execute()
             )
             events = events_result.get("items", [])
+            for event in events:
+                event['source'] = 'gmail'
             print("events: ", events)            
             return events
 

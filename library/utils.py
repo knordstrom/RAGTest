@@ -72,3 +72,19 @@ class Utils:
         if old_key in d:
             d[new_key] = transform(d.pop(old_key))
         return d
+    
+    @staticmethod
+    def remove_keys(keys: list[list[str]], data: list[dict]) -> list[dict]:
+        """Takes a list of keys aad a list of dicts and removes the keys from the dicts in the list
+        Args:
+            keys (list[list[str]]): A list of lists of strings. Each list of strings is a nested path into the dicts to be deletesd at the leaf node
+            data (list[dict]): A list of dicts to remove the keys from"""
+        for item in data:   
+            #iterate through the list of keys except for the last one, getting the value for the key and defaulting to an empty dict
+            for keyvals in keys:
+                i = item
+                for j in range(len(keyvals) - 1):
+                    k = keyvals[j]
+                    i = i.get(k, {})
+                i.pop(keyvals[-1], None)
+        return data

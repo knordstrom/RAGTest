@@ -175,6 +175,11 @@ class Weaviate(VDB):
 
         return response
     
+    def get_by_ids(self, key: WeaviateSchemas, id_prop: str, ids: list[str]) -> dict:
+        return self.collection(key).query.fetch_objects(
+            filters= Filter.by_property(id_prop).contains_any(ids),
+        )
+    
     def get_email_by_id(self, email_id: str) -> dict:
         results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
             filters=Filter.by_property("email_id").equal(email_id),
