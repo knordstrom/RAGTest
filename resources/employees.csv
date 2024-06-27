@@ -1,0 +1,5 @@
+EmployeeID,Name,ManagerID,ManagerName,Location,Title,WorkEmail,Type,CostCenter,CostCenterHierarchy
+000001,Pradeep Javangula,000001,Pradeep Javangula,N/A,CEO/Founder,pradeep@cognimate.ai,Employee,California,Enginering
+000002,Keith Nordstrom,000001,Pradeep Javangula,N/A,CTO/Founder,keith@cognimate.ai,Employee,California,Enginering
+000003,Prakash Aditham,000001,Pradeep Javangula,N/A,CPO/Founder,prakash@cognimate.ai,Employee,California,Enginering
+000004,Mithali Shashindar,000002,Keith Nordstrom,N/A,Engineering Intern,mithali@cognimate.ai,Employee,California,Enginering

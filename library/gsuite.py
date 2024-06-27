@@ -102,7 +102,10 @@ class GoogleSchemas(enum.Enum):
 class GSuite(GSuiteServiceProvider):
     # Request all access (permission to read/send/receive emails, manage the inbox, and more)
     SCOPES = ['https://mail.google.com/', 'https://www.googleapis.com/auth/calendar.readonly',
-            'https://www.googleapis.com/auth/drive.readonly', 'https://www.googleapis.com/auth/documents.readonly']
+            'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/documents']
+    
+
+    TOKEN_FILE = 'token.json'
 
     MIME_TYPE = {"pdf": "mimeType='application/pdf'",
                 "docx": "mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'",
@@ -121,8 +124,8 @@ class GSuite(GSuiteServiceProvider):
         creds = None
         # the file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first time
-        if os.path.exists("token.json"):
-            creds = Credentials.from_authorized_user_file("token.json", self.SCOPES)
+        if os.path.exists(self.TOKEN_FILE):
+            creds = Credentials.from_authorized_user_file(self.TOKEN_FILE, self.SCOPES)
 
         # if there are no (valid) credentials availablle, let the user log in.
         if not creds or not creds.valid:
@@ -135,7 +138,7 @@ class GSuite(GSuiteServiceProvider):
                 )
                 creds = flow.run_local_server(port=3000)
             # save the credentials for the next run
-            with open("token.json", "w") as token:
+            with open(self.TOKEN_FILE, "w") as token:
                 token.write(creds.to_json())
         return creds
         
@@ -240,7 +243,7 @@ class GSuite(GSuiteServiceProvider):
                         content.append(para_element['textRun']['content'])
         return ''.join(content)
 
-    def get_gdocs_content(self, doc_ids_name):
+    def get_gdocs_content(self, doc_ids_name: dict):
         doc_ids = list(doc_ids_name.keys())
         with self.service(GoogleSchemas.DOCUMENTS) as service:
             doc_info = {}
