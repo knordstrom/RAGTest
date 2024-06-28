@@ -102,7 +102,7 @@ class GoogleSchemas(enum.Enum):
 class GSuite(GSuiteServiceProvider):
     # Request all access (permission to read/send/receive emails, manage the inbox, and more)
     SCOPES = ['https://mail.google.com/', 'https://www.googleapis.com/auth/calendar.readonly',
-            'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/documents']
+            'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/documents.readonly']
     
 
     TOKEN_FILE = 'token.json'
