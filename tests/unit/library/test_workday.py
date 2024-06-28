@@ -1,3 +1,4 @@
+import random
 import unittest
 import unittest
 import os
@@ -5,8 +6,9 @@ import library.workday as wd
 
 class WorkdayTest(unittest.TestCase):
 
-    def test_org_chart(self):
+    def test_org_chart_gets_constructed_in_any_order(self):
         employees = wd.Employee.from_csv(os.path.join(os.path.dirname(__file__), '../../resources', 'employees.csv'))
+        random.shuffle(employees)
         assert len(employees) == 25
         for e in employees:
             assert len(e.reports) == 0
@@ -29,7 +31,7 @@ class WorkdayTest(unittest.TestCase):
         e6 = list(filter(lambda e: e.employee_id == "000006", org_chart[0].reports[0].reports))[0]
         assert sorted_ids(e6.reports) == ['000014', '000015']
 
-        # e14 = filter(lambda e: e.employee_id == "000014", e6.reports)[0]
-        # assert sorted_ids(e14.reports) == ['C00001', '000018']
+        e14 = list(filter(lambda e: e.employee_id == "000014", e6.reports))[0]
+        assert sorted_ids(e14.reports) == ['000018','C00001']
 
         

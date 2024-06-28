@@ -47,5 +47,5 @@ class Employee:
         with open(file_name, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                employees.append(Employee.from_dict(row))
+                employees.append(Employee.from_workday_row(row))
         return employees
