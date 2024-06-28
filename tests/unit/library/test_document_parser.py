@@ -1,5 +1,4 @@
 import unittest
-import unittest
 import os
 import library.document_parser as dp
 

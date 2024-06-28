@@ -2,9 +2,10 @@ from datetime import datetime
 import dotenv
 from neo4j import GraphDatabase
 import os
-import hashlib
 
+from library.person import Person
 from library.utils import Utils
+from library.employee import Employee
 
 class EventPersonRelationships:
     attendance_map = {}
@@ -19,21 +20,14 @@ class EventPersonRelationships:
     def person_list(self):
         return list(self.person_map.values())
     
-    def attendee_id(self, email):
-        sha256 = hashlib.sha256()
-        sha256.update(email.encode('utf-8'))
-        return sha256.hexdigest()
-    
     def add_attendee(self, person_email, event_id, status, name):
-        attendee_id = self.attendee_id(person_email)
+        p = Person(name, person_email)
+        attendee_id = p.identifier()
         attend_rel_id = attendee_id + event_id
         invited_rel_id = event_id + attendee_id
 
-        attendee = {
-            "id": attendee_id,
-            "email": person_email,
-            "name": name,
-        }
+        attendee = p.to_dict()
+
         rel_dict = {
             "person_email": person_email,
             "event_id": event_id,
@@ -45,6 +39,9 @@ class EventPersonRelationships:
         self.person_map[attendee_id] = attendee
 
 class Neo4j:
+
+    PERSON = "Person"
+    EVENT = "Event"
 
     def __init__(self, host = None, port = None, protocol = "neo4j", user = None, password = None):
         dotenv.load_dotenv()
@@ -109,6 +106,20 @@ class Neo4j:
         with self.driver.session() as session:
             session.run(query, start_node_value=start_node_value, end_node_value=end_node_value, rel_id=properties['id'], properties=properties)
 
+    def process_org_chart(self, org: list[Employee]):
+        # performance: do without recursion?
+
+        for employee in org:
+            person = employee.to_dict()
+            self.merge_node(self.PERSON, "id", person)
+            self.process_org_chart(employee.reports)
+            for sub in employee.reports:
+                report = sub.to_dict()
+                self.create_relationship(self.PERSON, "id", person["id"], "MANAGES", self.PERSON, "id", report["id"], {"id": person["id"] + report["id"]})
+                self.create_relationship(self.PERSON, "id", report["id"], "REPORTS_TO", self.PERSON, "id", person["id"], {"id": report["id"] + person["id"]})
+                     
+
+    #### Events ####
     def process_events(self, events):
         """Processes a list of Google API calendar events and adds them, plus their atttendees, to the Neo4j database."""
 
@@ -142,18 +153,18 @@ class Neo4j:
 
     def add_to_db(self, events_list, relationships: EventPersonRelationships):
         for person in relationships.person_list:
-            self.merge_node("Person", "id", person)
+            self.merge_node(self.PERSON, "id", person)
 
         for event in events_list:
-            self.merge_node("Event", "id", event)
+            self.merge_node(self.EVENT, "id", event)
 
         for attend in relationships.attendance_list:
-            self.create_relationship("Person", "email", attend['person_email'], "ATTENDS", "Event", "id", attend['event_id'], {"id": attend["attend_rel_id"], "status": attend["status"]})
-            self.create_relationship("Event", "id", attend['event_id'], "INVITED", "Person", "email", attend['person_email'], {"id": attend["invited_rel_id"], "status": attend["status"]})
+            self.create_relationship(self.PERSON, "email", attend['person_email'], "ATTENDS", self.EVENT, "id", attend['event_id'], {"id": attend["attend_rel_id"], "status": attend["status"]})
+            self.create_relationship(self.EVENT, "id", attend['event_id'], "INVITED", self.PERSON, "email", attend['person_email'], {"id": attend["invited_rel_id"], "status": attend["status"]})
 
         for event_id, organizer in relationships.organizer_map.items():
-            self.create_relationship("Person", "email", organizer['email'], "ORGANIZES", "Event", "id", event_id, {"id": 'organize' + event_id + organizer['email']})
-            self.create_relationship("Event", "id", event_id, "ORGANIZED_BY", "Person", "email", organizer['email'], {"id": 'organize' + event_id + organizer['email']})
+            self.create_relationship(self.PERSON, "email", organizer['email'], "ORGANIZES", self.EVENT, "id", event_id, {"id": 'organize' + event_id + organizer['email']})
+            self.create_relationship(self.EVENT, "id", event_id, "ORGANIZED_BY", self.PERSON, "email", organizer['email'], {"id": 'organize' + event_id + organizer['email']})
             
             
     @staticmethod
