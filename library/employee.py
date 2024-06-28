@@ -37,7 +37,7 @@ class Employee:
         return result
     
     @staticmethod
-    def from_dict(d: dict):
+    def from_workday_row(d: dict):
         return Employee(d['EmployeeID'], d['Name'], d['ManagerID'], d['ManagerName'], d['Location'], d['Title'], d['WorkEmail'], 
                         d['Type'], d['CostCenter'], d['CostCenterHierarchy'])
     
