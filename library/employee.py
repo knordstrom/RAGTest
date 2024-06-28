@@ -26,7 +26,14 @@ class Employee:
     def to_dict(self):
         p = Person(self.name, self.work_email)
         result = p.to_dict()
-        result['employee_id'] = self.employee_id
+        result.update({
+            'employee_id': self.employee_id,
+            'location': self.location,
+            'title': self.title,
+            'type': self.type,
+            'cost_center': self.cost_center,
+            'cost_center_hierarchy': self.cost_center_hierarchy,
+        })
         return result
     
     @staticmethod
