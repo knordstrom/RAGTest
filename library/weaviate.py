@@ -205,6 +205,23 @@ class Weaviate(VDB):
         if len(results.objects)>0:
             return results.objects[0].properties
         return None
+
+    def get_email_metadata(self, email_id: str):
+        results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
+            filters=Filter.by_property("email_id").equal(email_id),
+        )
+        if len(results.objects)>0:
+            return [obj.properties for obj in results.objects]
+        return None
+
+
+    def get_thread_email_message_by_id(self, thread_id: str):
+        results = self.collection(WeaviateSchemas.EMAIL_TEXT).query.fetch_objects(
+            filters=Filter.by_property("thread_id").equal(thread_id),
+        )
+        if len(results.objects)>0:
+            return [obj.properties for obj in results.objects]
+        return None
     
     def get_slack_message_by_id(self, message_id: str):
         results = self.collection(WeaviateSchemas.SLACK_MESSAGE).query.fetch_objects(

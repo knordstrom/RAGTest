@@ -11,8 +11,8 @@ import library.weaviate as weaviate
 import warnings 
 
 from api.gsuite_retrieval import gsuite_retrieval
-from slack_retrieval import slack_retrieval
-from reference import reference
+from .slack_retrieval import slack_retrieval
+from .reference import reference
 
 warnings.simplefilter("ignore", ResourceWarning)
 
