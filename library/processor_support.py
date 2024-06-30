@@ -65,6 +65,7 @@ class ProcessorSupport:
         try:
             consumer = KafkaConsumer(bootstrap_servers=kafka, 
                                     group_id=group,
+                                    api_version="7.3.2",
                                     value_deserializer=lambda v: json.loads(v.decode('utf-8')))
             consumer.subscribe(topics=[topic])
             print("Subscribed to " + topic + ", waiting for messages...")

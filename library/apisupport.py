@@ -63,7 +63,7 @@ class APISupport:
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
         count = 0
         for item in items:
-            item['provider'] = provider.value
+            # item['provider'] = provider.value
             if item == None:
                 print("Item with no entries found ", item,  "for write to", channel)
                 continue
