@@ -66,10 +66,6 @@ class BriefingSupport:
                 'email': sum_email,
                 'slack': sum_slack
             }
-
-    # @staticmethod
-    # def get_email_thread_context(event: dict, certainty: float = None) -> list[dict]:
-
     
     @staticmethod
     def doc_context_for(event: dict, certainty: float = None) -> list[dict]:
@@ -99,14 +95,15 @@ class BriefingSupport:
 
     @staticmethod
     def construct_conversation_and_summary(emails_dict: dict) -> dict:
-        prompt = """
-            Below is a series of email conversations between different individuals. Please read through the conversations and provide a concise summary that captures the main points and key takeaways from these exchanges.
+        # prompt = """
+        #     Below is a series of email conversations between different individuals. Please read through the conversations and provide a concise summary that captures the main points and key takeaways from these exchanges.
 
-            Conversations:
-            {Conversation}
+        #     Conversations:
+        #     {Conversation}
 
-            Please summarize the conversations, highlighting any important decisions, action items, and key topics discussed.
-            """
+        #     Please summarize the conversations, highlighting any important decisions, action items, and key topics discussed.
+        #     """
+        prompt = PromptManager().get_latest_prompt_template('Summarizer.email_summarizer')
         for thread_id, emails in emails_dict.items():
             for email_id, details in emails.items():
                 conversation = ""
