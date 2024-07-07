@@ -210,9 +210,9 @@ class Weaviate(VDB):
         results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
             filters=Filter.by_property("email_id").equal(email_id),
         )
-        if len(results.objects)>0:
+        if len(results.objects) > 0:
             return [obj.properties for obj in results.objects]
-        return None
+        return []
 
 
     def get_thread_email_message_by_id(self, thread_id: str):

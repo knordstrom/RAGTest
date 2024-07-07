@@ -89,13 +89,13 @@ class BriefingSupport:
         :param data_list: List of dictionaries, each containing an 'email_id' and 'from' field.
         :return: The 'from' field of the matching dictionary or None if no match is found.
         """
-        # print("data_list: ", data_list)
-        for item in data_list:
-            # print("item: ", item)
-            # print("type of item: ", type(item))
-            if item.get('email_id') == email_id:
-                return item.get('from')
-        return None
+        filtered_data = list(filter(lambda x: x['email_id'] == email_id, data_list))
+        if filtered_data:
+            head = filtered_data[0]  # Get the first item
+            result = head['from']
+        else:
+            result = None
+        return result
 
     @staticmethod
     def construct_conversation_and_summary(emails_dict: dict) -> dict:
@@ -119,14 +119,20 @@ class BriefingSupport:
         return emails_dict
 
     @staticmethod
+    def add_unique_item(item, item_list):
+        if item not in item_list:
+            item_list.append(item)
+
+    @staticmethod
     def get_email_thread_ids(emails: list[dict]) -> tuple[list, list]:
-        thread_ids = set()
-        email_ids = set()
+        thread_ids = []
+        email_ids = []
         for email in emails:
-            # Add the thread_id to the set
-            thread_ids.add(email["thread_id"])
-            email_ids.add(email["email_id"])
-        return list(thread_ids), list(email_ids) 
+            # Add the thread_id to the list if it's not already present
+            BriefingSupport.add_unique_item(email["thread_id"], thread_ids)
+            # Add the email_id to the list if it's not already present
+            BriefingSupport.add_unique_item(email["email_id"], email_ids)
+        return thread_ids, email_ids
     
     @staticmethod
     def get_email_metadata(email_ids: list[str]) -> list[dict]:
@@ -134,8 +140,9 @@ class BriefingSupport:
         email_metadata = []
         for email in email_ids:
             email_metadata_using_email_id = w.get_email_metadata(email)
-            for item in email_metadata_using_email_id:
-                email_metadata.append(item)
+            if email_metadata_using_email_id:
+                for item in email_metadata_using_email_id:
+                    email_metadata.append(item)
         return email_metadata
 
     @staticmethod
@@ -152,13 +159,20 @@ class BriefingSupport:
         return threads
 
     @staticmethod
-    def group_messages_by_thread_id(threads: dict) -> defaultdict:
-        grouped_messages = defaultdict(lambda: defaultdict(list))
+    def group_messages_by_thread_id(threads: dict) -> dict:
+        grouped_messages = {}
 
         # Group and order messages by email_id and ordinal
         for thread_id, messages in threads.items():
+            grouped_messages[thread_id] = {}
             for message in messages:
-                grouped_messages[thread_id][message['email_id']].append((message['ordinal'], message['text']))
+                email_id = message['email_id']
+                ordinal = message['ordinal']
+                text = message['text']
+                if email_id not in grouped_messages[thread_id]:
+                    grouped_messages[thread_id][email_id] = []
+                grouped_messages[thread_id][email_id].append((ordinal, text))
+
         return grouped_messages
 
     @staticmethod
