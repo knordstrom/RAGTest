@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 from collections import defaultdict
 from library import weaviate
+from library.api_models import BriefResponse, SlackThreadResponse
 from library.groq_client import GroqClient
 import library.neo4j as neo
 from dotenv import load_dotenv
@@ -15,7 +16,7 @@ from library.weaviate_schemas import WeaviateSchemas
 class BriefingSupport:
 
     @staticmethod
-    def create_briefings_for(email: str, start_time: datetime, end_time: datetime, certainty: float = None) -> dict:
+    def create_briefings_for(email: str, start_time: datetime, end_time: datetime, certainty: float = None) -> BriefResponse:
         """    # retrieve person node from neo4j
         #    retrieve associated people
         #    retrieve associated events
@@ -53,7 +54,7 @@ class BriefingSupport:
             },
         })
         del context['Context']          
-        return context
+        return BriefResponse.model_validate(context)
     
     @staticmethod
     def contextualize(event: dict, certainty: float = None) -> dict:
@@ -208,10 +209,10 @@ class BriefingSupport:
         {Conversation}"""
         w = weaviate.Weaviate()
         for thread in sum_slack:
-            messages = w.get_slack_thread_messages_by_id(thread['thread_id'])
+            messages: SlackThreadResponse = w.get_slack_thread_messages_by_id(thread['thread_id'])
             conversation = ""
-            for message in messages['messages']:
-                conversation += "\n" + message['from'] + ": " + message['text']
+            for message in messages.messages:
+                conversation += "\n" + message.sender + ": " + "".join(message.text)
             
             thread['text'] = conversation
             thread['summary'] = GroqClient(os.getenv('GROQ_API_KEY')).query(prompt, {'Conversation': conversation})

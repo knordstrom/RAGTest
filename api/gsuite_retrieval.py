@@ -1,7 +1,9 @@
 import datetime
 import json
+from typing import List, Union
 import dotenv
 import flask
+from pydantic import EmailStr
 
 from library.apisupport import APISupport
 from library.enums.data_sources import DataSources
@@ -9,6 +11,9 @@ from library.gsuite import GSuite
 from library.slack import Slack, SlackAuthException
 from googleapiclient.errors import HttpError
 import os
+from fastapi import APIRouter
+
+route = APIRouter(tags=["Data Acquisition"])
 
 gsuite_retrieval = flask.Blueprint('gsuite_retrieval', __name__)
 require = APISupport.require
@@ -16,24 +21,21 @@ dotenv.load_dotenv()
 
 creds = gsuite_retrieval.root_path + '/../' + os.getenv('GSUITE_CREDS_FILE', 'resources/gmail_creds.json')
 
-@gsuite_retrieval.route('/data/gsuite/email', methods=['GET'])
-def email() -> str:
-    email = require(['email', 'e'])
-    count = flask.request.args.get('n', None, int)
-    mapped: list = APISupport.read_last_emails(email, creds, count = count)
+@route.get('/data/gsuite/email')
+def email(email: EmailStr, n: Union[int, None] = None) -> List[dict]:
+    """Get the last n emails from the specified user's gsuite account. Response is a pass-through of the Gmail API response."""
+    mapped: list[dict] = APISupport.read_last_emails(email, creds, count = n)
     APISupport.write_emails_to_kafka(mapped, DataSources.GOOGLE) 
     return mapped
 
-@gsuite_retrieval.route('/data/gsuite/calendar', methods=['GET'])
-def calendar() -> str:
-    email: str = require(['email', 'e'])
-    count = require(['n'], int)
-
+@route.get('/data/gsuite/calendar')
+def calendar(email: EmailStr, n: int) -> List[dict]:
+    """Get the next n events from the specified user's gsuite calendar. Response is a pass-through of the Calendar API response."""
     try:
         now = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        print("Getting the upcoming " + str(count) + " events")
+        print("Getting the upcoming " + str(n) + " events")
         print("Creds " + creds)
-        events = GSuite(email, creds).events(now, count)
+        events = GSuite(email, creds).events(now, n)
         APISupport.write_cal_to_kafka(events, DataSources.GOOGLE) 
         return events
 
@@ -41,9 +43,9 @@ def calendar() -> str:
         print(f"An error occurred: {error}")
         flask.abort(400, f"An HTTP error occurred '{error}'")
 
-@gsuite_retrieval.route('/data/gsuite/documents', methods=['GET'])
-def documents() -> str:
-    email: str = require(['email', 'e'])
+@route.get('/data/gsuite/documents')
+def documents(email: EmailStr) -> List[dict]:
+    """Get the documents from the specified user's gsuite account. Response is a pass-through of the Drive API response."""
     try:
         # now = datetime.datetime.now(datetime.UTC).isoformat()
         print("Getting your documents")

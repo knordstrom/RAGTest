@@ -4,6 +4,7 @@ import os
 import uuid
 import flask
 from kafka import KafkaProducer
+from library.api_models import AskResponse, ScheduleResponse
 from library.enums.data_sources import DataSources
 from library.enums.kafka_topics import KafkaTopics
 from library.enums.kafka_topics import KafkaTopics
@@ -78,7 +79,7 @@ class APISupport:
         print("Wrote ", count, " items to Kafka on channel ", channel)    
     
     @staticmethod
-    def perform_ask(question, key, context_limit = 5, max_tokens=2000):
+    def perform_ask(question: str, key: str, context_limit: int = 5, max_tokens: int =2000) -> AskResponse:
         vdb = weaviate.Weaviate(os.getenv('VECTOR_DB_HOST',"127.0.0.1"), os.getenv('VECTOR_DB_PORT',"8080"))
         context = vdb.search(question, key, context_limit)
         
@@ -109,27 +110,34 @@ class APISupport:
         print(str(texts))
         
         response = GroqClient(os.getenv('GROQ_API_KEY'), max_tokens=max_tokens).query(prompt, {'Question':question, 'Context': texts})
-        return {
-            "Question": question,
-            "Response": response,
-            "Context": {
+        return AskResponse.model_validate({
+            "question": question,
+            "response": response,
+            "context": {
                 "emails": emails,               
             },            
-        }
+        })
     
     @staticmethod
-    def get_calendar_between(email: str, start_time: datetime, end_time: datetime) -> dict:
+    def get_calendar_between(email: str, start_time: datetime, end_time: datetime) -> ScheduleResponse:
         n = neo.Neo4j()
         n.connect()
         print("Getting calendar for " + email + " from " + start_time.isoformat() + " to " + end_time.isoformat())
         events = n.get_schedule(email, start_time, end_time)
-        print("Events were ", str(events))
-        return {
+        
+        print("Full response", {
             "email": email,
             "start_time": start_time.isoformat(),
             "end_time": end_time.isoformat(),
             "events": events
-        }
+        })
+
+        return ScheduleResponse.model_validate({
+            "email": email,
+            "start_time": start_time.isoformat(),
+            "end_time": end_time.isoformat(),
+            "events": events
+        })
 
     @staticmethod
     def require(keys: list[str], type = str) -> str:
