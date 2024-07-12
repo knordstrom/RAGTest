@@ -1,16 +1,20 @@
 import ast
 import json
+import os
+from typing import Union
+
+from fastapi import APIRouter
+from fastapi.responses import RedirectResponse
 from library.apisupport import APISupport
 from library.slack import Slack, SlackAuthException
-import flask
 
-slack_retrieval = flask.Blueprint('slack_retrieval', __name__)
-require = APISupport.require
+route = APIRouter(tags=["Data Acquisition"])
 
+root_path = os.path.dirname(os.path.realpath(__file__))
 
 default_destination = {'destination': '/data/slack/channels'}
 
-@slack_retrieval.route('/data/slack/channels', methods=['GET'])
+@route.get('/data/slack/channels')
 def slack() -> str:
     s = Slack()
     creds = s.check_auth()
@@ -19,33 +23,33 @@ def slack() -> str:
     if not creds or not creds.valid or creds.expired:
         if creds:
             print("Redirecting to auth", creds.valid, creds.expired, creds.expiry)
-        return flask.redirect(s.auth_target(default_destination))
+        return RedirectResponse(url=s.auth_target(default_destination))
     try:
         conversations = s.read_conversations()
-        with open(slack_retrieval.root_path + '/../resources/slack_response.json', 'w') as file:
+        with open(root_path + '/../resources/slack_response.json', 'w') as file:
             json.dump(conversations, file)
         APISupport.write_slack_to_kafka(conversations)
     except SlackAuthException as error:
-        return flask.redirect(s.auth_target(default_destination))
+        return RedirectResponse(url=s.auth_target(default_destination))
     
     return conversations
 
-@slack_retrieval.route('/slack/auth/start', methods=['GET'])
-def slack_auth() -> str:
-    destination = flask.request.args.get('destination', default_destination['destination'])
+@route.get('/slack/auth/start')
+def slack_auth(destination: Union[str,None] = None) -> str:
+    destination = destination if destination else default_destination['destination']
     s = Slack()
     creds = s.check_auth()
     if not creds or not creds.valid:
-        return flask.redirect(s.auth_target({'destination': destination}))
+        return RedirectResponse(url=s.auth_target({'destination': destination}))
     else:
-        return flask.redirect(destination)
+        return RedirectResponse(url=destination)
     
 
-@slack_retrieval.route("/slack/auth/finish", methods=["GET", "POST"])
-def slack_auth_finish():
+@route.get("/slack/auth/finish")
+def slack_auth_finish(code:str, state:Union[str,None] = None):
     # Retrieve the auth code and state from the request params
-    auth_code = require(["code"])
-    received_state = ast.literal_eval(flask.request.args.get("state",str(default_destination)))
+
+    received_state = ast.literal_eval(state if state else str(default_destination))
     s = Slack()
-    result = s.finish_auth(auth_code)
-    return flask.redirect(received_state.get('destination', default_destination['destination']))
+    result = s.finish_auth(code)
+    return RedirectResponse(url=received_state.get('destination', default_destination['destination']))

@@ -1,25 +1,23 @@
 import datetime
-import json
 from typing import List, Union
 import dotenv
-import flask
 from pydantic import EmailStr
 
 from library.apisupport import APISupport
 from library.enums.data_sources import DataSources
 from library.gsuite import GSuite
-from library.slack import Slack, SlackAuthException
 from googleapiclient.errors import HttpError
 import os
 from fastapi import APIRouter
 
 route = APIRouter(tags=["Data Acquisition"])
 
-gsuite_retrieval = flask.Blueprint('gsuite_retrieval', __name__)
 require = APISupport.require
 dotenv.load_dotenv()
 
-creds = gsuite_retrieval.root_path + '/../' + os.getenv('GSUITE_CREDS_FILE', 'resources/gmail_creds.json')
+root_path = os.path.dirname(os.path.realpath(__file__))
+
+creds = root_path + '/../' + os.getenv('GSUITE_CREDS_FILE', 'resources/gmail_creds.json')
 
 @route.get('/data/gsuite/email')
 async def email(email: EmailStr, n: Union[int, None] = None) -> List[dict]:
@@ -41,7 +39,7 @@ async def calendar(email: EmailStr, n: int) -> List[dict]:
 
     except HttpError as error:
         print(f"An error occurred: {error}")
-        flask.abort(400, f"An HTTP error occurred '{error}'")
+        APISupport.error_response(400, f"An HTTP error occurred '{error}'")
 
 @route.get('/data/gsuite/documents')
 async def documents(email: EmailStr) -> List[dict]:
@@ -58,10 +56,9 @@ async def documents(email: EmailStr) -> List[dict]:
 
     except HttpError as error:
         print(f"An error occurred: {error}")
-        flask.abort(400, f"An HTTP error occurred '{error}'")     
+        APISupport.error_response(400, f"An HTTP error occurred '{error}'")     
 
 def create_temporary_folder():
-    root_path = gsuite_retrieval.root_path
     temp_folder = os.path.join(root_path, 'temp', 'gsuite')
     os.makedirs(temp_folder, exist_ok=True)
     return temp_folder

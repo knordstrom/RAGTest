@@ -2,14 +2,13 @@ import datetime
 import json
 import os
 import uuid
+from fastapi import HTTPException
 import flask
 from kafka import KafkaProducer
 from library.api_models import AskResponse, ScheduleResponse
 from library.enums.data_sources import DataSources
 from library.enums.kafka_topics import KafkaTopics
 from library.enums.kafka_topics import KafkaTopics
-from library.promptmanager import PromptManager
-from library.utils import Utils
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
 import library.neo4j as neo
@@ -17,8 +16,6 @@ from library.gsuite import GSuite, GmailLogic
 
 from groq import Groq
 from dotenv import load_dotenv
-
-from library.weaviate_schemas import WeaviateSchemas
 
 class APISupport:
 
@@ -147,3 +144,7 @@ class APISupport:
                 return value
         keys = "' or '".join(keys)
         flask.abort(400, f"Missing required parameter '{keys}'")
+
+    @staticmethod
+    def error_response(code: int, message: str) -> dict:
+        raise HTTPException(status_code=code, detail=message)
