@@ -13,7 +13,7 @@ class TestGmail(GSuiteServiceProvider):
     def service(self):
         pass
     
-    def list(self, userId='me', pageToken=None, maxResults = None):
+    def list_emails(self, userId='me', pageToken=None, maxResults = None):
         messages = []
         if not maxResults:
             maxResults = 100
@@ -33,7 +33,7 @@ class TestGmail(GSuiteServiceProvider):
             messages.append({'id': str(i), 'historyId': str(i), 'threadId': str(i), 'labelIds': ['INBOX'], 'internalDate': str(i)})
         return {'messages': messages, 'nextPageToken': str(counter) if maxResults + tokenLimit < self.totalMessages else None}
     
-    def get(self, id, userId='me', format='full'):
+    def get_email(self, id, userId='me', format='full'):
         return {'payload': {'parts': [{'mimeType': 'text/plain', 'body': {'data': 'dGV4dC1wbGFpbg=='}}]}}
     
     def close(self):
@@ -44,17 +44,17 @@ class TestGmailLogic(unittest.TestCase):
     def test_stub_sanity(self):
         tm = TestGmail(5)
         assert tm.totalMessages == 5
-        assert len(tm.list(maxResults=10)['messages']) == 5
-        assert tm.list(maxResults=10)['nextPageToken'] is None
+        assert len(tm.list_emails(maxResults=10)['messages']) == 5
+        assert tm.list_emails(maxResults=10)['nextPageToken'] is None
 
         #request these in pieces now
-        assert len(tm.list(maxResults=3)['messages']) == 3
-        assert tm.list(maxResults=3)['nextPageToken'] is not None
+        assert len(tm.list_emails(maxResults=3)['messages']) == 3
+        assert tm.list_emails(maxResults=3)['nextPageToken'] is not None
 
-        prev_token = tm.list(maxResults=3)['nextPageToken']
+        prev_token = tm.list_emails(maxResults=3)['nextPageToken']
         print("Prev token: " + prev_token)
-        assert len(tm.list(maxResults=3, pageToken = prev_token)['messages']) == 2
-        assert tm.list(maxResults=3, pageToken = prev_token)['nextPageToken'] is None
+        assert len(tm.list_emails(maxResults=3, pageToken = prev_token)['messages']) == 2
+        assert tm.list_emails(maxResults=3, pageToken = prev_token)['nextPageToken'] is None
 
 
     def test_get_emails_returns_as_many_as_asked_for_below_limit(self):
