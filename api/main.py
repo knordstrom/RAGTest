@@ -11,10 +11,15 @@ from library.apisupport import APISupport
 from library.briefing_support import BriefingSupport
 import library.weaviate as weaviate
 import warnings 
+
 from api.reference import route as refs
 from api.gsuite_retrieval import route as data
 from fastapi import FastAPI
 from pydantic import BaseModel
+
+from api.gsuite_retrieval import gsuite_retrieval
+from .slack_retrieval import slack_retrieval
+from .reference import reference
 
 warnings.simplefilter("ignore", ResourceWarning)
 
