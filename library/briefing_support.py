@@ -55,7 +55,7 @@ class BriefingSupport:
         return BriefResponse(email=email, start_time=start_time, end_time=end_time, summary=summary, context=BriefContext(schedule = meetings))
      
     @staticmethod
-    def contextualize(event: dict, certainty: float = None) -> MeetingSupport:
+    def contextualize(event: Event, certainty: float = None) -> MeetingSupport:
         sum_docs: list[DocumentEntry] = BriefingSupport.doc_context_for(event, certainty)
         sum_email: list[EmailConversationEntry] = BriefingSupport.email_context_for(event, certainty)
         sum_slack: list[SlackConversationEntry] = BriefingSupport.slack_context_for(event, certainty)
@@ -67,7 +67,7 @@ class BriefingSupport:
         )
     
     @staticmethod
-    def doc_context_for(event: dict, certainty: float = None) -> list[DocumentEntry]:
+    def doc_context_for(event: Event, certainty: float = None) -> list[DocumentEntry]:
         sum_docs = BriefingSupport.context_for(event, WeaviateSchemas.DOCUMENT_SUMMARY, WeaviateSchemas.DOCUMENT, 'document_id', certainty)
         Utils.remove_keys([['metadata', 'lastModifyingUser'],['metadata', 'owners'],['metadata', 'permissions']], sum_docs)
         response = []
@@ -75,24 +75,6 @@ class BriefingSupport:
             Utils.rename_key(doc, 'text', 'summary')
             response.append(DocumentEntry.model_validate(doc))
         return response
-
-    
-    @staticmethod
-    def find_sender_by_email_id(email_id: str, data_list: list[dict]) -> EmailParticipant:
-        """
-        Find the 'from' field in dictionaries within a list where 'email_id' matches the given email_id.
-
-        :param email_id: The email_id to search for.
-        :param data_list: List of dictionaries, each containing an 'email_id' and 'from' field.
-        :return: The 'from' field of the matching dictionary or None if no match is found.
-        """
-        filtered_data = list(filter(lambda x: x.email_id == email_id, data_list))
-        if filtered_data:
-            head: Email = filtered_data[0]  # Get the first item
-            result = head.from_
-        else:
-            result = None
-        return result
 
     @staticmethod
     def construct_conversation_and_summary(emails_dict: dict[str, list[EmailTextWithFrom]]) -> dict[str,EmailConversationWithSummary]:
@@ -124,7 +106,7 @@ class BriefingSupport:
         return response
 
     @staticmethod
-    def get_email_thread_ids(emails: list[dict]) -> tuple[list[str], list[str]]:
+    def get_email_thread_ids(emails: list[dict[str, any]]) -> tuple[list[str], list[str]]:
         thread_ids: dict[str, str] = {}
         email_ids: dict[str, str] = {}
         for email in emails:
@@ -193,7 +175,7 @@ class BriefingSupport:
     
     @staticmethod
     def email_context_for(event: Event, certainty: float = None) -> list[EmailConversationEntry]:
-        sum_email = BriefingSupport.context_for(event, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'email_id', certainty)
+        sum_email: list[dict[str, any]] = BriefingSupport.context_for(event, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'email_id', certainty)
 
         thread_ids, email_ids = BriefingSupport.get_email_thread_ids(sum_email)
         email_metadata: dict[str, Email] = BriefingSupport.get_email_metadata(email_ids)

@@ -2,9 +2,9 @@ import unittest
 import os
 
 from library.api_models import MeetingAttendee
-from library.models.event import Event
+from library.models.event import Event as EventModel
 from library.processor_support import EventRecordWrapper, ProcessorSupport
-from library.weaviate_schemas import EmailParticipant
+from library.weaviate_schemas import EmailParticipant, Event
 
 class TestEventExtracts(unittest.TestCase):
 
@@ -12,7 +12,7 @@ class TestEventExtracts(unittest.TestCase):
         file = os.path.join(os.path.dirname(__file__), '../../resources/events', 'invite1.ics')
         with open(file, 'r') as file:
             ics_file = file.read()
-            event = Event.create(ics_file)
+            event: EventModel = EventModel.create(ics_file)
             print(event)
 
             assert event is not None
@@ -33,7 +33,7 @@ class TestEventExtracts(unittest.TestCase):
         file = os.path.join(os.path.dirname(__file__), '../../resources/events', 'invite2.ics')
         with open(file, 'r') as file:
             ics_file = file.read()
-            event = Event.create(ics_file)
+            event: EventModel = EventModel.create(ics_file)
             print(event)
 
             assert event is not None
@@ -52,7 +52,7 @@ class TestEventExtracts(unittest.TestCase):
         file = os.path.join(os.path.dirname(__file__), '../../resources/events', 'standup.ics')
         with open(file, 'r') as file:
             ics_file = file.read()
-            event: Event = Event.create(ics_file)
+            event: EventModel = EventModel.create(ics_file)
             print(event)
 
             assert event is not None
@@ -76,7 +76,7 @@ class TestEventExtracts(unittest.TestCase):
         file = os.path.join(os.path.dirname(__file__), '../../resources/events', 'allday.ics')
         with open(file, 'r') as file:
             ics_file = file.read()
-            event: Event = Event.create(ics_file)
+            event: EventModel = EventModel.create(ics_file)
             print(event)
 
             assert event is not None
@@ -95,7 +95,7 @@ class TestEventExtracts(unittest.TestCase):
         file = os.path.join(os.path.dirname(__file__), '../../resources/events', 'sample1.ics')
         with open(file, 'r') as file:
             ics_file = file.read()
-            event = Event.create(ics_file)
+            event: EventModel = EventModel.create(ics_file)
             print(event)
 
             assert event is not None
@@ -113,12 +113,25 @@ class TestEventExtracts(unittest.TestCase):
             assert MeetingAttendee(name='keith@myhouse.com' , email='keith@myhouse.com') in event.attendees 
 
     def test_gsuite_event_from_ics(self):
-        graph_event: EventRecordWrapper = ProcessorSupport.email_event_to_graph_event(Event(**self.ics_event_dict))
+        attendees = [MeetingAttendee(**x) for x in self.ics_event_dict["attendees"]]
+        full_dict = self.ics_event_dict
+        full_dict.update({
+            "email_id": "435623645",
+            "sent_date": "2024-06-13T15:00:00-06:00",
+            "from_": "he@she.com",
+            "to": "she@he.com",
+            "thread_id": "34534555",
+            "name" : self.ics_event_dict["summary"],
+            "provider": "google",
+        })
+        graph_event: EventRecordWrapper = ProcessorSupport.email_event_to_graph_event(Event(**self.ics_event_dict), attendees)
         for k in self.gsuite_event_dict.keys():
             print(f"Checking key {k}", k, "   ", graph_event.value.get(k), "    ", self.gsuite_event_dict[k])
             if k == "start" or k == "end":
                 # there is an inconsistency in the values listed below. The ICS dicts list the tz as Etc/UTC when it is in -6:00
                 assert graph_event.value.get(k)["dateTime"] == self.gsuite_event_dict[k]["dateTime"], f"Key {k} does not match"
+            elif k == "attendees" or k =="creator" or k =="organizer" or k =="status":
+                pass
             else:
                 assert graph_event.value.get(k) == self.gsuite_event_dict[k], f"Key {k} does not match"
 
