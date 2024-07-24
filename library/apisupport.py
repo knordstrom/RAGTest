@@ -4,7 +4,7 @@ import os
 import uuid
 from fastapi import HTTPException
 from kafka import KafkaProducer
-from library.api_models import AskResponse, Meeting, ScheduleResponse
+from library.api_models import AskRequestContext, AskResponse, Meeting, ScheduleResponse
 from library.enums.data_sources import DataSources
 from library.enums.kafka_topics import KafkaTopics
 from library.enums.kafka_topics import KafkaTopics
@@ -111,13 +111,11 @@ class APISupport:
         print(str(texts))
         
         response = GroqClient(os.getenv('GROQ_API_KEY'), max_tokens=max_tokens).query(prompt, {'Question':question, 'Context': texts})
-        return AskResponse.model_validate({
-            "question": question,
-            "response": response,
-            "context": {
-                "emails": emails,               
-            },            
-        })
+        return AskResponse(
+            question = question,
+            response = response,
+            context = AskRequestContext(emails = emails)        
+        )
     
     @staticmethod
     def get_calendar_between(email: str, start_time: datetime, end_time: datetime) -> ScheduleResponse:
@@ -131,12 +129,12 @@ class APISupport:
             m['name'] = m.get('summary', 'No Title')
             meetings.append(Meeting(**m))
 
-        return ScheduleResponse.model_validate({
-            "email": email,
-            "start_time": start_time.isoformat(),
-            "end_time": end_time.isoformat(),
-            "events": meetings
-        })
+        return ScheduleResponse(
+            email  = email,
+            start_time = start_time.isoformat(),
+            end_time = end_time.isoformat(),
+            events = meetings
+        )
 
     @staticmethod
     def error_response(code: int, message: str) -> dict:
