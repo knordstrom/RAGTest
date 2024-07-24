@@ -16,6 +16,7 @@ default_destination = {'destination': '/data/slack/channels'}
 
 @route.get('/data/slack/channels')
 def slack() -> str:
+    """Retrieve slack channels for the current user. THIS CURRENTLY DOES NOT WORK WITHOUT MANUAL INCLUSION OF SLACK CREDENTIALS."""
     s = Slack()
     creds = s.check_auth()
     if creds:
@@ -34,7 +35,7 @@ def slack() -> str:
     
     return conversations
 
-@route.get('/slack/auth/start')
+@route.get('/slack/auth/start', include_in_schema=False)
 def slack_auth(destination: Union[str,None] = None) -> str:
     destination = destination if destination else default_destination['destination']
     s = Slack()
@@ -45,7 +46,7 @@ def slack_auth(destination: Union[str,None] = None) -> str:
         return RedirectResponse(url=destination)
     
 
-@route.get("/slack/auth/finish")
+@route.get("/slack/auth/finish", include_in_schema=False)
 def slack_auth_finish(code:str, state:Union[str,None] = None):
     # Retrieve the auth code and state from the request params
 

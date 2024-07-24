@@ -1,10 +1,10 @@
 import groq
+from library.models.event import Event
 from library.promptmanager import PromptManager
 from library.slack import Slack
 from library.utils import Utils
 import library.weaviate as weaviate
 from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
-import library.document_parser as DocumentParser
 from groq import Groq
 from dotenv import load_dotenv
 import os
@@ -23,10 +23,12 @@ class Handlers:
             email['body'] = email['subject']
         self.w.upsert_chunked_text(email, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'body')
 
-    def handle_event(self, event: dict):
-        if event.get('description', '') == '':
-            event['description'] = event.get('summary', '')
-        self.w.upsert_chunked_text(event, WeaviateSchemas.EVENT_TEXT, WeaviateSchemas.EVENT, 'description')
+    def handle_event(self, event: Event):
+        if event.description == '' or event.description is None:
+            event.description = event.summary
+        event_dict = event.model_dump(exclude_none = True)
+        Utils.rename_key(event_dict, 'from_', 'from')
+        self.w.upsert_chunked_text(event_dict, WeaviateSchemas.EVENT_TEXT, WeaviateSchemas.EVENT, 'description')
 
     def handle_document(self, document: dict, filename: str = None):
         text = document.get("text")

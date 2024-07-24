@@ -3,16 +3,18 @@ import json
 import os
 import uuid
 from fastapi import HTTPException
-import flask
 from kafka import KafkaProducer
-from library.api_models import AskResponse, ScheduleResponse
+from library.api_models import AskResponse, Meeting, ScheduleResponse
 from library.enums.data_sources import DataSources
 from library.enums.kafka_topics import KafkaTopics
 from library.enums.kafka_topics import KafkaTopics
+from library.models.event import Event
+from library.models.message import Message
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
 import library.neo4j as neo
 from library.gsuite import GSuite, GmailLogic
+from weaviate.collections.classes.internal import Object
 
 from groq import Groq
 from dotenv import load_dotenv
@@ -20,12 +22,12 @@ from dotenv import load_dotenv
 class APISupport:
 
     @staticmethod
-    def read_last_emails(email: str, creds: str, count = None) -> list[dict]:
+    def read_last_emails(email: str, creds: str, count = None) -> list[Message]:
         try:
             g: GSuite = GSuite(email, creds)
             gm: GmailLogic = GmailLogic(g)
-            ids = gm.get_emails(count)
-            mapped = []
+            ids: list[dict[str, str]] = gm.get_emails(count)
+            mapped: list[Message] = []
             for id in ids:
                 mapped.append(gm.get_email(msg_id=id['id']))
             
@@ -34,38 +36,40 @@ class APISupport:
             g.close()
 
     @staticmethod
-    def write_emails_to_kafka(emails: list[dict], provider: DataSources) -> None:
-        APISupport.write_to_kafka(emails, KafkaTopics.EMAILS, provider,  lambda item: str(item['to'][0]))
-        APISupport.write_to_kafka(emails, KafkaTopics.EMAILS, provider,  lambda item: str(item['to'][0]))
+    def write_emails_to_kafka(emails: list[Message], provider: DataSources) -> None:
+        written = [email.model_dump() for email in emails]
+        APISupport.write_to_kafka(written, KafkaTopics.EMAILS, provider,  lambda item: str(item['to'][0]))
 
     @staticmethod
     def write_slack_to_kafka(slacks: list[dict]) -> None:
-        APISupport.write_to_kafka(slacks, KafkaTopics.SLACK, DataSources.SLACK, lambda item: str(item['name']))
         APISupport.write_to_kafka(slacks, KafkaTopics.SLACK, DataSources.SLACK, lambda item: str(item['name']))
 
     @staticmethod
     def write_cal_to_kafka(events: list[dict], provider: DataSources) -> None:
         APISupport.write_to_kafka(events, KafkaTopics.CALENDAR, provider)
-        APISupport.write_to_kafka(events, KafkaTopics.CALENDAR, provider)
 
     @staticmethod
     def write_docs_to_kafka(docs: list[dict], provider: DataSources) -> None:  
         APISupport.write_to_kafka(docs, KafkaTopics.DOCUMENTS,  provider)
-        APISupport.write_to_kafka(docs, KafkaTopics.DOCUMENTS,  provider)
+
+
+    def handle_json(obj):
+        if isinstance(obj, (datetime.datetime, datetime.date)):
+            return obj.isoformat()
+        raise TypeError("Type not serializable  " + str(obj))
 
     @staticmethod
     def write_to_kafka(items: list[dict], topic_channel: KafkaTopics, provider: DataSources, key_function: callable = lambda x: str(uuid.uuid4())) -> None:
         channel = topic_channel.value
         producer = KafkaProducer(bootstrap_servers=os.getenv('KAFKA_BROKER','127.0.0.1:9092'), 
                                  api_version="7.3.2", 
-                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+                                 value_serializer=lambda v: json.dumps(v, default=APISupport.handle_json).encode('utf-8'))
         count = 0
         for item in items:
             # item['provider'] = provider.value
             if item == None:
                 print("Item with no entries found ", item,  "for write to", channel)
                 continue
-            item['provider'] = provider.value
             item['provider'] = provider.value
             ks = key_function(item)
             key = bytearray().extend(map(ord, ks))
@@ -77,11 +81,11 @@ class APISupport:
     
     @staticmethod
     def perform_ask(question: str, key: str, context_limit: int = 5, max_tokens: int =2000) -> AskResponse:
-        vdb = weaviate.Weaviate(os.getenv('VECTOR_DB_HOST',"127.0.0.1"), os.getenv('VECTOR_DB_PORT',"8080"))
-        context = vdb.search(question, key, context_limit)
+        vdb: weaviate.Weaviate = weaviate.Weaviate(os.getenv('VECTOR_DB_HOST',"127.0.0.1"), os.getenv('VECTOR_DB_PORT',"8080"))
+        context: list[Object] = vdb.search(question, key, context_limit)
         
         emails = []
-        for o in context.objects:
+        for o in context:
             emails.append(o.properties['text'])
             
         mail_context = '"' + '"\n\n"'.join(emails) + '"\n\n'
@@ -101,7 +105,7 @@ class APISupport:
         ### Response:'''
 
         texts = []
-        for o in context.objects:
+        for o in context:
             texts.append(o.properties['text'])
 
         print(str(texts))
@@ -118,32 +122,21 @@ class APISupport:
     @staticmethod
     def get_calendar_between(email: str, start_time: datetime, end_time: datetime) -> ScheduleResponse:
         n = neo.Neo4j()
-        n.connect()
         print("Getting calendar for " + email + " from " + start_time.isoformat() + " to " + end_time.isoformat())
-        events = n.get_schedule(email, start_time, end_time)
-        
-        print("Full response", {
-            "email": email,
-            "start_time": start_time.isoformat(),
-            "end_time": end_time.isoformat(),
-            "events": events
-        })
+        events: list[Event] = n.get_schedule(email, start_time, end_time)
+
+        meetings: list[Meeting] = []
+        for event in events:
+            m = event.model_dump()
+            m['name'] = m.get('summary', 'No Title')
+            meetings.append(Meeting(**m))
 
         return ScheduleResponse.model_validate({
             "email": email,
             "start_time": start_time.isoformat(),
             "end_time": end_time.isoformat(),
-            "events": events
+            "events": meetings
         })
-
-    @staticmethod
-    def require(keys: list[str], type = str) -> str:
-        for key in keys:
-            value = flask.request.args.get(key, type=type)
-            if value is not None:         
-                return value
-        keys = "' or '".join(keys)
-        flask.abort(400, f"Missing required parameter '{keys}'")
 
     @staticmethod
     def error_response(code: int, message: str) -> dict:

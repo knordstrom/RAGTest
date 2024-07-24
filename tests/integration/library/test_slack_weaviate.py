@@ -6,7 +6,7 @@ from library import weaviate as w
 import library.handlers as h
 from requests.exceptions import ConnectionError
 
-from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
+from library.weaviate_schemas import WeaviateSchemas
 from tests.integration.library.integration_test_base import IntegrationTestBase
 
 class TestSlackWeaviate(IntegrationTestBase):

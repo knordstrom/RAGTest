@@ -1,11 +1,6 @@
-import ast
 import datetime
 from typing import Union
-from dateutil import parser as dateparser
 
-from os import abort
-import dotenv
-import flask
 from library.api_models import ApiResponse, AskResponse, BriefResponse, ScheduleResponse
 from library.apisupport import APISupport
 from library.briefing_support import BriefingSupport
@@ -14,20 +9,16 @@ import warnings
 
 from api.reference import route as refs
 from api.gsuite_retrieval import route as data
+from api.slack_retrieval import route as slack
 from fastapi import FastAPI
-from pydantic import BaseModel
-
-from api.gsuite_retrieval import gsuite_retrieval
-from .slack_retrieval import slack_retrieval
-from .reference import reference
 
 warnings.simplefilter("ignore", ResourceWarning)
 
 app = FastAPI(title="Sofia API", description="API for intereacting with the Sofia agent", version="0.1")
 app.include_router(refs)
 app.include_router(data)
+app.include_router(slack)
 
-require = APISupport.require
 tags = ["Main Interface"]
 
 @app.get('/ask', tags=tags)
@@ -41,14 +32,14 @@ async def briefs(email:str, start:datetime.datetime, end: Union[datetime.datetim
     """Create briefings for a user."""
     if certainty is not None:
         if certainty < 0 or certainty > 100:
-            flask.abort(400, "Confidence must be a percentage value between 0 and 100.")
+            APISupport.error_response(400, "Confidence must be a percentage value between 0 and 100.")
         else:
             certainty = certainty / 100
     plus12 = start + datetime.timedelta(hours=12)
     if end is None:
         end = plus12
     elif end < start:
-            flask.abort(400, "End time must be after the start time.")
+        APISupport.error_response(400, "End time must be after the start time.")
     response =  BriefingSupport.create_briefings_for(email, start, end, certainty = certainty)
     return ApiResponse.create(response)
 

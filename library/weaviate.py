@@ -8,9 +8,12 @@ from library.vdb import VDB
 from library import utils
 import weaviate.classes as wvc
 from weaviate.classes.config import Property, DataType
-from library.weaviate_schemas import WeaviateSchemas, WeaviateSchema
+from library.weaviate_schemas import Email, EmailText, WeaviateSchemas, WeaviateSchema
 from weaviate.classes.query import Filter
 from weaviate.collections.classes.grpc import Sort
+from weaviate.collections.collection import Collection
+from weaviate.collections.classes.internal import Object
+from weaviate.collections.classes.types import Properties, References
 
 class Weaviate(VDB):
 
@@ -31,7 +34,7 @@ class Weaviate(VDB):
     def reset_client(self):
         self._client = None
         
-    def collection(self, key: WeaviateSchemas) -> object:
+    def collection(self, key: WeaviateSchemas) -> Collection[Properties, References]:
         schema = self.schemas[key]
         return self.client.collections.get(schema['class'])
     
@@ -153,6 +156,9 @@ class Weaviate(VDB):
     def upsert_chunked_text(self, obj:dict, chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str) -> bool:
         text = obj[splitOn]        
         del obj[splitOn]
+        print()
+        print("UPserting", obj)
+        print()
         meta = self.upsert(obj=obj, collection_key=metadata_collection_key) 
         text = self.upsert_text_vectorized(text, obj, chunked_collection_key)     
         return meta and text
@@ -161,25 +167,25 @@ class Weaviate(VDB):
         collection = self.collection(key)
         return collection.aggregate.over_all()
     
-    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty = .7) -> list:
+    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty = .7) -> list[Object[any, any]]:
 
-        collection = self.collection(key)
+        collection: Collection[Properties, References] = self.collection(key)
 
-        response = collection.query.near_text(
+        response: list[object[any, any]] = collection.query.near_text(
             query=query,
             limit=limit,
             certainty=certainty,
             return_metadata=wvc.query.MetadataQuery(distance=True)
-        )
+        ).objects
 
-        print("Found " + str(len(response.objects)) + " objects")
+        print("Found " + str(len(response)) + " objects")
 
         return response
     
-    def get_by_ids(self, key: WeaviateSchemas, id_prop: str, ids: list[str]) -> dict:
+    def get_by_ids(self, key: WeaviateSchemas, id_prop: str, ids: list[str]) -> list[Object[any, any]]:
         return self.collection(key).query.fetch_objects(
             filters= Filter.by_property(id_prop).contains_any(ids),
-        )
+        ).objects
     
     def get_email_by_id(self, email_id: str) -> EmailMessage:
         results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
@@ -197,11 +203,18 @@ class Weaviate(VDB):
             return EmailMessage.model_validate(response)
         return None
 
+    def email_update(self, props: dict[str, any]) -> None:
+        if props.get('from') is not None:
+            utils.Utils.rename_key(props, 'from', 'sender')
+        else:
+            utils.Utils.rename_key(props, 'from_', 'sender')
+            
     def get_emails(self) -> list[EmailMessage]:
         result = []
         for x in self.collection(WeaviateSchemas.EMAIL).iterator():
             x = x.properties
-            utils.Utils.rename_key(x, 'from', 'sender')
+            print("X was",x)
+            self.email_update(x)
             result.append(EmailMessage.model_validate(x))
         return result
     
@@ -212,43 +225,30 @@ class Weaviate(VDB):
         if len(results.objects)>0:
             print("THREAD", results.objects[0].properties)
             props = results.objects[0].properties
-            utils.Utils.rename_key(props, 'from', 'sender')
+            self.email_update(props)
             return EmailThreadResponse.model_validate(props)
         return None
 
-    def get_email_metadata(self, email_id: str):
+    def get_email_metadata_by_id(self, email_id: str) -> Email:
         results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
             filters=Filter.by_property("email_id").equal(email_id),
-        )
-        if len(results.objects) > 0:
-            return [obj.properties for obj in results.objects]
-        return []
+        ).objects
+        if len(results)>0:
+            props = results[0].properties
+            if props.get('from_') is None:
+                props['from_'] = props.get('from')
+            if props.get('from') is None:
+                props['from'] = props.get('from_')
 
+            print("EMAIL RESULTS", props)
+            return Email.model_validate(props)
+        return None
 
-    def get_thread_email_message_by_id(self, thread_id: str):
+    def get_thread_email_messages_by_id(self, thread_id: str) -> list[EmailText]:
         results = self.collection(WeaviateSchemas.EMAIL_TEXT).query.fetch_objects(
             filters=Filter.by_property("thread_id").equal(thread_id),
         )
-        if len(results.objects)>0:
-            return [obj.properties for obj in results.objects]
-        return None
-
-    def get_email_metadata(self, email_id: str):
-        results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
-            filters=Filter.by_property("email_id").equal(email_id),
-        )
-        if len(results.objects) > 0:
-            return [obj.properties for obj in results.objects]
-        return []
-
-
-    def get_thread_email_message_by_id(self, thread_id: str):
-        results = self.collection(WeaviateSchemas.EMAIL_TEXT).query.fetch_objects(
-            filters=Filter.by_property("thread_id").equal(thread_id),
-        )
-        if len(results.objects)>0:
-            return [obj.properties for obj in results.objects]
-        return None
+        return [EmailText.model_validate(obj.properties ) for obj in results.objects]
     
     def get_slack_message_by_id(self, message_id: str) -> SlackMessage:
         results = self.collection(WeaviateSchemas.SLACK_MESSAGE).query.fetch_objects(
@@ -274,7 +274,6 @@ class Weaviate(VDB):
             "messages": result
         })
     
-
     def get_slack_thread_by_id(self, thread_id: str) -> SlackThreadResponse:
         results = self.collection(WeaviateSchemas.SLACK_THREAD).query.fetch_objects(
             filters=Filter.by_property("thread_id").equal(thread_id),
@@ -310,7 +309,7 @@ class Weaviate(VDB):
             return SlackThreadResponse.model_validate(thread)
         return None
     
-    def get_document_by_id(self, document_id: str):
+    def get_document_by_id(self, document_id: str) -> DocumentResponse:
         results = self.collection(WeaviateSchemas.DOCUMENT).query.fetch_objects(
             filters=Filter.by_property("document_id").equal(document_id),
         )
@@ -330,7 +329,7 @@ class Weaviate(VDB):
             return DocumentResponse.model_validate(response)
         return None
     
-    def get_documents(self):
+    def get_documents(self) -> list[DocumentResponse]:
         return [DocumentResponse.model_validate(x.properties) for x in self.collection(WeaviateSchemas.DOCUMENT).iterator()]
 
     def close(self):       

@@ -1,17 +1,17 @@
-import json
+from datetime import datetime
 from groq import Groq
-from kafka import KafkaConsumer, TopicPartition
+from kafka import TopicPartition
 import os
 from library import neo4j
+from library.api_models import MeetingAttendee
 from library.enums.kafka_topics import KafkaTopics
 from library.processor_support import ProcessorSupport
 import library.weaviate as weaviate
-from library.weaviate_schemas import WeaviateSchemas
+from library.weaviate_schemas import Event, WeaviateSchemas
+import library.models.event as event
 import library.handlers as h
-import traceback
 import warnings
 from library import neo4j
-from datetime import datetime
 
 warnings.simplefilter("ignore", ResourceWarning)
 
@@ -27,15 +27,35 @@ def write_emails_to_vdb(mapped: list) -> None:
             email: dict = record.value
             events = email.get('events', [])
             email.pop('events', None)
-            print("=> Considering email " + str(j) + " of " + str(len(mapped)) + "...")
+            print("=> Considering email ",j," of ",len(mapped),"...")
             handler.handle_email(email)
 
             graph_events = []
             for event in events:
-                print("Upserting event " + str(event) + " on from " + str(email['from']))     
                 event['source'] = 'email'      
-                handler.handle_event(event) # , email['from']
-                graph_events.append(ProcessorSupport.email_event_to_graph_event(event))
+                print("Upserting event ", event, " on from ", email['from_'])
+                print("Email was", email)     
+
+                event_obj = Event(
+                    event_id=event['event_id'], 
+                    summary=event['summary'], 
+                    location=event.get('location'), 
+                    start=datetime.fromisoformat(event['start']), 
+                    end=datetime.fromisoformat(event['end']), 
+                    email_id=email['email_id'], 
+                    sent_date=datetime.fromisoformat(email['date']), 
+                    from_=event['organizer']['email'],
+                    to=email['to'][0]['email'], 
+                    thread_id=email['thread_id'], 
+                    name=email['subject'], 
+                    description=event['description'], 
+                    provider=email['provider']
+                )
+
+                attendees = [MeetingAttendee(email=attendee['email'], name=attendee['name']) for attendee in event['attendees']]
+
+                handler.handle_event(event_obj)
+                graph_events.append(ProcessorSupport.email_event_to_graph_event(event_obj, attendees))
             
             if len(graph_events) > 0:
                 write_events_to_neo4j(graph_events)
@@ -45,9 +65,8 @@ def write_emails_to_vdb(mapped: list) -> None:
         if w is not None:
             w.close()
 
-def write_events_to_neo4j(events: list):
+def write_events_to_neo4j(events: list[event.Event]) -> None:
     graph = neo4j.Neo4j()
-    graph.connect()
     graph.process_events(events)
 
 def write_doc_to_vdb(docs):

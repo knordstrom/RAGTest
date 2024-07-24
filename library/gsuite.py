@@ -2,7 +2,7 @@ import datetime
 import enum
 import os
 import pickle
-from library import models, document_parser
+from library import document_parser
 
 # Gmail API utils
 from googleapiclient.discovery import build
@@ -22,16 +22,20 @@ import os
 from googleapiclient.http import MediaIoBaseDownload
 import json
 
+from google.apps import meet_v2
+
+from library.models import message
+
 # interface for the Gmail API wrapper
 class GSuiteServiceProvider:
 
     def service(self):
         pass
 
-    def list(self, userId='me', pageToken=None, maxResults = None):
+    def list_emails(self, userId: str = 'me', pageToken: str = None, maxResults: int = None) -> list[dict[str,str]]:
         pass
 
-    def get(self, id, userId='me', format='full'):
+    def get_email(self, id: str, userId: str = 'me', format: str = 'full') -> message.Message:
         pass
 
     def close(self):
@@ -44,13 +48,13 @@ class GmailLogic:
     def __init__(self, gmail: GSuiteServiceProvider):
         self.gmail = gmail
 
-    def get_emails(self, count = None) -> list:
-        pageToken = None
-        messages_left = True
-        messages = []
+    def get_emails(self, count: int = None) -> list[dict[str, str]]:
+        pageToken: str = None
+        messages_left: bool = True
+        messages: list[dict[str, str]] = []
 
         while messages_left:
-            results = self.gmail.list(userId='me', pageToken=pageToken, maxResults=count)
+            results: list[dict[str,str]] = self.gmail.list_emails(userId='me', pageToken=pageToken, maxResults=count)
             pageToken = results.get('nextPageToken')
             new_messages = results.get('messages', [])
             count -= len(new_messages)
@@ -59,11 +63,11 @@ class GmailLogic:
                 messages_left = False
         return messages
     
-    def get_email(self, user_id: str='me', msg_id: str='') -> dict:
+    def get_email(self, user_id: str='me', msg_id: str='') -> message.Message:
         self.count += 1
         print(str(self.count) + ". Getting email with id " + msg_id + " for user " + user_id)
-        data = self.gmail.get(userId=user_id, id=msg_id)
-        return models.Message.extract_data(data)
+        data = self.gmail.get_email(userId=user_id, id=msg_id)
+        return message.Message.from_gsuite_payload(data)
     
 
     def read_message(self, user_id: str='me', message: str=''):
@@ -75,7 +79,7 @@ class GmailLogic:
             - Downloads text/html content (if available) and saves it under the folder created as index.html
             - Downloads any file that is attached to the email and saves it in the folder created
         """
-        msg = self.gmail.get(id=message, userId=user_id, format='full')
+        msg = self.gmail.get_email(id=message, userId=user_id, format='full')
         # parts can be the message body, or attachments
         return msg
 
@@ -98,11 +102,14 @@ class GoogleSchemas(enum.Enum):
             return 'v1'
         return None    
     
-# Realization of the Gmail API interface
 class GSuite(GSuiteServiceProvider):
-    # Request all access (permission to read/send/receive emails, manage the inbox, and more)
-    SCOPES = ['https://mail.google.com/', 'https://www.googleapis.com/auth/calendar.readonly',
-            'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/documents']
+
+    SCOPES = ['https://mail.google.com/', 
+              'https://www.googleapis.com/auth/calendar.readonly',
+              'https://www.googleapis.com/auth/drive', 
+              'https://www.googleapis.com/auth/documents',
+            #   'https://www.googleapis.com/auth/meetings.space.readonly'
+              ]
     
 
     TOKEN_FILE = 'token.json'
@@ -143,18 +150,18 @@ class GSuite(GSuiteServiceProvider):
         return creds
         
 
-    def list(self, userId='me', pageToken = None, maxResults = None):
+    def list_emails(self, userId='me', pageToken = None, maxResults = None) -> list[dict[str,str]]:
         with self.service(GoogleSchemas.GMAIL) as service:
             return service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults).execute()
     
-    def get(self, id, userId='me', format='full'):
+    def get_email(self, id, userId='me', format='full') -> dict[str, str]:
         with self.service(GoogleSchemas.GMAIL) as service:
              result = service.users().messages().get(userId=userId, id=id, format = format).execute()  
              self.__get_attachments(result, userId) 
     
         return result
     
-    def events(self, now: datetime.datetime, count: int = 10):
+    def events(self, now: datetime.datetime, count: int = 10) -> list[dict[str, str]]:
         with self.service(GoogleSchemas.CALENDAR) as service:
             print("Getting the upcoming 10 events")
             events_result = (
@@ -191,6 +198,28 @@ class GSuite(GSuiteServiceProvider):
             if len(attachments) > 0:
                 message['attachments'] = attachments
 
+    def list_meetings(self, count: int = 10):
+        client = meet_v2.ConferenceRecordsServiceAsyncClient()
+
+        # Initialize request argument(s)
+        request = meet_v2.ListConferenceRecordsRequest()
+
+        # Make the request
+        page_result = client.list_conference_records(request=request)
+        return page_result
+
+    def list_transcripts(self, parent_value, count: int = 10):
+        client = meet_v2.ConferenceRecordsServiceAsyncClient()
+
+        # Initialize request argument(s)
+        request = meet_v2.ListTranscriptsRequest(
+            parent=parent_value, 
+            page_size=count
+        )
+
+        # Make the request
+        page_result = client.list_transcripts(request=request)
+        return page_result
 
     def get_document_ids(self, type):
         with self.service(GoogleSchemas.DRIVE) as service:
@@ -289,7 +318,7 @@ class GSuite(GSuiteServiceProvider):
     def get_docx_content(self, docx_dict):
         return self.get_3p_content(docx_dict, document_parser.DocxParser())             
 
-    def compile_info(self, document_type: str, content_callback: callable) -> dict:
+    def compile_info(self, document_type: str, content_callback: callable) -> dict[str, any]:
         print("Compiling info for", document_type)
         gdoc_ids_name = self.get_document_ids(type=document_type)
         if not gdoc_ids_name:
@@ -298,7 +327,7 @@ class GSuite(GSuiteServiceProvider):
         gdoc_metadata = self.get_file_metadata(gdoc_ids_name)
         gdoc_info = content_callback(gdoc_ids_name)
         print("     gdoc_info: ", gdoc_info.keys())
-        doc_info = {} 
+        doc_info: dict[str, any] = {} 
         for gdoc in gdoc_ids_name.keys():
             print("         gdoc id name: ", gdoc)
             if gdoc not in gdoc_info:

@@ -1,15 +1,11 @@
-import time
-import json
-import os
 import pytest
 import requests
 from library import weaviate as w
 import library.handlers as h
-from weaviate.classes.query import Filter
 from requests.exceptions import ConnectionError
 
 from library.utils import Utils
-from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
+from library.weaviate_schemas import WeaviateSchemas
 from tests.integration.library.integration_test_base import IntegrationTestBase
 
 class TestEmailWeaviate(IntegrationTestBase):
@@ -104,7 +100,7 @@ class TestEmailWeaviate(IntegrationTestBase):
                     "name": "Him"
                 }
             ]
-        assert len(metadata[0].properties) == 11, "There should be 11 properties in an email, found " + str(len(metadata[0].properties))
+        assert len(metadata[0].properties) == 12, "There should be 11 properties in an email, found " + str(len(metadata[0].properties))
 
         for chunk in text:
             assert 'text' in chunk.properties.keys()

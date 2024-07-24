@@ -2,7 +2,7 @@ RAG Test
 ========================
 
 This is a very basic test repo using GPT4All, Weaviate, and a gmail account in order to answer questions 
-through a flask API. Emails are read from the gmail account according to parameters sent to the API then 
+through a FastAPI API. Emails are read from the gmail account according to parameters sent to the API then 
 sent through a Kafka topic to a processor that vectorizes and stores them. A separate API then allows a question 
 to be asked with a certain number of emails to be retrieved and used to answer the question.
 
@@ -22,7 +22,7 @@ Setup
   #. Navigate to the docker folder and run `docker-compose up -d` to start the weaviate server, kafka, zookeeper, and the processor
   #. Download credentials from the google cloud console at https://console.cloud.google.com/apis/credentials and place them in the `resources` folder as `gmail_creds.json`
   #. Set your GROQ key as an environment variable `GROQ_API_KEY`. You can also do this through a .env file in the root folder of the project
-  #. Run the flask app with `make run` or `flask --app api/main run --port=5010` 
+  #. Run the FastAPI app with `make run` or `uvicorn api.main:app --reload --host 0.0.0.0 --port 5010` 
   #. Follow the temporary instructions for downloading conversations from slack's API and storing them in the weaviate server (see below under Slack)
 
 Usage

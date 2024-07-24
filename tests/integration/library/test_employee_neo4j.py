@@ -1,17 +1,10 @@
-import ast
-import time
-import json
 import os
 from neo4j import Record
 import pytest
 import requests
-from library import models, neo4j, weaviate as w
+from library import neo4j
 from library.employee import Employee
-import library.handlers as h
-from weaviate.classes.query import Filter
 from requests.exceptions import ConnectionError
-
-from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 from library.workday import Workday
 from tests.integration.library.integration_test_base import IntegrationTestBase
 
@@ -53,7 +46,6 @@ class TestEmployeeNeo4j(IntegrationTestBase):
         org_chart = workday.org_chart()
 
         graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
-        graph.connect()
 
         graph.process_org_chart(org_chart)
 

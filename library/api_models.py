@@ -1,12 +1,10 @@
 from datetime import datetime
 from uuid import UUID
-from flask_restx import Api, fields
 from pydantic import AliasChoices, BaseModel, EmailStr, Field, ConfigDict
 
 import typing
 from typing import List, Optional, Union, TypeVar, Generic
 from dataclasses import dataclass, Field, fields as dataclassFields
-from flask_restx import fields as flaskRPFields
 
 
 
@@ -31,18 +29,14 @@ class AskResponse(BaseModel):
     context: AskRequestContext
 
 ## /briefs
-class SlackEntry(BaseModel):
+class SlackConversationEntry(BaseModel):
     text: str 
     thread_id: str 
-    ordinal: int 
-    message_id: str 
     channel_id: str 
     summary: str 
 
-class EmailEntry(BaseModel):
+class EmailConversationEntry(BaseModel):
     text: str 
-    email_id: str 
-    ordinal: int 
     thread_id: str 
     summary: str 
 
@@ -61,9 +55,9 @@ class DocumentEntry(BaseModel):
     summary: str 
 
 class MeetingSupport(BaseModel):
-    docs: List[DocumentEntry] 
-    email: List[EmailEntry] 
-    slack: List[SlackEntry] 
+    docs: List[DocumentEntry] = []
+    email: List[EmailConversationEntry] = []
+    slack: List[SlackConversationEntry] = []
 
 class MeetingAttendee(BaseModel):
     email: EmailStr 
@@ -74,7 +68,7 @@ class MeetingContext(BaseModel):
     attendees: list[MeetingAttendee] 
     start: datetime 
     end: datetime 
-    description: str 
+    description: Union[str, None] = None 
     recurring_id: str 
     name: str 
     person: MeetingAttendee 
@@ -101,7 +95,7 @@ class Meeting(BaseModel):
     recurring_id: str 
     name: str
     location: Optional[str] = None
-    person: MeetingAttendee
+    person: Optional[MeetingAttendee] = None
     organizer: MeetingAttendee
 
 class ScheduleResponse(BaseModel):

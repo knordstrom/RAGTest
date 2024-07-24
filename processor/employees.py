@@ -13,7 +13,6 @@ def start():
     org = Workday(employees).org_chart()
 
     graph = Neo4j(protocol="bolt")
-    graph.connect()
     graph.process_org_chart(org)
 
     

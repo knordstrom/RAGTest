@@ -1,8 +1,12 @@
 import csv
+from typing import Optional, Union
+
+from pydantic import BaseModel
 
 from library.person import Person
-class Employee:
+class Employee():
 
+    
     def __init__(self, employee_id: str, name: str, manager_id: str, manager_name: str, location: str, title: str, work_email: str, 
                  type: str, cost_center: str, cost_center_hierarchy: str):
         self.employee_id = employee_id
@@ -15,13 +19,44 @@ class Employee:
         self.type = type
         self.cost_center = cost_center
         self.cost_center_hierarchy = cost_center_hierarchy
-        self.reports = []
+        self.reports: list['Employee'] = []
+        self.manager: 'Employee' = None
 
     def __str__(self):
         return self.name + " (" + self.title + ") [" + self.employee_id + "]"
     
-    def add_report(self, report):
+    def add_report(self, report: 'Employee'):
+        report.manager = self
         self.reports.append(report)
+
+    def path_above_to(self, other: Union['Employee', str]) -> list['Employee']:
+        """Return a list of employees up the org chart from this employee.
+        If the employee_id is not found, returns an empty list.
+        The order of the response is such that the employee repreented by other is first and the one being queried is last.
+        """
+        if (type(other) == str and self.employee_id == other) or self == other:
+            return [self]
+        if self.manager is not None:
+            up = self.manager.path_above_to(other)
+            if len(up) > 0:
+                up.append(self)
+                return up
+        return []
+    
+    def path_below_to(self, other: Union['Employee', str], sp = "") -> list['Employee']:
+        """Return a list of employees dowwn the org chart from this employee.
+        If the employee_id is not found, returns an empty list.
+        The order of the response is such that the employee repreented by other is first and the one being queried is last."""
+        #print(sp, self.employee_id, other)
+        if (type(other) == str and self.employee_id == other) or self == other:
+            return [self]
+        for report in self.reports:
+            down = report.path_below_to(other, sp + "     ")
+            #print(sp + "   down: ", down)
+            if len(down) > 0:
+                down.append(self)
+                return down
+        return []
 
     def to_dict(self):
         p = Person(self.name, self.work_email)

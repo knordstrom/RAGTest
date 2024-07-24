@@ -69,7 +69,7 @@ async def document(document_id: str) -> ApiResponse[DocumentResponse]:
     results = w.get_document_by_id(document_id)
     return ApiResponse.create(results) if results else APISupport.error_response(404, f"Document with id {document_id} not found")
 
-@route.delete('/references/armageddon/{collection}')
+@route.delete('/references/armageddon/{collection}', include_in_schema=False)
 async def armaggedon(collection: str) -> str:
     """Truncate a collection in Weaviate."""
     w = Weaviate()

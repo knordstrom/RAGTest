@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Union
+from typing import Any, List, Union
 import dotenv
 from pydantic import EmailStr
 
@@ -10,9 +10,10 @@ from googleapiclient.errors import HttpError
 import os
 from fastapi import APIRouter
 
+from library.models.message import Message
+
 route = APIRouter(tags=["Data Acquisition"])
 
-require = APISupport.require
 dotenv.load_dotenv()
 
 root_path = os.path.dirname(os.path.realpath(__file__))
@@ -20,9 +21,9 @@ root_path = os.path.dirname(os.path.realpath(__file__))
 creds = root_path + '/../' + os.getenv('GSUITE_CREDS_FILE', 'resources/gmail_creds.json')
 
 @route.get('/data/gsuite/email')
-async def email(email: EmailStr, n: Union[int, None] = None) -> List[dict]:
+async def email(email: EmailStr, n: Union[int, None] = None) -> List[Message]:
     """Get the last n emails from the specified user's gsuite account. Response is a pass-through of the Gmail API response."""
-    mapped: list[dict] = APISupport.read_last_emails(email, creds, count = n)
+    mapped: list[Message] = APISupport.read_last_emails(email, creds, count = n)
     APISupport.write_emails_to_kafka(mapped, DataSources.GOOGLE) 
     return mapped
 
@@ -42,14 +43,14 @@ async def calendar(email: EmailStr, n: int) -> List[dict]:
         APISupport.error_response(400, f"An HTTP error occurred '{error}'")
 
 @route.get('/data/gsuite/documents')
-async def documents(email: EmailStr) -> List[dict]:
+async def documents(email: EmailStr) -> dict[str, Any]:
     """Get the documents from the specified user's gsuite account. Response is a pass-through of the Drive API response."""
     try:
         # now = datetime.datetime.now(datetime.UTC).isoformat()
         print("Getting your documents")
         print("Creds " + creds)
         temp_folder = create_temporary_folder()
-        doc_info = GSuite(email, creds, temp_folder).get_doc_info()
+        doc_info: dict[str, any] = GSuite(email, creds, temp_folder).get_doc_info()
         print("doc_info: ", doc_info.keys())
         APISupport.write_docs_to_kafka([x for x in doc_info.values()], DataSources.GOOGLE) 
         return doc_info

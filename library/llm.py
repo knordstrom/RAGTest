@@ -13,10 +13,10 @@ class LLM:
 
     def query(self, question, key, context_limit = 5, max_tokens=500):
 
-        context = self.vdb.search(question, key, context_limit)
+        context: list[object] = self.vdb.search(question, key, context_limit)
         
         emails = []
-        for o in context.objects:
+        for o in context:
             emails.append(o.properties['text'])
             
         mail_context = '"' + '"\n\n"'.join(emails) + '"\n\n'
