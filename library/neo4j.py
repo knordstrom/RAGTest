@@ -4,8 +4,6 @@ import dotenv
 from neo4j import GraphDatabase
 import os
 
-import neo4j.time
-
 from library.person import Person
 from library.utils import Utils
 from library.employee import Employee
@@ -222,14 +220,7 @@ class Neo4j:
         Utils.rename_key(record_dict, 'event.location', 'location')
         return record_dict
     
-    @staticmethod
-    def handle_time(value) -> datetime:
-        if isinstance(value, str):
-            return datetime.fromisoformat(value)
-        elif isinstance(value, neo4j.time.DateTime):
-            return value.to_native()
-        else:
-            return value
+
             
     @staticmethod
     def finalize_schedule_response(response: list[dict[str, any]]) -> list[Event]:
@@ -245,8 +236,8 @@ class Neo4j:
                 'email': item['organizer.email'],
             }
 
-            item['start'] = Neo4j.handle_time(item['start'])
-            item['end'] = Neo4j.handle_time(item['end'])
+            item['start'] = Utils.handle_time(item['start'])
+            item['end'] = Utils.handle_time(item['end'])
             
             for k in ['person.name', 'person.email', 'organizer.name', 'organizer.email', 'attendee.name', 'attendee.email', 
                       'attending.status', 'invite.status']:
