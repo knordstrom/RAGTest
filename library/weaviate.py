@@ -156,9 +156,7 @@ class Weaviate(VDB):
     def upsert_chunked_text(self, obj:dict, chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str) -> bool:
         text = obj[splitOn]        
         del obj[splitOn]
-        print()
-        print("UPserting", obj)
-        print()
+
         meta = self.upsert(obj=obj, collection_key=metadata_collection_key) 
         text = self.upsert_text_vectorized(text, obj, chunked_collection_key)     
         return meta and text
@@ -213,7 +211,6 @@ class Weaviate(VDB):
         result = []
         for x in self.collection(WeaviateSchemas.EMAIL).iterator():
             x = x.properties
-            print("X was",x)
             self.email_update(x)
             result.append(EmailMessage.model_validate(x))
         return result
@@ -223,7 +220,6 @@ class Weaviate(VDB):
             filters=Filter.by_property("thread_id").equal(thread_id),
         )
         if len(results.objects)>0:
-            print("THREAD", results.objects[0].properties)
             props = results.objects[0].properties
             self.email_update(props)
             return EmailThreadResponse.model_validate(props)
@@ -240,7 +236,6 @@ class Weaviate(VDB):
             if props.get('from') is None:
                 props['from'] = props.get('from_')
 
-            print("EMAIL RESULTS", props)
             return Email.model_validate(props)
         return None
 

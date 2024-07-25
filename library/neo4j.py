@@ -244,7 +244,6 @@ class Neo4j:
                 item.pop(k)
             
             item['summary'] = item.get('name')
-            print("ITEM", item)
             result.append(Event(**item))
 
         return sorted(result, key=lambda x: x.start)
