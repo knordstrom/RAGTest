@@ -2,6 +2,7 @@ import datetime
 import re
 from urllib.parse import urlparse, urlunparse
 import langchain_text_splitters as lang_splitter
+import neo4j.time
 
 class Utils:
     @staticmethod
@@ -47,6 +48,15 @@ class Utils:
                 val = val/1000
             message[key] = Utils.get_iso8601_timestamp(val)
 
+    @staticmethod
+    def handle_time(value) -> datetime:
+        if isinstance(value, str):
+            return datetime.datetime.fromisoformat(value)
+        elif isinstance(value, neo4j.time.DateTime):
+            return value.to_native()
+        else:
+            return value
+        
     @staticmethod
     def array_keep_keys(arr, keys):
         return [Utils.dict_keep_keys(d, keys) for d in arr]

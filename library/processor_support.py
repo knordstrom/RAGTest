@@ -2,9 +2,10 @@ import datetime
 import datetime
 import json
 import os
-from library import weaviate
+from library import weaviate, weaviate_schemas
 from kafka import KafkaConsumer, TopicPartition
 
+from library.api_models import MeetingAttendee
 from library.enums.kafka_topics import KafkaTopics
 
 class EventRecordWrapper:
@@ -13,31 +14,31 @@ class EventRecordWrapper:
 
 class ProcessorSupport:
 
-    def email_event_to_graph_event(email_event: dict) -> dict:
+    def email_event_to_graph_event(email_event: weaviate_schemas.Event, attendees: list[MeetingAttendee]) -> dict:
         event = {
-            'id': email_event.get('event_id'),
-            'location': email_event.get('location'),
-            'description': email_event.get('description'),
-            'summary': email_event.get('summary'),
-            'status': email_event.get('status')
+            'id': email_event.event_id,
+            'location': email_event.location,
+            'description': email_event.description,
+            'summary': email_event.summary,
+            # 'status': email_event.status
         }
 
         event['creator'] = {
-            'email': email_event.get('organizer', {}).get('email')
+            'email': email_event.from_
         }
         event['organizer'] = event["creator"]
-        event['attendees'] = [{"email": e.get("email")} for e in email_event.get('attendees', [])]
+        event['attendees'] = [e.model_dump() for e in attendees]
 
-        start_date = datetime.datetime.fromisoformat(email_event.get('start'))
-        end_date = datetime.datetime.fromisoformat(email_event.get('end'))
+        start_date = email_event.start
+        end_date = email_event.end
 
         event['start'] = {
             "dateTime": start_date.isoformat(),
-            "timeZone": "Etc/UTC" #start_date.tzname()
+            "timeZone": start_date.tzname()
         }
         event['end'] = {
             "dateTime": end_date.isoformat(),
-            "timeZone":  "Etc/UTC" #end_date.tzname()
+            "timeZone": end_date.tzname()
         }
         return EventRecordWrapper(event)
 

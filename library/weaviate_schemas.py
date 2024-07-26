@@ -1,9 +1,17 @@
+from datetime import datetime
 import enum
+from typing import Any, Optional, TypeVar, Union
+from pydantic import BaseModel, Field, FieldSerializationInfo
+from pydantic.fields import FieldInfo
+from typing import get_origin
 from weaviate.classes.config import Property, DataType
 import weaviate.classes as wvc
 
-class WeaviateSchemas(enum.Enum):
+T = TypeVar("T", bound=BaseModel)
+U = TypeVar("U", bound=BaseModel)
 
+class WeaviateSchemas(enum.Enum):
+    EMAIL_THREAD = 'email_thread'
     EMAIL = 'email'
     EMAIL_TEXT = 'email_text'
     EVENT = 'event'
@@ -16,250 +24,289 @@ class WeaviateSchemas(enum.Enum):
     SLACK_MESSAGE = 'slack_message'
     SLACK_MESSAGE_TEXT = 'slack_message_text'
 
+class WeaviateSchemaTransformer:
+    @staticmethod
+    def data_type(tpe: FieldInfo) -> DataType:
+        # print("             Data type: ", tpe.annotation, tpe , get_origin(tpe.annotation) is list)
+        if tpe.annotation == datetime:
+            return DataType.DATE
+        elif tpe.annotation == int:
+            return DataType.INT
+        elif tpe.annotation == bool:
+            return DataType.BOOL
+        elif tpe.annotation == float:
+            return DataType.NUMBER
+        elif tpe.annotation == list[datetime]:
+            return DataType.DATE_ARRAY
+        elif tpe.annotation == list[str]:
+            return DataType.TEXT_ARRAY
+        elif tpe.annotation == list[int]:
+            return DataType.INT_ARRAY
+        elif tpe.annotation == list[bool]:
+            return DataType.BOOL_ARRAY
+        elif tpe.annotation == list[float]:
+            return DataType.NUMBER_ARRAY
+        elif tpe.annotation == str:
+            return DataType.TEXT
+        elif get_origin(tpe.annotation) is list:
+            return DataType.OBJECT_ARRAY
+        elif get_origin(tpe.annotation) is Union:
+            return WeaviateSchemaTransformer.data_type(FieldInfo(annotation=tpe.annotation.__args__[0]))
+        else:
+            return DataType.OBJECT
+
+    @staticmethod
+    def to_prop(dt: DataType, name: str, field: FieldInfo) -> Property:
+        name = name.strip("_")
+        if dt == DataType.OBJECT_ARRAY:
+            inner_type = field.annotation.__args__[0]
+            return Property(name=name, data_type=dt, nested_properties= WeaviateSchemaTransformer.to_props(inner_type)         ) 
+        elif dt == DataType.OBJECT:
+            return  Property(name=name, data_type=dt, nested_properties=  WeaviateSchemaTransformer.to_props(field.annotation)) 
+        else:
+            return Property(name=name, data_type=dt)    
+        
+    @staticmethod
+    def to_props(obj: T) -> list[Property]:
+        result = []
+        for name, field in dict(obj.model_fields).items():
+            dt = WeaviateSchemaTransformer.data_type(field)
+            p = WeaviateSchemaTransformer.to_prop(dt, name, field)
+            result.append(p)
+
+        return result
+
+class EmailThread(BaseModel):
+    thread_id: str
+    latest: datetime
+
+class EmailParticipant(BaseModel):
+    email: str
+    name: str
+
+class Email(BaseModel):
+    email_id: str
+    history_id: str
+    thread_id: str
+    labels: list[str]
+    to: list[EmailParticipant]
+    cc: list[EmailParticipant]
+    bcc: list[EmailParticipant]
+    subject: str
+    from_: EmailParticipant
+    date: datetime
+    provider: str
+
+class EmailThread(BaseModel):
+    thread_id: str
+    latest: datetime
+
+class EmailParticipant(BaseModel):
+    email: str
+    name: str
+
+class Email(BaseModel):
+    email_id: str
+    history_id: Union[str, None] = None
+    thread_id: str
+    labels: list[str]
+    to: list[EmailParticipant]
+    cc: list[EmailParticipant] = Field(default=[])
+    bcc: list[EmailParticipant] = Field(default=[])
+    subject: str
+    from_: EmailParticipant = Field(alias='from')
+    date: datetime
+    provider: str
+
+class EmailText(BaseModel):
+    text: str
+    email_id: str
+    thread_id: str
+    ordinal: int
+
+class EmailTextWithFrom(BaseModel):
+    text: str
+    email_id: str
+    thread_id: str
+    ordinal: int
+    from_: EmailParticipant
+
+class EmailConversationWithSummary(BaseModel):
+    thread_id: str
+    conversation: str
+    summary: str
+
+class Event(BaseModel):
+    event_id: str
+    summary: str
+    location: Optional[str]
+    start: datetime
+    end: datetime
+    email_id: str
+    sent_date: datetime
+    from_: str
+    to: str
+    thread_id: str
+    name: str
+    description: str
+    provider: str
+
+class EventText(BaseModel):
+    text: str
+    event_id: str
+    ordinal: int
+
+class DocumentPermission(BaseModel):
+    kind: str
+    permission_id: str
+    type: str
+    emailAddress: str
+    role: str
+    displayName: str
+    photoLink: str
+    deleted: bool
+    pendingOwner: bool
+
+class DocumentUser(BaseModel):
+    kind: str
+    displayName: str
+    photoLink: str
+    me: bool
+    permissionId: str
+    emailAddress: str
+    
+class DocumentMetadata(BaseModel):
+    metadata_id: str
+    name: str
+    mimeType: str
+    viewedByMeTime: datetime
+    createdTime: datetime
+    modifiedTime: datetime
+    owners: list[DocumentUser]
+    lastModifyingUser: DocumentUser
+    viewersCanCopyContent: bool
+    permissions: list[DocumentPermission]
+    provider: str
+
+class Document(BaseModel):
+    document_id: str
+    metadata: DocumentMetadata
+    doc_type: str
+    latest: datetime
+
+class DocumentText(BaseModel):
+    text: str
+    document_id: str
+    ordinal: int
+
+class DocumentSummary(BaseModel):
+    text: str
+    document_id: str
+
+class SlackChannel(BaseModel):
+    channel_id: str
+    name: str
+    creator: str
+    is_private: bool
+    is_shared: bool
+    num_members: int
+    updated: datetime
+    provider: str
+
+class SlackThread(BaseModel):
+    thread_id: str
+    channel_id: str
+    latest: datetime
+
+class SlackMessage(BaseModel):
+    message_id: str
+    from_: str
+    subtype: str
+    ts: datetime
+    type: str
+    thread_id: str
+
+class SlackMessageText(BaseModel):
+    text: str
+    message_id: str
+    thread_id: str
+    ordinal: int
+    
 class WeaviateSchema:
 
     class_objs: list[(WeaviateSchemas,dict)] = [
+        (WeaviateSchemas.EMAIL_THREAD, {  
+            "class": "EmailThread",    
+            "properties": WeaviateSchemaTransformer.to_props(EmailThread),
+            "references": [],
+            "vectorizer": False,
+        }),
         (WeaviateSchemas.EMAIL,{
             "class": "Email",
+            "properties": WeaviateSchemaTransformer.to_props(EmailThread),       
+            "references": [],
+            "vectorizer": False,   
+        }),
+        (WeaviateSchemas.EMAIL_TEXT, {
+                "class": "EmailText",
+                "properties": WeaviateSchemaTransformer.to_props(EmailText),       
+                "references": [],
+                "vectorizer": True,
+        }),
+        (WeaviateSchemas.EVENT, {
+                # Class definition
+                "class": "Event",
+                "properties": WeaviateSchemaTransformer.to_props(Event),       
+                "references": [],
+                "vectorizer": False,
+        }),
+        (WeaviateSchemas.EVENT_TEXT, {
+                "class": "EventText",
+                "properties": WeaviateSchemaTransformer.to_props(EventText),
+                "references": [ ],
+                "vectorizer": True,
+        }),
+        (WeaviateSchemas.DOCUMENT, {
+            "class": "Document",
+            "properties": WeaviateSchemaTransformer.to_props(Document),
+            "references": [],
             "vectorizer": False,
-
-            # Property definitions
-            "properties": [
-                Property(name = "email_id", data_type=DataType.TEXT),
-                Property(name ="history_id", data_type=DataType.TEXT),
-                Property(name ="thread_id", data_type=DataType.TEXT),
-                Property(name ="labels", data_type=DataType.TEXT_ARRAY),
-                Property(name ="to", data_type=DataType.OBJECT_ARRAY, nested_properties=[
-                    Property(name ="email", data_type = DataType.TEXT),
-                    Property(name ="name", data_type = DataType.TEXT)
-                ]),
-                Property(name ="cc", data_type=DataType.OBJECT_ARRAY, nested_properties=[
-                    Property(name ="email", data_type = DataType.TEXT),
-                    Property(name ="name", data_type = DataType.TEXT)
-                ]),
-                Property(name ="bcc", data_type=DataType.OBJECT_ARRAY, nested_properties=[
-                    Property(name ="email", data_type = DataType.TEXT),
-                    Property(name ="name", data_type = DataType.TEXT)
-                ]),
-                Property(name ="subject", data_type=DataType.TEXT),
-                Property(name ="from", data_type = DataType.OBJECT, nested_properties=[
-                    Property(name ="email", data_type = DataType.TEXT),
-                    Property(name ="name", data_type = DataType.TEXT)
-                ]),
-                Property(name ="date", data_type=DataType.DATE),
-                Property(name ="provider", data_type=DataType.TEXT),
-            ],          
-
-    }),
-    (WeaviateSchemas.EMAIL_TEXT, {
-            # Class definition
-            "class": "EmailText",
-
-            # Property definitions
-            "properties": [
-                Property(name = "text", data_type=DataType.TEXT),
-                Property(name = "email_id", data_type=DataType.TEXT, description="The weaviate ID of the email this text is associated with (target: Email)"),
-                Property(name = "thread_id", data_type=DataType.TEXT, description="An identifier for the thread this email is part of (target: Email)"),              
-                Property(name = "ordinal", data_type=DataType.INT, description="The order of this text in the email"),
-            ],
-            "references": [     
-
-            ],
-
-            # Specify a vectorizer
-            "vectorizer": True,
-    }),
-    (WeaviateSchemas.EVENT, {
-            # Class definition
-            "class": "Event",
-
-            # Property definitions
-            "properties": [
-                Property(name = "event_id", data_type=DataType.TEXT),
-                Property(name = "summary", data_type=DataType.TEXT),
-                Property(name = "location", data_type=DataType.TEXT),
-                Property(name = "start", data_type=DataType.DATE),
-                Property(name = "end", data_type=DataType.DATE),
-
-                Property(name="email_id", data_type=DataType.TEXT, description="(target: Email)"),
-                Property(name="sent_date", data_type=DataType.DATE, description="(target: Email)"),
-                Property(name="from", data_type=DataType.TEXT, descriptiondescription="(target: Email)"),
-                Property(name="to", data_type=DataType.TEXT, description="(target: Email)"),
-                Property(name="thread_id", data_type=DataType.TEXT, description="(target: Email)"),
-                Property(name="name", data_type=DataType.TEXT, description="(target: Event)"),
-                Property(name="description", data_type=DataType.TEXT, description="(target: Event)"),
-                Property(name ="provider", data_type=DataType.TEXT),
-            ],
-            "references": [
-                
-            ],
-
-            # Specify a vectorizer
+        }),
+        (WeaviateSchemas.DOCUMENT_TEXT, {
+                "class": "DocumentText",
+                "properties": WeaviateSchemaTransformer.to_props(DocumentText),
+                "references": [],
+                "vectorizer": True,
+        }),
+        (WeaviateSchemas.DOCUMENT_SUMMARY, {
+                "class": "DocumentSummary",
+                "properties": WeaviateSchemaTransformer.to_props(DocumentSummary),
+                "references": [],
+                "vectorizer": True,
+        }),
+        (WeaviateSchemas.SLACK_CHANNEL, { 
+            "class": "SlackChannel",    
+            "properties": WeaviateSchemaTransformer.to_props(SlackChannel),
+            "references": [],
             "vectorizer": False,
-    }),
-    (WeaviateSchemas.EVENT_TEXT, {
-            # Class definition
-            "class": "EventText",
-
-            # Property definitions
-            "properties": [
-                Property(name = "text", data_type=DataType.TEXT),
-                Property(name = "event_id", data_type=DataType.TEXT, description="The weaviate ID of the event this text is associated with (target: Event)"),
-                Property(name = "ordinal", data_type=DataType.INT, description="The order of this text in the email"),
-            ],
-            "references": [
-
-            ],
-
-            # Specify a vectorizer
-            "vectorizer": True,
-    }),
-    (WeaviateSchemas.DOCUMENT, {
-        "class": "Document",
-        "properties": [
-            Property(name="document_id", data_type=DataType.TEXT),
-           Property(name="metadata", data_type=DataType.OBJECT, nested_properties=[
-                Property(name="metadata_id", data_type=DataType.TEXT),
-                Property(name="name", data_type=DataType.TEXT),
-                Property(name="mimeType", data_type=DataType.TEXT),
-                Property(name="viewedByMeTime", data_type=DataType.DATE),
-                Property(name="createdTime", data_type=DataType.DATE),
-                Property(name="modifiedTime", data_type=DataType.DATE),
-                Property(name="owners", data_type=DataType.OBJECT_ARRAY, nested_properties=[
-                    Property(name="kind", data_type=DataType.TEXT),
-                    Property(name="displayName", data_type=DataType.TEXT),
-                    Property(name="photoLink", data_type=DataType.TEXT),
-                    Property(name="me", data_type=DataType.BOOL),
-                    Property(name="permissionId", data_type=DataType.TEXT),
-                    Property(name="emailAddress", data_type=DataType.TEXT)
-                ]),
-                Property(name="lastModifyingUser", data_type=DataType.OBJECT, nested_properties=[
-                    Property(name="kind", data_type=DataType.TEXT),
-                    Property(name="displayName", data_type=DataType.TEXT),
-                    Property(name="photoLink", data_type=DataType.TEXT),
-                    Property(name="me", data_type=DataType.BOOL),
-                    Property(name="permissionId", data_type=DataType.TEXT),
-                    Property(name="emailAddress", data_type=DataType.TEXT)
-            ]),
-                Property(name="viewersCanCopyContent", data_type=DataType.BOOL),
-                Property(name="permissions", data_type=DataType.OBJECT_ARRAY, nested_properties=[
-                    Property(name="kind", data_type=DataType.TEXT),
-                    Property(name="permission_id", data_type=DataType.TEXT),
-                    Property(name="type", data_type=DataType.TEXT),
-                    Property(name="emailAddress", data_type=DataType.TEXT),
-                    Property(name="role", data_type=DataType.TEXT),
-                    Property(name="displayName", data_type=DataType.TEXT),
-                    Property(name="photoLink", data_type=DataType.TEXT),
-                    Property(name="deleted", data_type=DataType.BOOL),
-                    Property(name="pendingOwner", data_type=DataType.BOOL)
-            ]),
-            Property(name ="provider", data_type=DataType.TEXT),
-        ]),
-            Property(name="doc_type", data_type=DataType.TEXT),
-        ],
-        "references": [
-
-        ],
-        "vectorizer": False,
-    }),
-    (WeaviateSchemas.DOCUMENT_TEXT, {
-            # Class definition
-            "class": "DocumentText",
-
-            # Property definitions
-            "properties": [
-                Property(name = "text", data_type=DataType.TEXT),
-                Property(name = "document_id", data_type=DataType.TEXT, description="The weaviate ID of the document this text is associated with (target: Document)"),
-                Property(name = "ordinal", data_type=DataType.INT, description="The order of this text in the email"),
-            ],
-            "references": [
-            ],
-
-            # Specify a vectorizer
-            "vectorizer": True,
-    }),
-    (WeaviateSchemas.DOCUMENT_SUMMARY, {
-            # Class definition
-            "class": "DocumentSummary",
-
-            # Property definitions
-            "properties": [
-                Property(name = "text", data_type=DataType.TEXT),
-                Property(name = "document_id", data_type=DataType.TEXT, description="The weaviate ID of the document this text is associated with (target: Document)"),
-            ],
-            "references": [
-            ],
-
-            # Specify a vectorizer
-            "vectorizer": True,
-    }),
-    (WeaviateSchemas.SLACK_CHANNEL, { 
-        "class": "SlackChannel",    
-
-        "properties": [
-            Property(name = "channel_id", data_type=DataType.TEXT, description="Unique identifier for the channel"),
-            Property(name = "creator", data_type=DataType.TEXT, description="Email address of the creator"),
-            Property(name = "name", data_type=DataType.TEXT, description="Name of the channel"),
-            Property(name = "is_private", data_type=DataType.BOOL, description="Is the channel private?"),
-            Property(name = "is_shared", data_type=DataType.BOOL, description="Is the channel shared?"),
-            Property(name = "num_members", data_type=DataType.INT, description="Number of members in the channel"),
-            Property(name = "updated", data_type=DataType.DATE, description="Last updated timestamp"),
-            Property(name ="provider", data_type=DataType.TEXT),
-        ],
-
-        "references": [
-        ],
-
-        "vectorizer": False,
-    }),
-    (WeaviateSchemas.SLACK_THREAD, {  
-        "class": "SlackThread",    
-
-        "properties": [
-            Property(name = "thread_id", data_type=DataType.TEXT, description="Unique identifier for the thread"),
-            Property(name = "channel_id", data_type=DataType.TEXT, description="Unique identifier for the channel (target: SlackChannel)"),
-        ],
-
-        "references": [
-        ],
-
-        "vectorizer": False,
-     }),
-    (WeaviateSchemas.SLACK_MESSAGE, {   
-            # Class definition
-            "class": "SlackMessage",
-
-            # Property definitions
-            "properties": [
-                Property(name = "message_id", data_type=DataType.TEXT, description="Unique identifier for the message"),
-                Property(name = "from", data_type=DataType.TEXT, description="Email address of the sender"),
-                Property(name = "subtype", data_type=DataType.TEXT, description="A refinement on the 'type' propeerty of the message"),
-                Property(name = "ts", data_type=DataType.TEXT, description="Timestamp of the message"),
-                Property(name = "type", data_type=DataType.TEXT, description="Type of the message, usually 'message' or 'file'"),
-                Property(name= "thread_id", data_type=DataType.TEXT, description="Unique identifier for the thread (target: SlackThread)"),
-            ],
-            "references": [
-            ],
-
-            # Specify a vectorizer
+        }),
+        (WeaviateSchemas.SLACK_THREAD, {  
+            "class": "SlackThread",    
+            "properties": WeaviateSchemaTransformer.to_props(SlackThread),
+            "references": [ ],
             "vectorizer": False,
-    }),
-    (WeaviateSchemas.SLACK_MESSAGE_TEXT, {   
-            # Class definition
-            "class": "SlackMessageText",
-
-            # Property definitions
-            "properties": [
-                Property(name = "text", data_type=DataType.TEXT, description="Text content of this chunk of the message"),
-                Property(name = "message_id", data_type=DataType.TEXT, description="Unique identifier for the message (target: SlackMessage)"),
-                Property(name = "thread_id", data_type=DataType.TEXT, description="Unique identifier for the thread (target: SlackThread)"),
-                Property(name = "ordinal", data_type=DataType.INT, description="The order of this text in the email"),
-            ],
-            "references": [
-            ],
-
-            # Specify a vectorizer
-            "vectorizer": True,
+        }),
+        (WeaviateSchemas.SLACK_MESSAGE, {   
+                "class": "SlackMessage",
+                "properties": WeaviateSchemaTransformer.to_props(SlackMessage),
+                "references": [],
+                "vectorizer": False,
+        }),
+        (WeaviateSchemas.SLACK_MESSAGE_TEXT, {   
+                "class": "SlackMessageText",
+                "properties": WeaviateSchemaTransformer.to_props(SlackMessageText),
+                "references": [],
+                "vectorizer": True,
         })
     ]
     

@@ -1,15 +1,13 @@
 import ast
-import time
-import json
 import os
 import pytest
 import requests
-from library import models, weaviate as w
+from library import weaviate as w
 import library.handlers as h
-from weaviate.classes.query import Filter
 from requests.exceptions import ConnectionError
 
-from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
+from library.models.message import Message
+from library.weaviate_schemas import WeaviateSchemas
 from tests.integration.library.integration_test_base import IntegrationTestBase
 
 class TestEventWeaviate(IntegrationTestBase):
@@ -62,14 +60,18 @@ class TestEventWeaviate(IntegrationTestBase):
             for _ in range(3):
                email_json.readline()
 
-            email_obj = models.Message.extract_data(ast.literal_eval(email_json.readline()))
-            
-            assert(len(email_obj.get('events', []))) != 0, "The email object should have an event in it"
+            event_json = ast.literal_eval(email_json.readline())
+            email_obj = Message.from_gsuite_payload(event_json)
 
-            print(email_obj.get('events', []))
+            print("Email object ", email_obj)
+            print("Email object events ", event_json)            
+
+            assert(len(email_obj.events)) != 0, "The email object should have an event in it"
+
+            print(email_obj.events)
             handler = h.Handlers(weave)
             
-            handler.handle_event(email_obj['events'][0])
+            handler.handle_event(email_obj.events[0])
             saved_texts = [t for t in texts.iterator()]
             assert len(saved_texts) >= 1, "There should be an event text saved in the system"
 

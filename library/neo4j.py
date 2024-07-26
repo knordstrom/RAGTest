@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 import dotenv
 from neo4j import GraphDatabase
 import os
@@ -6,6 +7,8 @@ import os
 from library.person import Person
 from library.utils import Utils
 from library.employee import Employee
+from library.weaviate_schemas import Event as WeaviateEvent
+from library.models.event import Event
 
 class EventPersonRelationships:
     attendance_map = {}
@@ -43,14 +46,16 @@ class Neo4j:
     PERSON = "Person"
     EVENT = "Event"
 
-    def __init__(self, host = None, port = None, protocol = "neo4j", user = None, password = None):
-        dotenv.load_dotenv()
+    def __init__(self, host = None, port = None, protocol = None, user = None, password = None):
+        dotenv.load_dotenv(dotenv_path = os.path.join(os.path.dirname(__file__), '../.env'))
+        protocol = os.getenv("NEO4J_PROTOCOL", "bolt") if protocol is None else protocol
         self.db_host = os.getenv("NEO4J_DB_HOST", "localhost") if host is None else host
         self.db_port = os.getenv("NEO4J_DB_PORT", "7687") if port is None else port
         self.url = f"{protocol}://{self.db_host}:{self.db_port}"
         self.username = os.getenv("NEO4J_USERNAME", "neo4j") if user is None else user
         self.password = os.getenv("NEO4J_PASSWORD", "neo4j") if password is None else password
         self.driver = GraphDatabase.driver(self.url, auth=(self.username, self.password))
+        self.connect()
 
     def connect(self):
         print("url is: ", self.url)
@@ -70,14 +75,14 @@ class Neo4j:
     def query(self, query):
         return self.driver.execute_query(query)
 
-    def get_schedule(self, email: str, start_time: datetime, end_time: datetime) -> dict:
+    def get_schedule(self, email: str, start_time: datetime, end_time: datetime) -> list[Event]:
         query = """
         MATCH (person:Person {email: $email})
         MATCH (event:Event)-[invite:INVITED]-(person)
         MATCH (attendee:Person)-[attending:ATTENDS]-(event)
         MATCH (event)-[r:ORGANIZED_BY]-(organizer:Person)
         WHERE datetime(event.end) >= datetime($start_time) AND datetime(event.start) <= datetime($end_time)
-        RETURN DISTINCT person.name, person.email, event.name, event.description, event.start, event.end, event.recurring_id, invite.status, attendee.name, attendee.email, attending.status, organizer.name, organizer.email
+        RETURN DISTINCT person.name, person.email, event.id, event.name, event.description, event.start, event.end, event.recurring_id, invite.status, attendee.name, attendee.email, attending.status, organizer.name, organizer.email
         """
         print("Querying Neo4j with: " + query)
         with self.driver.session() as session:
@@ -120,7 +125,7 @@ class Neo4j:
                      
 
     #### Events ####
-    def process_events(self, events):
+    def process_events(self, events: list[Event]):
         """Processes a list of Google API calendar events and adds them, plus their atttendees, to the Neo4j database."""
 
         events_list = []
@@ -141,7 +146,8 @@ class Neo4j:
             "start": event["start"].get("dateTime", event["start"].get("date")),
             "end": event["end"].get("dateTime", event["end"].get("date")),
             "name": event.get("summary", ""),
-            "description": event.get("description", "")
+            "description": event.get("description", ""),
+            "summary": event.get("summary", ""),
         }
         return event_dict
 
@@ -168,7 +174,7 @@ class Neo4j:
             
             
     @staticmethod
-    def collate_schedule_response(records):
+    def collate_schedule_response(records: list[dict[str, Any]]) -> list[Event]:
         def key(record):
             t1 = datetime.fromisoformat(record['event.start']) if type(record['event.start']) == str  else record['event.start']
             t2 = datetime.fromisoformat(record['event.end']) if type(record['event.end']) == str else record['event.end']
@@ -205,6 +211,7 @@ class Neo4j:
         record_dict = {}
         record_dict.update(record)
         record_dict['attendees'] = []
+        Utils.rename_key(record_dict, 'event.id', 'event_id')
         Utils.rename_key(record_dict, 'event.start', 'start', lambda x: x.isoformat() if type(x) == datetime else x)
         Utils.rename_key(record_dict, 'event.end', 'end', lambda x: x.isoformat() if type(x) == datetime else x)
         Utils.rename_key(record_dict, 'event.description', 'description')
@@ -213,8 +220,11 @@ class Neo4j:
         Utils.rename_key(record_dict, 'event.location', 'location')
         return record_dict
     
+
+            
     @staticmethod
-    def finalize_schedule_response(response):
+    def finalize_schedule_response(response: list[dict[str, any]]) -> list[Event]:
+        result: list[Event] = []
         for item in response:
             item['person'] = {
                 'name': item['person.name'],
@@ -225,10 +235,16 @@ class Neo4j:
                 'name': item['organizer.name'],
                 'email': item['organizer.email'],
             }
+
+            item['start'] = Utils.handle_time(item['start'])
+            item['end'] = Utils.handle_time(item['end'])
             
             for k in ['person.name', 'person.email', 'organizer.name', 'organizer.email', 'attendee.name', 'attendee.email', 
                       'attending.status', 'invite.status']:
                 item.pop(k)
+            
+            item['summary'] = item.get('name')
+            result.append(Event(**item))
 
-        return sorted(response, key=lambda x: x['start'])
+        return sorted(result, key=lambda x: x.start)
     

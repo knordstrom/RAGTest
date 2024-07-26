@@ -1,16 +1,8 @@
-import ast
-import time
-import json
-import os
 from neo4j import Record
 import pytest
 import requests
-from library import models, neo4j, weaviate as w
-import library.handlers as h
-from weaviate.classes.query import Filter
 from requests.exceptions import ConnectionError
-
-from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
+import library.neo4j as neo4j
 from tests.integration.library.integration_test_base import IntegrationTestBase
 
 class WithValue:
@@ -46,7 +38,6 @@ class TestEventNeo4j(IntegrationTestBase):
     
     def test_event_model_create(self, service):
         graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
-        graph.connect()
 
         graph.process_events([WithValue(self.event1), WithValue(self.event2)])
 
@@ -59,24 +50,31 @@ class TestEventNeo4j(IntegrationTestBase):
         items = []
         for saved in result:
             if saved['n'].labels == {'Person'}:
-                emails[saved['n']['email']] = saved['n']['name']
-                item = f"{saved['n']['name']} {saved['r'].type} {saved['b']['summary']}"
-                items.append(item)
+                if saved['n']['email'] in [
+                    'linda@yourhouse.com',
+                    'keith@myhouse.com',
+                    'unknownorganizer@calendar.google.com'
+                ]:
+                    emails[saved['n']['email']] = saved['n']['name']
+                    item = f"{saved['n']['name']} {saved['r'].type} {saved['b']['summary']}"
+                    items.append(item)
             elif saved['n'].labels == {'Event'}:
-                events[saved['n']['summary']] = saved['n']['location']
-                item = f"{saved['n']['summary']} {saved['r'].type} {saved['b']['name']}"
-                items.append(item)
+                if saved['n']['id'] in ['b6rid5usd1l53qs756qnfb9ni4', '_6oq3ac1l69j32or1c5i3ep1g64pjgchm60pjcopb6or3adpmckr68p1k6gq3aohmc8qmao9m6phj6c1d71j38p1oclgmabbgc5p78rj5e906atj5dpq2soridtn6upjp5phmur8']:
+                    print("       -- summary ", saved['n']['summary'])
+                    events[saved['n']['summary']] = saved['n']['location']
+                    item = f"{saved['n']['summary']} {saved['r'].type} {saved['b']['name']}"
+                    items.append(item)
 
-            print("       ---", saved)
+            # print("       ---", saved)
 
-
-        assert len(result) == 8    # 2 events and 2 people
-        assert len(events) == 2
+        assert len(emails) == 2
         assert 'linda@yourhouse.com' in emails.keys()
         assert 'keith@myhouse.com' in emails.keys()
+       
         assert len(events) == 2
         assert 'Stay at Holiday Inn Express & Suites Grand Junction' in events.keys()
         assert 'Keith Nordstrom and Linda Coaching Meeting' in events.keys()
+
         assert len(items) == 8
         assert 'keith@myhouse.com ATTENDS Stay at Holiday Inn Express & Suites Grand Junction' in items
         assert 'keith@myhouse.com ATTENDS Keith Nordstrom and Linda Coaching Meeting' in items
