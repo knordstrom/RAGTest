@@ -4,6 +4,7 @@ from typing import Union
 from library.api_models import ApiResponse, AskResponse, BriefResponse, ScheduleResponse
 from library.apisupport import APISupport
 from library.briefing_support import BriefingSupport
+from library.models.briefing_summarizer import GroqBriefingSummarizer
 import library.weaviate as weaviate
 import warnings 
 
@@ -40,7 +41,8 @@ async def briefs(email:str, start:datetime.datetime, end: Union[datetime.datetim
         end = plus12
     elif end < start:
         APISupport.error_response(400, "End time must be after the start time.")
-    response =  BriefingSupport.create_briefings_for(email, start, end, certainty = certainty)
+    support = BriefingSupport(GroqBriefingSummarizer())
+    response =  support.create_briefings_for(email = email, start_time=start, end_time= end, certainty = certainty)
     return ApiResponse.create(response)
 
 @app.get('/schedule', tags=tags)

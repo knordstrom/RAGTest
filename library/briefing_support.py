@@ -4,30 +4,29 @@ import os
 from collections import defaultdict
 from library import weaviate
 from library.api_models import BriefContext, BriefResponse, DocumentEntry, EmailConversationEntry, MeetingAttendee, MeetingContext, MeetingSupport, SlackConversationEntry, SlackThreadResponse
-from library.groq_client import GroqClient
+from library.models.briefing_summarizer import BriefingSummarizer
 from library.models.event import Event
 import library.neo4j as neo
 from dotenv import load_dotenv
-from library.promptmanager import PromptManager
 from library.utils import Utils
 from library.weaviate_schemas import Email, EmailConversationWithSummary, EmailParticipant, EmailText, EmailTextWithFrom, WeaviateSchemas
 from weaviate.collections.classes.internal import Object
 
-
 class BriefingSupport:
 
-    @staticmethod
-    def create_briefings_for_summary(email: str, start_time: datetime, end_time: datetime, schedule: list[dict]) -> str:
-        prompt = PromptManager().get_latest_prompt_template('APISupport.create_briefings_for')  
-        return GroqClient(os.getenv('GROQ_API_KEY'), max_tokens=2000).query(prompt, {
+    def __init__(self, summarizer: BriefingSummarizer) -> None:
+        self.summarizer: BriefingSummarizer = summarizer
+
+    def create_briefings_for_summary(self, email: str, start_time: datetime, end_time: datetime, schedule: list[dict]) -> str:
+        out = self.summarizer.summarize('APISupport.create_briefings_for', {
             'email': email,
             'start_time': start_time.isoformat(),
             'end_time': end_time.isoformat(),
             'Context': str(schedule)
         })
+        return out
 
-    @staticmethod
-    def create_briefings_for(email: str, start_time: datetime, end_time: datetime, certainty: float = None) -> BriefResponse:
+    def create_briefings_for(self, email: str, start_time: datetime, end_time: datetime, certainty: float = None) -> BriefResponse:
         """    # retrieve person node from neo4j
         #    retrieve associated people
         #    retrieve associated events
@@ -40,11 +39,11 @@ class BriefingSupport:
         schedule: list[Event] = n.get_schedule(email, start_time, end_time)
         print("Schedule was ", schedule)
 
-        summary: str = BriefingSupport.create_briefings_for_summary(email, start_time, end_time, schedule)
-        
+        summary: str = self.create_briefings_for_summary(email, start_time, end_time, schedule)
+
         meetings = []
         for event in schedule:
-            support = BriefingSupport.contextualize(event, certainty)
+            support = self.contextualize(event, certainty)
             attendees = event.attendees
             organizer = MeetingAttendee(name = event.organizer.name, email = event.organizer.email) if event.organizer else None
             meeting = MeetingContext(attendees=attendees, start=event.start, end=event.end, description=event.description, 
@@ -54,11 +53,10 @@ class BriefingSupport:
      
         return BriefResponse(email=email, start_time=start_time, end_time=end_time, summary=summary, context=BriefContext(schedule = meetings))
      
-    @staticmethod
-    def contextualize(event: Event, certainty: float = None) -> MeetingSupport:
-        sum_docs: list[DocumentEntry] = BriefingSupport.doc_context_for(event, certainty)
-        sum_email: list[EmailConversationEntry] = BriefingSupport.email_context_for(event, certainty)
-        sum_slack: list[SlackConversationEntry] = BriefingSupport.slack_context_for(event, certainty)
+    def contextualize(self, event: Event, certainty: float = None) -> MeetingSupport:
+        sum_docs: list[DocumentEntry] = self.doc_context_for(event, certainty)
+        sum_email: list[EmailConversationEntry] = self.email_context_for(event, certainty)
+        sum_slack: list[SlackConversationEntry] = self.slack_context_for(event, certainty)
 
         return MeetingSupport(
             docs=sum_docs,
@@ -66,9 +64,8 @@ class BriefingSupport:
             slack=sum_slack
         )
     
-    @staticmethod
-    def doc_context_for(event: Event, certainty: float = None) -> list[DocumentEntry]:
-        sum_docs = BriefingSupport.context_for(event, WeaviateSchemas.DOCUMENT_SUMMARY, WeaviateSchemas.DOCUMENT, 'document_id', certainty)
+    def doc_context_for(self, event: Event, certainty: float = None) -> list[DocumentEntry]:
+        sum_docs = self.context_for(event, WeaviateSchemas.DOCUMENT_SUMMARY, WeaviateSchemas.DOCUMENT, 'document_id', certainty)
         Utils.remove_keys([['metadata', 'lastModifyingUser'],['metadata', 'owners'],['metadata', 'permissions']], sum_docs)
         response = []
         for doc in sum_docs:
@@ -76,55 +73,22 @@ class BriefingSupport:
             response.append(DocumentEntry.model_validate(doc))
         return response
 
-    @staticmethod
-    def construct_conversation_and_summary(emails_dict: dict[str, list[EmailTextWithFrom]]) -> dict[str,EmailConversationWithSummary]:
-        # prompt = """
-        #     Below is a series of email conversations between different individuals. Please read through the conversations and provide a concise summary that captures the main points and key takeaways from these exchanges.
-
-        #     Conversations:
-        #     {Conversation}
-
-        #     Please summarize the conversations, highlighting any important decisions, action items, and key topics discussed.
-        #     """
-        mgr: PromptManager = PromptManager()
-        prompt = mgr.get_latest_prompt_template('Summarizer.email_summarizer')
-
+    def construct_conversation_and_summary(self, emails_dict: dict[str, list[EmailTextWithFrom]]) -> dict[str,EmailConversationWithSummary]:
         thread_id:str
         emails:list[EmailTextWithFrom]
         details: EmailTextWithFrom
-
         response: dict[str, EmailConversationWithSummary] = {}
         for thread_id, emails in emails_dict.items():
+            conversation = ""
             for details in emails:
-                conversation = ""
-                sender_name = details.from_
+                sender_name = details.from_.name
                 text = details.text
                 conversation += f"\n{sender_name}: {text}"
-            conversation_summary = GroqClient(os.getenv('GROQ_API_KEY')).query(prompt, {'Conversation': conversation})
-            print("Summary: ", conversation_summary)
+            conversation_summary = self.summarizer.summarize('Summarizer.email_summarizer', {'Conversation': conversation})
             response[thread_id] = EmailConversationWithSummary(thread_id= thread_id, conversation=conversation, summary=conversation_summary)
         return response
 
-    @staticmethod
-    def get_email_thread_ids(emails: list[dict[str, any]]) -> tuple[list[str], list[str]]:
-        thread_ids: dict[str, str] = {}
-        email_ids: dict[str, str] = {}
-        for email in emails:
-            thread_ids[email["thread_id"]] = email["thread_id"]
-            email_ids[email["email_id"]] = email["email_id"]
-        return list(thread_ids.keys()), list(email_ids.keys())
-    
-    @staticmethod
-    def get_email_metadata(email_ids: list[str]) -> dict[str, Email]:
-        w: weaviate.Weaviate = weaviate.Weaviate()
-        email_metadata = {}
-        for email in email_ids:
-            email_metadata_using_email_id: Email = w.get_email_metadata_by_id(email)
-            email_metadata[email] = email_metadata_using_email_id
-        return email_metadata
-
-    @staticmethod
-    def get_thread_email_message_by_id(thread_ids: list[str], email_map: dict[str, Email]) -> dict[str,list[EmailTextWithFrom]]:
+    def get_thread_email_message_by_id(self, thread_ids: list[str], email_map: dict[str, Email]) -> dict[str,list[EmailTextWithFrom]]:
         w: weaviate.Weaviate = weaviate.Weaviate()
         threads: dict[str, list[EmailTextWithFrom]] = {}
         for thread in thread_ids:
@@ -141,16 +105,14 @@ class BriefingSupport:
                     threads[thread].append(EmailTextWithFrom(**m))
         return threads
 
-    @staticmethod
-    def collate_email_messages_by_thread_id(emails: list[EmailTextWithFrom]) -> EmailTextWithFrom:
+    def collate_email_messages_by_thread_id(self, emails: list[EmailTextWithFrom]) -> EmailTextWithFrom:
         text: list[str] = []
         for email in emails:
             text.append(email.text)
         return EmailTextWithFrom(email_id=emails[0].email_id, thread_id=emails[0].thread_id, ordinal=emails[0].ordinal, 
                                  text=" ".join(text), from_=emails[0].from_)
 
-    @staticmethod
-    def group_messages_by_thread_id_email_id(threads: dict[str,list[EmailTextWithFrom]]) -> dict[str, list[EmailTextWithFrom]]:
+    def group_messages_by_thread_id(self, threads: dict[str,list[EmailTextWithFrom]]) -> dict[str, list[EmailTextWithFrom]]:
         grouped_messages: dict[str, list[EmailTextWithFrom]] = {}
 
         thread_id: str
@@ -166,24 +128,30 @@ class BriefingSupport:
                 grouped_messages[thread_id][email_id].append(message)
 
             for email_id in grouped_messages[thread_id]:
-                grouped_messages[thread_id][email_id] = BriefingSupport.collate_email_messages_by_thread_id(grouped_messages[thread_id][email_id])
+                grouped_messages[thread_id][email_id] = self.collate_email_messages_by_thread_id(grouped_messages[thread_id][email_id])
 
             for thread_id, messages in threads.items():
                 grouped_messages[thread_id] = sorted(messages, key=lambda x: x.ordinal)
 
         return grouped_messages
     
-    @staticmethod
-    def email_context_for(event: Event, certainty: float = None) -> list[EmailConversationEntry]:
-        sum_email: list[dict[str, any]] = BriefingSupport.context_for(event, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'email_id', certainty)
-
-        thread_ids, email_ids = BriefingSupport.get_email_thread_ids(sum_email)
-        email_metadata: dict[str, Email] = BriefingSupport.get_email_metadata(email_ids)
-        threads: dict[str,list[EmailTextWithFrom]] = BriefingSupport.get_thread_email_message_by_id(thread_ids, email_metadata)
-
-        conversations: dict[str, list[EmailTextWithFrom]] = BriefingSupport.group_messages_by_thread_id_email_id(threads)
-        summarized_conversations: dict[str,EmailConversationWithSummary] = BriefingSupport.construct_conversation_and_summary(conversations)
-
+    def get_thread_emails(self, sum_email: list[dict[str, any]]) -> dict[str, list[EmailTextWithFrom]]:
+        thread_text: dict[str, list[EmailTextWithFrom]] = {}
+        w: weaviate.Weaviate = weaviate.Weaviate()
+        for email_dict in sum_email:
+            thread_id = email_dict['thread_id']
+            if thread_id not in thread_text:
+                thread_list: list[EmailTextWithFrom] = w.get_thread_email_messages_by_id(thread_id)
+                thread_text[thread_id] = thread_list
+        return thread_text
+    
+    def email_context_for(self, event: Event, certainty: float = None) -> list[EmailConversationEntry]:
+        sum_email: list[dict[str, any]] = self.context_for(event, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'email_id', certainty) 
+        email_thread: dict[str, list[EmailTextWithFrom]] = self.get_thread_emails(sum_email) 
+        return self.process_email_context(email_thread)
+  
+    def process_email_context(self, threads: dict[str, list[EmailTextWithFrom]])-> list[EmailConversationEntry]:
+        summarized_conversations: dict[str,EmailConversationWithSummary] = self.construct_conversation_and_summary(threads)
         result: list[EmailConversationEntry] = []
         for conversation in summarized_conversations.values():
             result.append(EmailConversationEntry(text = conversation.conversation,
@@ -192,13 +160,12 @@ class BriefingSupport:
 
         return result
     
-    @staticmethod
-    def slack_context_for(event: Event, certainty: float = None) -> list[SlackConversationEntry]:
-        sum_slack = BriefingSupport.context_for(event, WeaviateSchemas.SLACK_MESSAGE_TEXT, WeaviateSchemas.SLACK_THREAD, 'thread_id', certainty)
+    def slack_context_for(self, event: Event, certainty: float = None) -> list[SlackConversationEntry]:
+        sum_slack = self.context_for(event, WeaviateSchemas.SLACK_MESSAGE_TEXT, WeaviateSchemas.SLACK_THREAD, 'thread_id', certainty)
         prompt = """Please summarize the following conversation in a few sentences.
         
         {Conversation}"""
-        w = weaviate.Weaviate()
+        w: weaviate.Weaviate = weaviate.Weaviate()
         result: list[SlackConversationEntry] = []
         for thread in sum_slack:
             messages: SlackThreadResponse = w.get_slack_thread_messages_by_id(thread['thread_id'])
@@ -210,17 +177,16 @@ class BriefingSupport:
                 conversation += "\n" + message.sender + ": " + "".join(message.text)
             
             thread['text'] = conversation
-            thread['summary'] = GroqClient(os.getenv('GROQ_API_KEY')).query(prompt, {'Conversation': conversation})
+            thread['summary'] = self.summarizer.summarize_with_prompt(prompt, {'Conversation': conversation})
             result.append(SlackConversationEntry.model_validate(thread))
         return result
     
-    @staticmethod
-    def context_for(event: Event, source: WeaviateSchemas, meta_source: WeaviateSchemas, id_prop: str, certainty: float = None) -> list[dict[str, any]]:
+    def context_for(self, event: Event, source: WeaviateSchemas, meta_source: WeaviateSchemas, id_prop: str, certainty: float = None) -> list[dict[str, any]]:
         w: weaviate.Weaviate = weaviate.Weaviate()
         cv = .3 if not certainty else certainty
         print(event)
-        res: list[object] = w.search(event.summary, source, certainty = cv)
-        dsc_res: list[object] = w.search(event.description, source) if event.description!= None and event.description!= '' else []
+        res: list[Object[any,any]] = w.search(event.summary, source, certainty = cv)
+        dsc_res: list[Object[any,any]] = w.search(event.description, source) if event.description!= None and event.description!= '' else []
         result: dict[str, any] = {}
         for o in res:
             props = o.properties
@@ -237,3 +203,5 @@ class BriefingSupport:
                 result.get(o.properties[id_prop], {}).update(o.properties)
 
         return list(result.values())
+
+
