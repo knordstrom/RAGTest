@@ -1,9 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from hashlib import md5
 from typing import Any
+from uuid import UUID, uuid4
 import dotenv
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase, Result
 import os
 
+from library.api_models import TokenResponse
+from library.token_generator import TokenGenerator
 from library.person import Person
 from library.utils import Utils
 from library.employee import Employee
@@ -123,6 +127,53 @@ class Neo4j:
                 self.create_relationship(self.PERSON, "id", person["id"], "MANAGES", self.PERSON, "id", report["id"], {"id": person["id"] + report["id"]})
                 self.create_relationship(self.PERSON, "id", report["id"], "REPORTS_TO", self.PERSON, "id", person["id"], {"id": report["id"] + person["id"]})
                      
+    #### Auth ####
+    def authenticate(self, email: str, password: str) -> list[dict[str, Any]]:
+        query = """
+        MATCH (person:Person {email: $email})
+        RETURN DISTINCT person.name, person.email, person.password, person.token, person.token_expiry
+        """
+        print("Querying Neo4j with: " + query)
+        with self.driver.session() as session:
+            result: Result = session.run(query, email=email)
+            records: list[dict[str, Any]] = list(result)
+            return records
+
+    def update_user_token(self, email: str) ->  list[dict[str, Any]]:
+        query = """
+        MATCH (person:Person {email: $email})
+        SET person.token = $token, person.token_expiry = $token_expiry
+        RETURN DISTINCT person.name, person.email, person.password, person.token, person.token_expiry
+        """
+        print("Querying Neo4j with: " + query)
+        with self.driver.session() as session:
+            token, token_expiry = TokenGenerator.generate_token()
+            records: list[dict[str, Any]] = list(session.run(query, email=email, token = token, token_expiry = token_expiry.isoformat()))
+            return records 
+    
+    def create_login(self, email: str, password: str) -> TokenResponse:
+        query = """
+        MATCH (person:Person {email: $email})
+        SET person.password = $password, person.token = $token, person.token_expiry = $token_expiry
+        RETURN DISTINCT person.name, person.email, person.password, person.token, person.token_expiry
+        """
+        return self.perform_user_update(query, email, password)
+        
+    def create_new_user(self, email: str, password: str) -> TokenResponse:
+        query = """
+        CREATE (person:Person {email: $email, password: $password, token: $token, token_expiry: $token_expiry})
+        RETURN DISTINCT person.name, person.email, person.password, person.token, person.token_expiry
+        """
+        return self.perform_user_update(query, email, password)
+    
+    def perform_user_update(self, query:str,  email: str, password: str) -> TokenResponse:
+        print("Querying Neo4j with: " + query)
+        with self.driver.session() as session:
+            token, token_expiry = TokenGenerator.generate_token()
+            records: list[dict[str, Any]] = list(session.run(query, email=email, password=str(md5(password.encode()).hexdigest()), token = token, token_expiry = token_expiry.isoformat()))
+            if len(records) == 0:
+                return None
+            return TokenResponse(email=email, token=token, expiry=token_expiry)
 
     #### Events ####
     def process_events(self, events: list[Event]):
