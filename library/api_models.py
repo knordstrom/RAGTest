@@ -189,3 +189,12 @@ class SlackThreadResponse(BaseModel):
     channel_id: str
     thread_id: str
     messages: List[SlackMessage] = []
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class TokenResponse(BaseModel):
+    token: Optional[str] = None
+    email: EmailStr
+    expiry: Optional[datetime] = None

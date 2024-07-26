@@ -11,6 +11,7 @@ import warnings
 from api.reference import route as refs
 from api.gsuite_retrieval import route as data
 from api.slack_retrieval import route as slack
+from api.auth import route as auth
 from fastapi import FastAPI
 
 warnings.simplefilter("ignore", ResourceWarning)
@@ -19,6 +20,7 @@ app = FastAPI(title="Sofia API", description="API for intereacting with the Sofi
 app.include_router(refs)
 app.include_router(data)
 app.include_router(slack)
+app.include_router(auth)
 
 tags = ["Main Interface"]
 
