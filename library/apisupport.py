@@ -119,6 +119,7 @@ class APISupport:
     
     @staticmethod
     def get_calendar_between(email: str, start_time: datetime, end_time: datetime) -> ScheduleResponse:
+    def get_calendar_between(email: str, start_time: datetime, end_time: datetime) -> ScheduleResponse:
         n = neo.Neo4j()
         print("Getting calendar for " + email + " from " + start_time.isoformat() + " to " + end_time.isoformat())
         events: list[Event] = n.get_schedule(email, start_time, end_time)

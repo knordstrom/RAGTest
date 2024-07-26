@@ -4,6 +4,7 @@ import weaviate as w
 #import langchain_experimental.text_splitter as lang_splitter
 from langchain_community.embeddings import GPT4AllEmbeddings
 from library.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse
+from library.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse
 from library.vdb import VDB 
 from library import utils
 import weaviate.classes as wvc
@@ -199,6 +200,8 @@ class Weaviate(VDB):
             response['text'] = [x.properties.get('text') for x in text_results.objects]
             utils.Utils.rename_key(response, 'from', 'sender')
             return EmailMessage.model_validate(response)
+            utils.Utils.rename_key(response, 'from', 'sender')
+            return EmailMessage.model_validate(response)
         return None
 
     def email_update(self, props: dict[str, any]) -> None:
@@ -257,7 +260,9 @@ class Weaviate(VDB):
             print("Results", len(results.objects), " with text ", len(text_results.objects), "(",[x.uuid for x in text_results.objects],")")
             response = results.objects[0].properties
             utils.Utils.rename_key(response, 'from', 'sender')
+            utils.Utils.rename_key(response, 'from', 'sender')
             response['text'] = [x.properties.get('text') for x in text_results.objects]
+            return SlackMessage.model_validate(response)
             return SlackMessage.model_validate(response)
         return None
     
@@ -275,8 +280,9 @@ class Weaviate(VDB):
         )
         if len(results.objects)>0:
             return SlackThreadResponse.model_validate(results.objects[0].properties)
+            return SlackThreadResponse.model_validate(results.objects[0].properties)
         return None
-    
+
     def get_slack_thread_messages_by_id(self, thread_id: str) -> SlackThreadResponse:
         results = self.collection(WeaviateSchemas.SLACK_THREAD).query.fetch_objects(
             filters=Filter.by_property("thread_id").equal(thread_id),
@@ -298,9 +304,12 @@ class Weaviate(VDB):
             for message in message_results.objects:
                 utils.Utils.rename_key(message.properties, 'from', 'sender')
                 message.properties['text'] = [values.get(message.properties.get('message_id'))]
+                utils.Utils.rename_key(message.properties, 'from', 'sender')
+                message.properties['text'] = [values.get(message.properties.get('message_id'))]
             
             thread['messages'] = [x.properties for x in message_results.objects]
 
+            return SlackThreadResponse.model_validate(thread)
             return SlackThreadResponse.model_validate(thread)
         return None
     
@@ -321,6 +330,7 @@ class Weaviate(VDB):
             response = results.objects[0].properties
             response['text'] = [x.properties.get('text') for x in text_results.objects]
             response['summary'] = [x.properties.get('summary') for x in summary_results.objects][0] if len(summary_results.objects)>0 else {}
+            return DocumentResponse.model_validate(response)
             return DocumentResponse.model_validate(response)
         return None
     

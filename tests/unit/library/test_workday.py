@@ -39,6 +39,12 @@ class WorkdayTest(unittest.TestCase):
         assert sorted_ids(employee("000004").reports) == ['000010', '000011']
         assert sorted_ids(employee("000005").reports) == ['000012', '000013']
 
+        assert sorted_ids(employee("000002").reports) == ['000006', '000007']
+        assert sorted_ids(employee("000003").reports) == ['000008', '000009']
+        assert sorted_ids(employee("000004").reports) == ['000010', '000011']
+        assert sorted_ids(employee("000005").reports) == ['000012', '000013']
+
+        e6 = employee("000006", employee("000002"))
         e6 = employee("000006", employee("000002"))
         assert sorted_ids(e6.reports) == ['000014', '000015']
         assert sorted_ids(employee("000014", e6).reports) == ['000018','C00001']

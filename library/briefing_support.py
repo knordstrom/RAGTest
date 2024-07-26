@@ -202,7 +202,10 @@ class BriefingSupport:
         result: list[SlackConversationEntry] = []
         for thread in sum_slack:
             messages: SlackThreadResponse = w.get_slack_thread_messages_by_id(thread['thread_id'])
+            messages: SlackThreadResponse = w.get_slack_thread_messages_by_id(thread['thread_id'])
             conversation = ""
+            for message in messages.messages:
+                conversation += "\n" + message.sender + ": " + "".join(message.text)
             for message in messages.messages:
                 conversation += "\n" + message.sender + ": " + "".join(message.text)
             

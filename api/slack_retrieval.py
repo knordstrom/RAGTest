@@ -5,15 +5,23 @@ from typing import Union
 
 from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
+import os
+from typing import Union
+
+from fastapi import APIRouter
+from fastapi.responses import RedirectResponse
 from library.apisupport import APISupport
 from library.slack import Slack, SlackAuthException
 
 route = APIRouter(tags=["Data Acquisition"])
+route = APIRouter(tags=["Data Acquisition"])
 
+root_path = os.path.dirname(os.path.realpath(__file__))
 root_path = os.path.dirname(os.path.realpath(__file__))
 
 default_destination = {'destination': '/data/slack/channels'}
 
+@route.get('/data/slack/channels')
 @route.get('/data/slack/channels')
 def slack() -> str:
     """Retrieve slack channels for the current user. THIS CURRENTLY DOES NOT WORK WITHOUT MANUAL INCLUSION OF SLACK CREDENTIALS."""
@@ -25,12 +33,15 @@ def slack() -> str:
         if creds:
             print("Redirecting to auth", creds.valid, creds.expired, creds.expiry)
         return RedirectResponse(url=s.auth_target(default_destination))
+        return RedirectResponse(url=s.auth_target(default_destination))
     try:
         conversations = s.read_conversations()
+        with open(root_path + '/../resources/slack_response.json', 'w') as file:
         with open(root_path + '/../resources/slack_response.json', 'w') as file:
             json.dump(conversations, file)
         APISupport.write_slack_to_kafka(conversations)
     except SlackAuthException as error:
+        return RedirectResponse(url=s.auth_target(default_destination))
         return RedirectResponse(url=s.auth_target(default_destination))
     
     return conversations
@@ -42,7 +53,9 @@ def slack_auth(destination: Union[str,None] = None) -> str:
     creds = s.check_auth()
     if not creds or not creds.valid:
         return RedirectResponse(url=s.auth_target({'destination': destination}))
+        return RedirectResponse(url=s.auth_target({'destination': destination}))
     else:
+        return RedirectResponse(url=destination)
         return RedirectResponse(url=destination)
     
 
@@ -51,6 +64,10 @@ def slack_auth_finish(code:str, state:Union[str,None] = None):
     # Retrieve the auth code and state from the request params
 
     received_state = ast.literal_eval(state if state else str(default_destination))
+
+    received_state = ast.literal_eval(state if state else str(default_destination))
     s = Slack()
+    result = s.finish_auth(code)
+    return RedirectResponse(url=received_state.get('destination', default_destination['destination']))
     result = s.finish_auth(code)
     return RedirectResponse(url=received_state.get('destination', default_destination['destination']))
