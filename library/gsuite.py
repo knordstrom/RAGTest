@@ -338,8 +338,8 @@ class GSuite(GSuiteServiceProvider):
             doc_info[gdoc]["doc_type"] = document_type
         return doc_info
 
-    def get_doc_info(self):
-        doc_info = {}
+    def get_doc_info(self) -> dict[str, any]:
+        doc_info: dict[str, any] = {}
         doc_info.update(self.compile_info("google_doc", self.get_gdocs_content))
         doc_info.update(self.compile_info("docx", self.get_docx_content))
         doc_info.update(self.compile_info("pdf", self.get_pdf_content))
