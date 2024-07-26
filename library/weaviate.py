@@ -8,7 +8,7 @@ from library.vdb import VDB
 from library import utils
 import weaviate.classes as wvc
 from weaviate.classes.config import Property, DataType
-from library.weaviate_schemas import Email, EmailText, WeaviateSchemas, WeaviateSchema
+from library.weaviate_schemas import Email, EmailText, EmailTextWithFrom, WeaviateSchemas, WeaviateSchema
 from weaviate.classes.query import Filter
 from weaviate.collections.classes.grpc import Sort
 from weaviate.collections.collection import Collection
@@ -239,11 +239,58 @@ class Weaviate(VDB):
             return Email.model_validate(props)
         return None
 
-    def get_thread_email_messages_by_id(self, thread_id: str) -> list[EmailText]:
+    def get_thread_email_messages_by_id(self, thread_id: str) -> list[EmailTextWithFrom]:
         results = self.collection(WeaviateSchemas.EMAIL_TEXT).query.fetch_objects(
             filters=Filter.by_property("thread_id").equal(thread_id),
+            sort=Sort.by_property(name="date", ascending = True),
         )
-        return [EmailText.model_validate(obj.properties ) for obj in results.objects]
+        email_ids = {}
+        for email in results.objects:
+            email_ids[email.properties.get('email_id')] = email.properties.get('text')
+        email_metadata: list[Object[Properties, References]] = self.get_by_ids(WeaviateSchemas.EMAIL, "email_id", list(email_ids.keys()))
+        from_map: dict[str, dict[str,str]] = {}
+        for email in email_metadata:
+            from_map[email.properties.get('email_id')] = email.properties.get('from',  email.properties.get('from_'))
+
+        return Weaviate._collate_emails(email_metadata, from_map)
+        
+    @staticmethod
+    def _collate_emails(email_metadata_date_sorted: list[Object[Properties, References]], from_map: dict[str, dict[str,str]]) -> list[EmailTextWithFrom]:
+        """Takes email text, which may have multiple parts, and collates them into a single email message for inclusion in a list of complete
+        email messages in a thread. The email text is sorted by ordinal and then concatenated into a single text field. 
+        IMPORTANT: Assumes email_metadata_date_sorted is sorted by date and thus that all email ids are consecutive entries."""
+        output: list[EmailTextWithFrom] = []
+        current_email_text_list: list[dict[str, any]] = []
+        current_item: EmailTextWithFrom = None
+        print("Collating emails", len(email_metadata_date_sorted))
+        for obj in email_metadata_date_sorted:
+            props: dict[str, any] = obj.properties
+            email_id = props.get('email_id')
+            print("Processing email ", email_id, current_item, current_email_text_list)
+            if current_item is None:
+                current_email_text_list = [{"text":props.get('text'), "ordinal":props.get('ordinal')}]
+                current_item = EmailTextWithFrom(text = "", 
+                    email_id=email_id, 
+                    thread_id=props.get("thread_id"), 
+                    ordinal=props.get("ordinal"), 
+                    from_=from_map.get(email_id))   
+            elif current_item.email_id != email_id:
+                current_email_text_list = sorted(current_email_text_list, key=lambda x: x.get('ordinal'))
+                current_item.text = "".join([x.get('text') for x in current_email_text_list])
+                output.append(current_item)
+                current_email_text_list = [{"text":props.get('text'), "ordinal":props.get('ordinal')}]
+                current_item = EmailTextWithFrom(text = "", 
+                    email_id=email_id, 
+                    thread_id=props.get("thread_id"), 
+                    ordinal=props.get("ordinal"), 
+                    from_=from_map.get(email_id))   
+            else:
+                current_email_text_list.append({"text":props.get('text'), "ordinal":props.get('ordinal')})   
+        if current_item is not None:
+            current_email_text_list = sorted(current_email_text_list, key=lambda x: x.get('ordinal'))
+            current_item.text = "".join([x.get('text') for x in current_email_text_list])
+            output.append(current_item)                                              
+        return output
     
     def get_slack_message_by_id(self, message_id: str) -> SlackMessage:
         results = self.collection(WeaviateSchemas.SLACK_MESSAGE).query.fetch_objects(
