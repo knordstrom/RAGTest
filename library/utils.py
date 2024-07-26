@@ -51,7 +51,7 @@ class Utils:
     @staticmethod
     def handle_time(value) -> datetime:
         if isinstance(value, str):
-            return datetime.fromisoformat(value)
+            return datetime.datetime.fromisoformat(value)
         elif isinstance(value, neo4j.time.DateTime):
             return value.to_native()
         else:

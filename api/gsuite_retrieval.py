@@ -20,9 +20,6 @@ dotenv.load_dotenv()
 root_path = os.path.dirname(os.path.realpath(__file__))
 
 creds = root_path + '/../' + os.getenv('GSUITE_CREDS_FILE', 'resources/gmail_creds.json')
-root_path = os.path.dirname(os.path.realpath(__file__))
-
-creds = root_path + '/../' + os.getenv('GSUITE_CREDS_FILE', 'resources/gmail_creds.json')
 
 @route.get('/data/gsuite/email')
 async def email(email: EmailStr, n: Union[int, None] = None) -> List[Message]:
@@ -34,22 +31,16 @@ async def email(email: EmailStr, n: Union[int, None] = None) -> List[Message]:
 @route.get('/data/gsuite/calendar')
 async def calendar(email: EmailStr, n: int) -> List[dict]:
     """Get the next n events from the specified user's gsuite calendar. Response is a pass-through of the Calendar API response."""
-@route.get('/data/gsuite/calendar')
-async def calendar(email: EmailStr, n: int) -> List[dict]:
-    """Get the next n events from the specified user's gsuite calendar. Response is a pass-through of the Calendar API response."""
     try:
         now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         print("Getting the upcoming " + str(n) + " events")
-        print("Getting the upcoming " + str(n) + " events")
         print("Creds " + creds)
-        events = GSuite(email, creds).events(now, n)
         events = GSuite(email, creds).events(now, n)
         APISupport.write_cal_to_kafka(events, DataSources.GOOGLE) 
         return events
 
     except HttpError as error:
         print(f"An error occurred: {error}")
-        APISupport.error_response(400, f"An HTTP error occurred '{error}'")
         APISupport.error_response(400, f"An HTTP error occurred '{error}'")
 
 @route.get('/data/gsuite/documents')
@@ -67,7 +58,6 @@ async def documents(email: EmailStr) -> dict[str, Any]:
 
     except HttpError as error:
         print(f"An error occurred: {error}")
-        APISupport.error_response(400, f"An HTTP error occurred '{error}'")     
         APISupport.error_response(400, f"An HTTP error occurred '{error}'")     
 
 def create_temporary_folder():
