@@ -3,7 +3,7 @@ from hashlib import md5
 from typing import Any
 from uuid import UUID, uuid4
 import dotenv
-from neo4j import GraphDatabase, Result
+from neo4j import GraphDatabase, Record, Result
 import os
 
 from library.api_models import TokenResponse
@@ -115,6 +115,7 @@ class Neo4j:
         with self.driver.session() as session:
             session.run(query, start_node_value=start_node_value, end_node_value=end_node_value, rel_id=properties['id'], properties=properties)
 
+    ### Employee ###
     def process_org_chart(self, org: list[Employee]):
         # performance: do without recursion?
 
@@ -126,7 +127,84 @@ class Neo4j:
                 report = sub.to_dict()
                 self.create_relationship(self.PERSON, "id", person["id"], "MANAGES", self.PERSON, "id", report["id"], {"id": person["id"] + report["id"]})
                 self.create_relationship(self.PERSON, "id", report["id"], "REPORTS_TO", self.PERSON, "id", person["id"], {"id": report["id"] + person["id"]})
-                     
+
+    
+    def get_chief_executives(self) -> list[Employee]:
+        query = """
+        MATCH (w:Person)
+        WHERE NOT EXISTS( (w)-[:REPORTS_TO]->() )
+        RETURN w as ceo"""
+        with self.driver.session() as session:
+            results: list[Record] = list(session.run(query))        
+            return [Employee(**record['ceo']) for record in results]
+        
+    def get_org_chart_above(self, email: str) -> list[Employee]:
+        ceo_emails: list[str] = [x.work_email for x in self.get_chief_executives()]
+        ceo_str = "','".join(ceo_emails)
+        query = """
+        MATCH p = SHORTEST 1 (p1:Person)-[r:REPORTS_TO]-+(p2:Person)
+        WHERE p1.email = '""" + email + """' AND p2.email IN ['""" + ceo_str + """']
+        RETURN p as result
+        """
+        print("Querying Neo4j with: " + query)
+        with self.driver.session() as session:
+            results: list[Record] = list(session.run(query, email=email, ceo_emails = ceo_str))
+
+            result: list[Employee] = []
+            for r in results:
+                path = r['result']
+
+                for e in path:
+                    nodes = list(e.nodes)
+                    for node in nodes:
+                        employee = Employee(**node)
+                        if len(result) == 0:
+                            result.append(employee)
+                        elif result[-1].work_email != employee.work_email:
+                            last_employee = result[-1]
+                            employee.add_report(last_employee)
+                            result.append(employee)
+
+            return result
+        
+    def get_org_chart_below(self, email: str) -> Employee:
+        query = """
+        MATCH path = (person:Person {email: $email})-[r:MANAGES*]->(report:Person)
+        RETURN path
+        """
+        print("Querying Neo4j with: " + query)
+        with self.driver.session() as session:
+            results = session.run(query, email=email)
+
+            result: Employee = None
+            emap: dict[str, Employee] = {}
+
+            for r in results:
+                path = r['path']
+
+                for e in path:
+                    nodes = list(e.nodes)
+                    last_in_chain: Employee = None
+                    for node in nodes:
+                        email = node['email']
+
+                        if email in emap:
+                            s = emap[email]
+                        else:
+                            s = Employee(**node)
+                            emap[s.work_email] = s
+                        
+                        if result is None:
+                            result = s
+
+                        if last_in_chain is None:
+                            last_in_chain = s
+                        elif last_in_chain.work_email != s.work_email:
+                            last_in_chain.add_report(s)
+                            last_in_chain = s
+
+            return result
+
     #### Auth ####
     def authenticate(self, email: str, password: str) -> list[dict[str, Any]]:
         query = """

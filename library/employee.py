@@ -1,33 +1,33 @@
 import csv
 from typing import Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from library.person import Person
-class Employee():
+class Employee(BaseModel):
 
+    employee_id:str
+    name:str
+    manager_id: Optional[str] = None
+    manager_name: Optional[str] = None
+    location:str
+    title:str
+    work_email:str = Field(alias='email', alias_priority = 0, validation_alias = 'email', serialization_alias = 'email')
+    type_: str = Field(alias='type', alias_priority = 0, validation_alias = 'type', serialization_alias = 'type')
+    cost_center:str
+    cost_center_hierarchy:str
+    reports: set['Employee'] = set()
+    manager: Optional['Employee'] = None
+
+    def __hash__(self) -> int:
+        return self.work_email.__hash__()
     
-    def __init__(self, employee_id: str, name: str, manager_id: str, manager_name: str, location: str, title: str, work_email: str, 
-                 type: str, cost_center: str, cost_center_hierarchy: str):
-        self.employee_id = employee_id
-        self.name = name
-        self.manager_id = manager_id
-        self.manager_name = manager_name
-        self.location = location
-        self.title = title
-        self.work_email = work_email
-        self.type = type
-        self.cost_center = cost_center
-        self.cost_center_hierarchy = cost_center_hierarchy
-        self.reports: list['Employee'] = []
-        self.manager: 'Employee' = None
-
     def __str__(self):
         return self.name + " (" + self.title + ") [" + self.employee_id + "]"
     
     def add_report(self, report: 'Employee'):
         report.manager = self
-        self.reports.append(report)
+        self.reports.add(report)
 
     def path_above_to(self, other: Union['Employee', str]) -> list['Employee']:
         """Return a list of employees up the org chart from this employee.
@@ -65,7 +65,7 @@ class Employee():
             'employee_id': self.employee_id,
             'location': self.location,
             'title': self.title,
-            'type': self.type,
+            'type': self.type_,
             'cost_center': self.cost_center,
             'cost_center_hierarchy': self.cost_center_hierarchy,
         })
@@ -73,8 +73,16 @@ class Employee():
     
     @staticmethod
     def from_workday_row(d: dict):
-        return Employee(d['EmployeeID'], d['Name'], d['ManagerID'], d['ManagerName'], d['Location'], d['Title'], d['WorkEmail'], 
-                        d['Type'], d['CostCenter'], d['CostCenterHierarchy'])
+        return Employee(employee_id = d['EmployeeID'], 
+                        name = d['Name'], 
+                        manager_id = d['ManagerID'], 
+                        manager_name = d['ManagerName'], 
+                        location = d['Location'], 
+                        title = d['Title'], 
+                        email = d['WorkEmail'], 
+                        type = d['Type'], 
+                        cost_center = d['CostCenter'], 
+                        cost_center_hierarchy = d['CostCenterHierarchy'])
     
     @staticmethod
     def from_csv(file_name: str):
