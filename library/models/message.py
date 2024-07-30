@@ -21,7 +21,7 @@ class Message(BaseModel):
     cc: list[EmailParticipant]
     bcc: list[EmailParticipant]
     subject: Union[str, None] = None
-    from_: EmailParticipant #= Field(..., alias='from')
+    from_: EmailParticipant
     body: str
     events: list[Event] = []
 
