@@ -137,6 +137,7 @@ class Weaviate(VDB):
         collection = self.collection(collection_key)
         schema_object = WeaviateSchema.class_map[collection_key]
         references = self.get_value_map(metaObj, schema_object, 'references')
+        properties = self.get_value_map(metaObj, schema_object, 'properties')
         split_text = utils.Utils.split(text)
         SUB_BATCH_SIZE = 50
         sub_batches = [split_text[i:i + SUB_BATCH_SIZE] for i in range(0, len(split_text), SUB_BATCH_SIZE)]

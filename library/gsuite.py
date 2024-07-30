@@ -136,14 +136,14 @@ class GSuite(GSuiteServiceProvider):
 
         # if there are no (valid) credentials availablle, let the user log in.
         if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                print("INstalling creds", self.creds)
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    self.creds, self.SCOPES
-                )
-                creds = flow.run_local_server(port=3000)
+            # if creds and creds.expired and creds.refresh_token:
+            #     creds.refresh(Request())
+            # else:
+            print("Installing creds", self.creds)
+            flow = InstalledAppFlow.from_client_secrets_file(
+                self.creds, self.SCOPES
+            )
+            creds = flow.run_local_server(port=3000)
             # save the credentials for the next run
             with open(self.TOKEN_FILE, "w") as token:
                 token.write(creds.to_json())
