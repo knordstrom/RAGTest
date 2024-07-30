@@ -11,11 +11,8 @@ import warnings
 from api.reference import route as refs
 from api.gsuite_retrieval import route as data
 from api.slack_retrieval import route as slack
-<<<<<<< Updated upstream
 from api.auth import route as auth
-=======
 from api.script import route as script
->>>>>>> Stashed changes
 from fastapi import FastAPI
 
 warnings.simplefilter("ignore", ResourceWarning)
