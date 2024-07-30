@@ -33,14 +33,12 @@ class TestEmployeeNeo4j(IntegrationTestBase):
         docker_services.wait_until_responsive(
             timeout=30.0, pause=0.1, check=lambda: self.is_responsive(url)
         )
-        return {
+        service = {
             'url': url,
             'host': docker_ip,
             'port': "7688"
         }
-    
 
-    def test_employee_model_create_contains_proper_structure(self, service):
         employees = Employee.from_csv(os.path.join(os.path.dirname(__file__), '../../resources', 'employees.csv'))
         workday = Workday(employees)
         org_chart = workday.org_chart()
@@ -48,6 +46,16 @@ class TestEmployeeNeo4j(IntegrationTestBase):
         graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
 
         graph.process_org_chart(org_chart)
+
+        return service
+    
+
+    def test_employee_model_create_contains_proper_structure(self, service):
+        graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
+
+        ceos: list[Employee] = graph.get_chief_executives()
+        assert len(ceos) == 1
+        assert ceos[0].work_email == 'jdoe@superbigmegacorp.com'
 
         response = graph.query("MATCH (n:Person)-[r]->(b:Person) RETURN n, r, b")
         result: list[Record] = [r for r in response.records]
@@ -139,3 +147,39 @@ class TestEmployeeNeo4j(IntegrationTestBase):
         assert "Morgan Lydstrom MANAGES Bruce Waymo" in sentences
         assert "Morgan Lydstrom MANAGES Danforth Hamptons" in sentences
 
+    def test_get_org_chart_above(self, service):
+        graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
+
+        chain: list[Employee] = graph.get_org_chart_above('ahigginbotham@superbigmegacorp.com')
+        assert len(chain) == 5 # 20, 16, 7, 2, 1
+        assert [e.employee_id for e in chain] == ['000020', '000016', '000007', '000002', '000001']
+        assert chain[0].work_email == 'ahigginbotham@superbigmegacorp.com'
+        assert chain[-1].work_email == 'jdoe@superbigmegacorp.com'
+        assert chain[0].manager == chain[1]
+        assert chain[1].manager == chain[2]
+        assert chain[2].manager == chain[3]
+        assert chain[3].manager == chain[4]
+
+    def test_get_org_chart_below(self, service):
+        graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
+
+        employee: Employee = graph.get_org_chart_below('cgubbins@superbigmegacorp.com')
+        assert employee.name == 'Cleo Gubbins'
+        first_level = {}
+        for e in employee.reports:
+            first_level[e.employee_id] = e
+        assert '000014' in first_level
+        assert '000015' in first_level
+
+        reports14 = {}
+        for e in first_level['000014'].reports:
+            reports14[e.employee_id] = e
+
+        reports15 = {}
+        for e in first_level['000015'].reports:
+            reports15[e.employee_id] = e
+
+        assert '000018' in reports14
+        assert 'C00001' in reports14
+        assert '000019' in reports15
+        assert 'C00002' in reports15

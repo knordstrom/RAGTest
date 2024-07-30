@@ -12,7 +12,11 @@ from api.reference import route as refs
 from api.gsuite_retrieval import route as data
 from api.slack_retrieval import route as slack
 from api.auth import route as auth
+<<<<<<< HEAD
 from api.script import route as script
+=======
+from api.employees import route as employees
+>>>>>>> b94cdbdc0d4cd7677e801e3bc97f5de9dfe8a285
 from fastapi import FastAPI
 
 warnings.simplefilter("ignore", ResourceWarning)
@@ -23,6 +27,7 @@ app.include_router(data)
 app.include_router(slack)
 app.include_router(auth)
 app.include_router(script)
+app.include_router(employees)
 
 tags = ["Main Interface"]
 
