@@ -1,0 +1,78 @@
+[
+  {
+    "creator": "U06EP4STTQ8",
+    "id": "C06DKQJ48TZ",
+    "is_private": false,
+    "is_shared": false,
+    "name": "random",
+    "num_members": 4,
+    "threads": [
+      {
+        "id": "C06DKQJ48TZ|1715803987.739079",
+        "messages": [
+          {
+            "email": "arjunkhanna9079@gmail.com",
+            "text": "Hey team, regarding the Project Orion Demo, I've uploaded the updated checklist to the drive. Please review before our prep meeting tomorrow. Urgent input needed especially on the security enhancements section.",
+            "ts": "1715803987.739079",
+            "type": "message",
+            "user": "U06E2R1AYCU"
+          },
+          {
+            "email": "emmasmithcto6306@gmail.com",
+            "text": "Reviewed the checklist and added my notes on the technical feasibility section. I've also updated the chatbot feature document based on our last discussion.",
+            "ts": "1715804028.782619",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          },
+          {
+            "email": "johnbrowncpo8808@gmail.com",
+            "text": "Thanks for the updates, Emma and Arjun. I'll focus on the UX enhancements plan tonight and sync up with you tomorrow.",
+            "ts": "1715804093.906569",
+            "type": "message",
+            "user": "U06DKQZ2J4F"
+          },
+          {
+            "email": "joytaylor1106@gmail.com",
+            "text": "I've compiled all feedback on UX/UI from the last sprint into a single document. It should help us streamline the discussion in tomorrow's meeting.",
+            "ts": "1715804158.020169",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          }
+        ]
+      },
+      {
+        "id": "C06DKQJ48TZ|1715803804.040759",
+        "messages": [
+          {
+            "email": "arjunkhanna9079@gmail.com",
+            "text": "For next week's investor meeting, we need to refine our pitch deck. Can we discuss this in today's afternoon call? Also, please look over the Sales Pipeline Status Report I shared.",
+            "ts": "1715803804.040759",
+            "type": "message",
+            "user": "U06E2R1AYCU"
+          },
+          {
+            "email": "emmasmithcto6306@gmail.com",
+            "text": "Pitch deck review scheduled. I've also added some technical insights to the analytics feature proposal that might interest our potential investors.",
+            "ts": "1715804028.782619",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          },
+          {
+            "email": "johnbrowncpo8808@gmail.com",
+            "text": "Will check the sales pipeline report and align it with the updates in our market and competitor analysis.",
+            "ts": "1715804093.906569",
+            "type": "message",
+            "user": "U06DKQZ2J4F"
+          },
+          {
+            "email": "joytaylor1106@gmail.com",
+            "text": "I've summarized the compliance updates in a brief for review. This will also be critical for our discussions with investors.",
+            "ts": "1715810311.122319",
+            "type": "message",
+            "user": "U06EP4STTQ8"
+          }
+        ]
+      }
+    ]
+  }
+]

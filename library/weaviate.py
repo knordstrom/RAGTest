@@ -243,16 +243,20 @@ class Weaviate(VDB):
     def get_thread_email_messages_by_id(self, thread_id: str) -> list[EmailTextWithFrom]:
         results = self.collection(WeaviateSchemas.EMAIL_TEXT).query.fetch_objects(
             filters=Filter.by_property("thread_id").equal(thread_id),
-            sort=Sort.by_property(name="date", ascending = True),
+            # sort=Sort.by_property(name="date", ascending = True),
         )
         email_ids = {}
+        email_ids_ordinal = {}
         for email in results.objects:
             email_ids[email.properties.get('email_id')] = email.properties.get('text')
+            email_ids_ordinal[email.properties.get('email_id')] = email.properties.get('ordinal')
+        
         email_metadata: list[Object[Properties, References]] = self.get_by_ids(WeaviateSchemas.EMAIL, "email_id", list(email_ids.keys()))
         from_map: dict[str, dict[str,str]] = {}
         for email in email_metadata:
-            from_map[email.properties.get('email_id')] = email.properties.get('from',  email.properties.get('from_'))
-
+            from_map[email.properties.get('email_id')] = email.properties.get('from_',  email.properties.get('from_'))
+            email.properties['text'] = email_ids[email.properties.get('email_id')]
+            email.properties['ordinal'] = email_ids_ordinal[email.properties.get('email_id')]
         return Weaviate._collate_emails(email_metadata, from_map)
         
     @staticmethod

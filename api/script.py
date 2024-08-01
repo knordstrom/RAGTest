@@ -42,9 +42,9 @@ def slack() -> str:
         # TODO: Uncomment the below code when the script is ready
         # s = Slack()
         # conversations = s.read_conversations()
-        # with open(root_path + '/../resources/slack_response.json', 'w') as file:
-        #     json.dump(conversations, file)
-        # APISupport.write_slack_to_kafka(conversations)
+        with open(root_path + '/../demo_script/slack.json', 'r') as slack_file:
+            conversations = json.load(slack_file)
+        APISupport.write_slack_to_kafka(conversations)
     
     except HttpError as error:
         print(f"An error occurred: {error}")
