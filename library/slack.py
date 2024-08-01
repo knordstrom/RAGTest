@@ -17,12 +17,20 @@ class Slack:
         "aditham": "prakash@cognimate.ai",
         "mshash": "mithali@cognimate.ai",
         "pradeepjavangula": "pradeep@cognimate.ai",
+        "arjun": "arjunkhanna9079@gmail.com",
+        "emma": "emmasmithcto6306@gmail.com",
+        "john": "johnbrowncpo8808@gmail.com",
+        "joy": "joytaylor1106@gmail.com",
     }
     user_ids_to_emails = {
         "U06EP4STTQ8": "keith@cognimate.ai",
         "U06E2R1AYCU": "prakash@cognimate.ai",
         "U06J697E08Y": "mithali@cognimate.ai",
-        "U06DKQZ2J4F": "pradeep@cognimate.ai"
+        "U06DKQZ2J4F": "pradeep@cognimate.ai",
+        "U06E2R1AYCZ": "arjunkhanna9079@gmail.com",
+        "U06EP4STTQ8": "emmasmithcto6306@gmail.com",
+        "U06DKQZ2J4F": "johnbrowncpo8808@gmail.com",
+        "U06JR3TNV10": "joytaylor1106@gmail.com"
     }
 
     @property
