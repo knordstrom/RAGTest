@@ -243,7 +243,7 @@ class Weaviate(VDB):
     def get_thread_email_messages_by_id(self, thread_id: str) -> list[EmailTextWithFrom]:
         results = self.collection(WeaviateSchemas.EMAIL_TEXT).query.fetch_objects(
             filters=Filter.by_property("thread_id").equal(thread_id),
-            # sort=Sort.by_property(name="date", ascending = True),
+            sort=Sort.by_property(name="date", ascending = True),
         )
         email_ids = {}
         email_ids_ordinal = {}
