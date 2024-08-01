@@ -1,0 +1,632 @@
+[
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444575579392000\"",
+        "id": "7pcparrk26qgijg8rgk2as28qu",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=N3BjcGFycmsyNnFnaWpnOHJnazJhczI4cXUgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "created": "2024-07-29T21:16:28.000Z",
+        "updated": "2024-07-29T21:16:29.696Z",
+        "summary": "Project Orion Demo Prep - Urgent Discussion Needed",
+        "creator": {
+            "email": "arjunkhannaceo9079@gmail.com"
+        },
+        "organizer": {
+            "email": "arjunkhannaceo9079@gmail.com"
+        },
+        "start": {
+            "dateTime": "2024-07-30T10:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-07-30T11:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "7pcparrk26qgijg8rgk2as28qu@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "self": true,
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "arjunkhannaceo9079@gmail.com",
+                "organizer": true,
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "johnbrowncpo8808@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "responseStatus": "needsAction"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/vyb-zzpv-rpx",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/vyb-zzpv-rpx",
+                    "label": "meet.google.com/vyb-zzpv-rpx"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "vyb-zzpv-rpx"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    },
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444575506028000\"",
+        "id": "76ofvq77l4je9comhu01d0l0b1",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NzZvZnZxNzdsNGplOWNvbWh1MDFkMGwwYjEgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "created": "2024-07-29T21:15:53.000Z",
+        "updated": "2024-07-29T21:15:53.014Z",
+        "summary": "Joy <> Emma One-on-One Mentorship and Progress Review with CTO",
+        "creator": {
+            "email": "joytaylorintern1106@gmail.com",
+            "self": true
+        },
+        "organizer": {
+            "email": "joytaylorintern1106@gmail.com",
+            "self": true
+        },
+        "start": {
+            "dateTime": "2024-07-30T12:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-07-30T13:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "76ofvq77l4je9comhu01d0l0b1@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "organizer": true,
+                "self": true,
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "responseStatus": "needsAction"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/zrz-pafp-zfy",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/zrz-pafp-zfy",
+                    "label": "meet.google.com/zrz-pafp-zfy"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "zrz-pafp-zfy"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    },
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444575168172000\"",
+        "id": "46km782kmgjnuq9r2iub0if9sq",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NDZrbTc4MmttZ2pudXE5cjJpdWIwaWY5c3Egam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "created": "2024-07-29T20:12:22.000Z",
+        "updated": "2024-07-29T21:13:04.086Z",
+        "summary": "Data Privacy and Compliance Review",
+        "description": "Review current data privacy policies and ensure all new features comply with GDPR and other relevant regulations.",
+        "creator": {
+            "email": "arjunkhannaceo9079@gmail.com"
+        },
+        "organizer": {
+            "email": "arjunkhannaceo9079@gmail.com"
+        },
+        "start": {
+            "dateTime": "2024-07-30T13:30:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-07-30T14:30:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "46km782kmgjnuq9r2iub0if9sq@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "self": true,
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "arjunkhannaceo9079@gmail.com",
+                "organizer": true,
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "johnbrowncpo8808@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "responseStatus": "accepted"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/tjs-uaqu-nuo",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/tjs-uaqu-nuo",
+                    "label": "meet.google.com/tjs-uaqu-nuo"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "tjs-uaqu-nuo"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    },
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444575804414000\"",
+        "id": "76eb716adg3nhafk85ens1jhfg",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NzZlYjcxNmFkZzNuaGFmazg1ZW5zMWpoZmcgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "created": "2024-07-29T21:18:21.000Z",
+        "updated": "2024-07-29T21:18:22.207Z",
+        "summary": "Sales Pipeline Review",
+        "description": "A critical review of our sales pipeline to evaluate current prospects, discuss strategies for accelerating the sales cycle, and address challenges in conversion rates. Sales team leads are expected to present updates on key accounts and forecast the next quarter's revenue.",
+        "creator": {
+            "email": "johnbrowncpo8808@gmail.com"
+        },
+        "organizer": {
+            "email": "johnbrowncpo8808@gmail.com"
+        },
+        "start": {
+            "dateTime": "2024-07-30T16:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-07-30T17:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "76eb716adg3nhafk85ens1jhfg@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "self": true,
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "arjunkhannaceo9079@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "johnbrowncpo8808@gmail.com",
+                "organizer": true,
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "responseStatus": "needsAction"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/zdg-kvrd-pyt",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/zdg-kvrd-pyt",
+                    "label": "meet.google.com/zdg-kvrd-pyt"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "zdg-kvrd-pyt"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    },
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444575690282000\"",
+        "id": "6t26jjsb9ram9hj4on97h7lr91",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NnQyNmpqc2I5cmFtOWhqNG9uOTdoN2xyOTEgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "created": "2024-07-29T21:17:24.000Z",
+        "updated": "2024-07-29T21:17:25.141Z",
+        "summary": "Meeting with Sarah - Pitch Deck ",
+        "creator": {
+            "email": "arjunkhannaceo9079@gmail.com"
+        },
+        "organizer": {
+            "email": "arjunkhannaceo9079@gmail.com"
+        },
+        "start": {
+            "dateTime": "2024-07-31T09:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-07-31T10:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "6t26jjsb9ram9hj4on97h7lr91@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "self": true,
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "arjunkhannaceo9079@gmail.com",
+                "organizer": true,
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "johnbrowncpo8808@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "responseStatus": "needsAction"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/tqu-zuwa-zuv",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/tqu-zuwa-zuv",
+                    "label": "meet.google.com/tqu-zuwa-zuv"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "tqu-zuwa-zuv"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    },
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444575146254000\"",
+        "id": "7mchnhcjkvideg296js6ahr11s",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=N21jaG5oY2prdmlkZWcyOTZqczZhaHIxMXMgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "created": "2024-07-29T21:12:52.000Z",
+        "updated": "2024-07-29T21:12:53.127Z",
+        "summary": "AI and Machine Learning Integration",
+        "description": "Explore opportunities for integrating AI and machine learning into the product to enhance user experience and feature set.",
+        "creator": {
+            "email": "emmasmithcto6306@gmail.com"
+        },
+        "organizer": {
+            "email": "emmasmithcto6306@gmail.com"
+        },
+        "start": {
+            "dateTime": "2024-07-31T14:30:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-07-31T15:30:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "7mchnhcjkvideg296js6ahr11s@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "self": true,
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "arjunkhannaceo9079@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "johnbrowncpo8808@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "organizer": true,
+                "responseStatus": "accepted"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/wkp-exbw-ahj",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/wkp-exbw-ahj",
+                    "label": "meet.google.com/wkp-exbw-ahj"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "wkp-exbw-ahj"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    },
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444575949630000\"",
+        "id": "1ja2426sqctt569tcb7s31ac5i",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=MWphMjQyNnNxY3R0NTY5dGNiN3MzMWFjNWkgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "created": "2024-07-29T21:19:33.000Z",
+        "updated": "2024-07-29T21:19:34.815Z",
+        "summary": "Competitor Analysis Roundup",
+        "description": "A focused discussion on our main competitors, analyzing their strategies, market positioning, and product offerings. Insights gathered here will help us refine our competitive edge and identify areas of opportunity. Marketing and strategy teams should come with prepared analyses.",
+        "creator": {
+            "email": "johnbrowncpo8808@gmail.com"
+        },
+        "organizer": {
+            "email": "johnbrowncpo8808@gmail.com"
+        },
+        "start": {
+            "dateTime": "2024-08-01T09:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-08-01T10:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "1ja2426sqctt569tcb7s31ac5i@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "self": true,
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "arjunkhannaceo9079@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "johnbrowncpo8808@gmail.com",
+                "organizer": true,
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "responseStatus": "needsAction"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/say-yzqa-kef",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/say-yzqa-kef",
+                    "label": "meet.google.com/say-yzqa-kef"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "say-yzqa-kef"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    },
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444575165260000\"",
+        "id": "4nfef7ribhrp97fiusfair799m",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NG5mZWY3cmliaHJwOTdmaXVzZmFpcjc5OW0gam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "created": "2024-07-29T19:57:57.000Z",
+        "updated": "2024-07-29T21:13:02.630Z",
+        "summary": "Initial Meeting on Analytics Feature Development",
+        "description": "<li>Overview of the proposed analytics feature.</li><li>Discussion on technical requirements and infrastructure (Led by Emma).</li><li>UI/UX design considerations and need for a frontend expert (Led by John).</li><li>Plan for user feedback collection and analysis (Led by Joy).</li><li>Performance and security standards.</li><li>Setting timelines and assigning tasks.</li>",
+        "creator": {
+            "email": "johnbrowncpo8808@gmail.com"
+        },
+        "organizer": {
+            "email": "johnbrowncpo8808@gmail.com"
+        },
+        "start": {
+            "dateTime": "2024-08-01T13:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-08-01T14:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "4nfef7ribhrp97fiusfair799m@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "self": true,
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "arjunkhannaceo9079@gmail.com",
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "johnbrowncpo8808@gmail.com",
+                "organizer": true,
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "responseStatus": "accepted"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/isv-aemr-oey",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/isv-aemr-oey",
+                    "label": "meet.google.com/isv-aemr-oey"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "isv-aemr-oey"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    },
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444575884332000\"",
+        "id": "4o3qbl846f4o77ebmn959j58b3",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NG8zcWJsODQ2ZjRvNzdlYm1uOTU5ajU4YjMgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "created": "2024-07-29T21:19:01.000Z",
+        "updated": "2024-07-29T21:19:02.166Z",
+        "summary": "UX/UI Feedback Loop",
+        "description": "This session is dedicated to reviewing our product's user experience and interface. We'll analyze user feedback, discuss UI improvements, and brainstorm UX enhancements to better meet our customers' needs. Designers, developers, and product managers should come prepared with data and user insights.",
+        "creator": {
+            "email": "johnbrowncpo8808@gmail.com"
+        },
+        "organizer": {
+            "email": "johnbrowncpo8808@gmail.com"
+        },
+        "start": {
+            "dateTime": "2024-08-01T14:30:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-08-01T15:30:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "4o3qbl846f4o77ebmn959j58b3@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "self": true,
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "arjunkhannaceo9079@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "johnbrowncpo8808@gmail.com",
+                "organizer": true,
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "responseStatus": "needsAction"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/hsh-befi-yas",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/hsh-befi-yas",
+                    "label": "meet.google.com/hsh-befi-yas"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "hsh-befi-yas"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    }
+]

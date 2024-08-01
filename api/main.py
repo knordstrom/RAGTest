@@ -12,6 +12,7 @@ from api.reference import route as refs
 from api.gsuite_retrieval import route as data
 from api.slack_retrieval import route as slack
 from api.auth import route as auth
+from api.script import route as script
 from api.employees import route as employees
 from fastapi import FastAPI
 
@@ -22,6 +23,7 @@ app.include_router(refs)
 app.include_router(data)
 app.include_router(slack)
 app.include_router(auth)
+app.include_router(script)
 app.include_router(employees)
 
 tags = ["Main Interface"]
