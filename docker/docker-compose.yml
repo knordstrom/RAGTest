@@ -1,7 +1,6 @@
 version: '3.4'
 services:
   weaviate:
-    platform: linux/x86_64
     image: cr.weaviate.io/semitechnologies/weaviate:1.24.4
     ports:
     - 8080:8080
@@ -16,12 +15,10 @@ services:
       TRANSFORMERS_INFERENCE_API: http://t2v-transformers:8080
       CLUSTER_HOSTNAME: 'weaviate-1'
   t2v-transformers:  # Set the name of the inference container
-    platform: linux/x86_64
     image: cr.weaviate.io/semitechnologies/transformers-inference:sentence-transformers-multi-qa-MiniLM-L6-cos-v1
     environment:
       ENABLE_CUDA: 0 
   neo4j:
-    platform: linux/x86_64
     image: neo4j:5.22.0
     ports:
     - 7687:7687
@@ -35,7 +32,6 @@ services:
       - NEO4J_apoc_import_file_enabled=true 
       - NEO4J_apoc_import_file_use__neo4j__config=true 
   zoo1:
-    platform: linux/x86_64
     image: confluentinc/cp-zookeeper:7.3.2
     hostname: zoo1
     container_name: zoo1
@@ -47,7 +43,6 @@ services:
       ZOOKEEPER_SERVERS: zoo1:2888:3888
 
   kafka1:
-    platform: linux/x86_64
     image: confluentinc/cp-kafka:7.3.2
     hostname: kafka1
     container_name: kafka1

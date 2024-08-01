@@ -30,7 +30,7 @@ def slack() -> str:
         with open(root_path + '/../demo_script/calendar.json', 'r') as cal_file:
             cal_data = json.load(cal_file)
         APISupport.write_cal_to_kafka(cal_data, DataSources.GOOGLE)
-        
+
         with open(root_path + '/../demo_script/email.json', 'r') as email_file:
             email_data = json.load(email_file)
         adapter = TypeAdapter(List[Message])
@@ -47,6 +47,6 @@ def slack() -> str:
     
     except HttpError as error:
         print(f"An error occurred: {error}")
-        APISupport.error_response(400, f"An HTTP error occurred '{error}'")
+        APISupport.error_response(500, f"An HTTP error occurred '{error}'")
     return "successfully ingested!"
 
