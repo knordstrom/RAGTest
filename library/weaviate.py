@@ -246,17 +246,13 @@ class Weaviate(VDB):
             sort=Sort.by_property(name="date", ascending = True),
         )
         email_ids = {}
-        email_ids_ordinal = {}
         for email in results.objects:
             email_ids[email.properties.get('email_id')] = email.properties.get('text')
-            email_ids_ordinal[email.properties.get('email_id')] = email.properties.get('ordinal')
-        
         email_metadata: list[Object[Properties, References]] = self.get_by_ids(WeaviateSchemas.EMAIL, "email_id", list(email_ids.keys()))
         from_map: dict[str, dict[str,str]] = {}
         for email in email_metadata:
-            from_map[email.properties.get('email_id')] = email.properties.get('from_',  email.properties.get('from_'))
-            email.properties['text'] = email_ids[email.properties.get('email_id')]
-            email.properties['ordinal'] = email_ids_ordinal[email.properties.get('email_id')]
+            from_map[email.properties.get('email_id')] = email.properties.get('from',  email.properties.get('from_'))
+
         return Weaviate._collate_emails(email_metadata, from_map)
         
     @staticmethod
