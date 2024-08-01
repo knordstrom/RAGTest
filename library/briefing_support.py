@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 from collections import defaultdict
 from library import weaviate
-from library.api_models import BriefContext, BriefResponse, DocumentEntry, EmailConversationEntry, MeetingAttendee, MeetingContext, MeetingSupport, SlackConversationEntry, SlackThreadResponse
+from library.api_models import BriefContext, BriefResponse, DocumentEntry, DocumentMetadata, EmailConversationEntry, MeetingAttendee, MeetingContext, MeetingSupport, SlackConversationEntry, SlackThreadResponse
 from library.models.briefing_summarizer import BriefingSummarizer
 from library.models.event import Event
 import library.neo4j as neo
@@ -66,11 +66,22 @@ class BriefingSupport:
     
     def doc_context_for(self, event: Event, certainty: float = None) -> list[DocumentEntry]:
         sum_docs = self.context_for(event, WeaviateSchemas.DOCUMENT_SUMMARY, WeaviateSchemas.DOCUMENT, 'document_id', certainty)
-        Utils.remove_keys([['metadata', 'lastModifyingUser'],['metadata', 'owners'],['metadata', 'permissions']], sum_docs)
         response = []
         for doc in sum_docs:
-            Utils.rename_key(doc, 'text', 'summary')
-            response.append(DocumentEntry.model_validate(doc))
+            response.append(DocumentEntry(
+                    document_id = doc['document_id'],
+                    doc_type = doc['doc_type'], 
+                    metadata = DocumentMetadata(
+                        created_time =  doc['metadata']['createdTime'],
+                        metadata_id =  doc['metadata']['metadata_id'],
+                        modified_time =  doc['metadata']['modifiedTime'],
+                        mime_type =  doc['metadata']['mimeType'],
+                        name =  doc['metadata']['name'],
+                        last_response =  doc['metadata']['modifiedTime'],
+                    ),
+                    provider = doc.get('provider'),
+                    summary = doc['text'],
+            ))
         return response
 
     def construct_conversation_and_summary(self, emails_dict: dict[str, list[EmailTextWithFrom]]) -> dict[str,EmailConversationWithSummary]:
@@ -85,7 +96,8 @@ class BriefingSupport:
                 text = details.text
                 conversation += f"\n{sender_name}: {text}"
             conversation_summary = self.summarizer.summarize('Summarizer.email_summarizer', {'Conversation': conversation})
-            response[thread_id] = EmailConversationWithSummary(thread_id= thread_id, conversation=conversation, summary=conversation_summary)
+            response[thread_id] = EmailConversationWithSummary(thread_id= thread_id, conversation=conversation, summary=conversation_summary,
+                                                               last_response=emails[-1].date)
         return response
 
     def get_thread_email_message_by_id(self, thread_ids: list[str], email_map: dict[str, Email]) -> dict[str,list[EmailTextWithFrom]]:
@@ -154,9 +166,12 @@ class BriefingSupport:
         summarized_conversations: dict[str,EmailConversationWithSummary] = self.construct_conversation_and_summary(threads)
         result: list[EmailConversationEntry] = []
         for conversation in summarized_conversations.values():
-            result.append(EmailConversationEntry(text = conversation.conversation,
+            result.append(EmailConversationEntry(
+                text = conversation.conversation,
                 thread_id = conversation.thread_id, 
-                summary = conversation.summary))
+                summary = conversation.summary,
+                last_response = conversation.last_response
+                ))
 
         return result
     
@@ -169,16 +184,18 @@ class BriefingSupport:
         result: list[SlackConversationEntry] = []
         for thread in sum_slack:
             messages: SlackThreadResponse = w.get_slack_thread_messages_by_id(thread['thread_id'])
-            messages: SlackThreadResponse = w.get_slack_thread_messages_by_id(thread['thread_id'])
             conversation = ""
             for message in messages.messages:
                 conversation += "\n" + message.sender + ": " + "".join(message.text)
-            for message in messages.messages:
-                conversation += "\n" + message.sender + ": " + "".join(message.text)
             
-            thread['text'] = conversation
-            thread['summary'] = self.summarizer.summarize_with_prompt(prompt, {'Conversation': conversation})
-            result.append(SlackConversationEntry.model_validate(thread))
+            summary = self.summarizer.summarize_with_prompt(prompt, {'Conversation': conversation})
+            result.append(SlackConversationEntry(
+                text = conversation,
+                thread_id = thread['thread_id'],
+                channel_id = thread['channel_id'],
+                summary = summary,
+                last_response = messages.messages[-1].ts
+            ))
         return result
     
     def context_for(self, event: Event, source: WeaviateSchemas, meta_source: WeaviateSchemas, id_prop: str, certainty: float = None) -> list[dict[str, any]]:

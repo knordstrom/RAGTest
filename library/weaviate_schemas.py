@@ -86,27 +86,6 @@ class EmailParticipant(BaseModel):
 
 class Email(BaseModel):
     email_id: str
-    history_id: str
-    thread_id: str
-    labels: list[str]
-    to: list[EmailParticipant]
-    cc: list[EmailParticipant]
-    bcc: list[EmailParticipant]
-    subject: str
-    from_: EmailParticipant
-    date: datetime
-    provider: str
-
-class EmailThread(BaseModel):
-    thread_id: str
-    latest: datetime
-
-class EmailParticipant(BaseModel):
-    email: str
-    name: str
-
-class Email(BaseModel):
-    email_id: str
     history_id: Union[str, None] = None
     thread_id: str
     labels: list[str]
@@ -123,18 +102,21 @@ class EmailText(BaseModel):
     email_id: str
     thread_id: str
     ordinal: int
+    date: datetime
 
 class EmailTextWithFrom(BaseModel):
     text: str
     email_id: str
     thread_id: str
     ordinal: int
+    date: datetime
     from_: EmailParticipant
 
 class EmailConversationWithSummary(BaseModel):
     thread_id: str
     conversation: str
     summary: str
+    last_response: datetime
 
 class Event(BaseModel):
     event_id: str
@@ -243,7 +225,7 @@ class WeaviateSchema:
         }),
         (WeaviateSchemas.EMAIL,{
             "class": "Email",
-            "properties": WeaviateSchemaTransformer.to_props(EmailThread),       
+            "properties": WeaviateSchemaTransformer.to_props(Email),       
             "references": [],
             "vectorizer": False,   
         }),

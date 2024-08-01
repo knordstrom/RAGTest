@@ -7,7 +7,7 @@ from library.employee import Employee
 from library.employee_manager import EmployeeManager
 from fastapi import APIRouter
 
-route = APIRouter(tags=["Employu"])
+route = APIRouter(tags=["Employees"])
 
 @route.get('/employees/reports/above')
 async def email_messages(email: str) -> ApiResponse[List[Employee]]:  

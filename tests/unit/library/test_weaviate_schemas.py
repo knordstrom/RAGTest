@@ -44,11 +44,12 @@ class TestWeaviateSchemas(unittest.TestCase):
 
     def test_email_text(self):
         props: list[Property] = WeaviateSchemaTransformer.to_props(EmailText)
-        assert len(props) == 4
+        assert len(props) == 5
         assert props[0] == Property(name = "text", data_type=DataType.TEXT)
         assert props[1] == Property(name = "email_id", data_type=DataType.TEXT)
         assert props[2] == Property(name = "thread_id", data_type=DataType.TEXT)         
         assert props[3] == Property(name = "ordinal", data_type=DataType.INT)
+        assert props[4] == Property(name = "date", data_type=DataType.DATE)
 
     def test_event(self):
         props: list[Property] = WeaviateSchemaTransformer.to_props(Event)
