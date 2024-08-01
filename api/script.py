@@ -30,18 +30,17 @@ def slack() -> str:
         with open(root_path + '/../demo_script/calendar.json', 'r') as cal_file:
             cal_data = json.load(cal_file)
         APISupport.write_cal_to_kafka(cal_data, DataSources.GOOGLE)
+        
         with open(root_path + '/../demo_script/email.json', 'r') as email_file:
             email_data = json.load(email_file)
         adapter = TypeAdapter(List[Message])
         emails = adapter.validate_python(email_data)
         APISupport.write_emails_to_kafka(emails, DataSources.GOOGLE)
+
         with open(root_path + '/../demo_script/documents.json', 'r') as docs_file:
             docs_data = json.load(docs_file)
         APISupport.write_docs_to_kafka([x for x in docs_data.values()], DataSources.GOOGLE)
 
-        # TODO: Uncomment the below code when the script is ready
-        # s = Slack()
-        # conversations = s.read_conversations()
         with open(root_path + '/../demo_script/slack.json', 'r') as slack_file:
             conversations = json.load(slack_file)
         APISupport.write_slack_to_kafka(conversations)
