@@ -85,20 +85,6 @@ class BriefingSupport:
                     provider = doc.get('provider'),
                     summary = doc['text'],
             ))
-            response.append(DocumentEntry(
-                    document_id = doc['document_id'],
-                    doc_type = doc['doc_type'], 
-                    metadata = DocumentMetadata(
-                        created_time =  doc['metadata']['createdTime'],
-                        metadata_id =  doc['metadata']['metadata_id'],
-                        modified_time =  doc['metadata']['modifiedTime'],
-                        mime_type =  doc['metadata']['mimeType'],
-                        name =  doc['metadata']['name'],
-                        last_response =  doc['metadata']['modifiedTime'],
-                    ),
-                    provider = doc.get('provider'),
-                    summary = doc['text'],
-            ))
         return response
 
     def construct_conversation_and_summary(self, emails_dict: dict[str, list[EmailTextWithFrom]]) -> dict[str,EmailConversationWithSummary]:
