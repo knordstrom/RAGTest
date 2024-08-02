@@ -6,7 +6,6 @@ from requests.exceptions import ConnectionError
 
 from library.utils import Utils
 from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
-from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 from tests.integration.library.integration_test_base import IntegrationTestBase
 
 class TestEmailWeaviate(IntegrationTestBase):
@@ -94,15 +93,10 @@ class TestEmailWeaviate(IntegrationTestBase):
                 {
                     "email": "him@that.com",
                     "name": "Him"
-                    "email": "him@that.com",
-                    "name": "Him"
                 }
             ],
             "bcc": [
                 {
-                    "email": "him@that.com",
-                    "name": "Him"
-                }
                     "email": "him@that.com",
                     "name": "Him"
                 }
@@ -143,16 +137,10 @@ class TestEmailWeaviate(IntegrationTestBase):
         assert len(metadata[0].properties) >=11, "There should be 11 properties in an email, found " + str(len(metadata[0].properties))
 
         pertinent: list[dict[str, object]] = []
-        pertinent: list[dict[str, object]] = []
         for chunk in text:
             if chunk.properties.get('email_id') == "abcdef":
                 pertinent.append(chunk)
-            if chunk.properties.get('email_id') == "abcdef":
-                pertinent.append(chunk)
             assert 'text' in chunk.properties.keys()
-        
-        assert len(pertinent) > 1, "There should be multiple text chunks saved for the email"
-        for chunk in pertinent:
         
         assert len(pertinent) > 1, "There should be multiple text chunks saved for the email"
         for chunk in pertinent:
