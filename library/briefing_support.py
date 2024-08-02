@@ -103,8 +103,6 @@ class BriefingSupport:
             conversation_summary = self.summarizer.summarize('Summarizer.email_summarizer', {'Conversation': conversation})
             response[thread_id] = EmailConversationWithSummary(thread_id= thread_id, conversation=conversation, summary=conversation_summary,
                                                                last_response=emails[-1].date)
-            response[thread_id] = EmailConversationWithSummary(thread_id= thread_id, conversation=conversation, summary=conversation_summary,
-                                                               last_response=emails[-1].date)
         return response
 
     def get_thread_email_message_by_id(self, thread_ids: list[str], email_map: dict[str, Email]) -> dict[str,list[EmailTextWithFrom]]:
