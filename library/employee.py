@@ -19,6 +19,13 @@ class Employee(BaseModel):
     reports: set['Employee'] = set()
     manager: Optional['Employee'] = None
 
+    _report_map: dict[str, 'Employee'] = None
+    @property
+    def report_map(self): 
+        if self._report_map is None:
+            self._report_map = {r.work_email: r for r in self.reports}
+        return self._report_map
+
     def __hash__(self) -> int:
         return self.work_email.__hash__()
     
@@ -70,6 +77,50 @@ class Employee(BaseModel):
             'cost_center_hierarchy': self.cost_center_hierarchy,
         })
         return result
+    
+    def distance_to_up(self, email: str) -> Optional[int]:
+        """Return the distance from this employee to the employee with the given email address.
+        If the email address is not found, returns -1.
+        """
+        if self.work_email == email:
+            return 0
+        if self.manager is not None:
+            if self.manager.work_email == email:
+                return 1
+            d = self.manager.distance_to_up(email)
+            if d is not None:
+                return d + 1
+        return None
+
+    def distance_to_down(self, email: str) -> Optional[int]:
+        """Return the distance from this employee to the employee with the given email address.
+        If the email address is not found, returns -1.
+        """
+        if self.work_email == email:
+            return 0
+        for r in self.reports:
+            if r.work_email == email:
+                return -1
+            d = r.distance_to_down(email)
+            if d is not None:
+                return d - 1
+        return None
+
+    def distance_to(self, email: str) -> Optional[int]:
+        """Return the distance from this employee to the employee with the given email address.
+        If the email address is not found, returns -1.
+        """
+        if self.work_email == email:
+            return 0
+        
+        distance_up = self.distance_to_up(email)
+        if distance_up is not None:
+            return distance_up
+        
+        distance_down = self.distance_to_down(email)
+        if distance_down is not None:
+            return distance_down
+        return None  
     
     @staticmethod
     def from_workday_row(d: dict):

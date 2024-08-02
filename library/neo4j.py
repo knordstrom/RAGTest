@@ -132,11 +132,21 @@ class Neo4j:
     def get_chief_executives(self) -> list[Employee]:
         query = """
         MATCH (w:Person)
-        WHERE NOT EXISTS( (w)-[:REPORTS_TO]->() )
+        WHERE w.employee_id IS NOT NULL AND NOT EXISTS( (w)-[:REPORTS_TO]->() )
         RETURN w as ceo"""
         with self.driver.session() as session:
-            results: list[Record] = list(session.run(query))        
+            results: list[Record] = list(session.run(query))     
+            [print(r) for r in results]   
             return [Employee(**record['ceo']) for record in results]
+        
+    def get_employee_with_full_org_chart(self, email: str) -> Employee:
+        result = self.get_org_chart_below(email)
+        if result is None:
+            return None
+        managers = self.get_org_chart_above(email)
+        if len(managers) > 1:
+            result.manager = managers[1]
+        return result
         
     def get_org_chart_above(self, email: str) -> list[Employee]:
         ceo_emails: list[str] = [x.work_email for x in self.get_chief_executives()]

@@ -4,6 +4,7 @@ import os
 from collections import defaultdict
 from library import weaviate
 from library.api_models import BriefContext, BriefResponse, DocumentEntry, DocumentMetadata, EmailConversationEntry, MeetingAttendee, MeetingContext, MeetingSupport, SlackConversationEntry, SlackThreadResponse
+from library.importance import ImportanceService
 from library.models.briefing_summarizer import BriefingSummarizer
 from library.models.event import Event
 import library.neo4j as neo
@@ -40,7 +41,7 @@ class BriefingSupport:
         print("Schedule was ", schedule)
 
         summary: str = self.create_briefings_for_summary(email, start_time, end_time, schedule)
-
+        importanceService = ImportanceService()
         meetings = []
         for event in schedule:
             support = self.contextualize(event, certainty)
@@ -49,6 +50,7 @@ class BriefingSupport:
             meeting = MeetingContext(attendees=attendees, start=event.start, end=event.end, description=event.description, 
                                      recurring_id = event.recurring_id, name=event.summary, person = MeetingAttendee(name = email, email = email), 
                                      organizer=organizer, support=support)
+            importanceService.add_importance_to_meeting(meeting)
             meetings.append(meeting)
      
         return BriefResponse(email=email, start_time=start_time, end_time=end_time, summary=summary, context=BriefContext(schedule = meetings))
@@ -91,6 +93,8 @@ class BriefingSupport:
         response: dict[str, EmailConversationWithSummary] = {}
         for thread_id, emails in emails_dict.items():
             conversation = ""
+            if len(emails) == 0:
+                continue
             for details in emails:
                 sender_name = details.from_.name
                 text = details.text

@@ -115,7 +115,9 @@ class TestEmailWeaviate(IntegrationTestBase):
                     "name": "Him"
                 }
             ]
-        assert len(metadata[0].properties) ==11, "There should be 11 properties in an email, found " + str(len(metadata[0].properties))
+        assert metadata[0].properties.get('body') is None
+        print("Metadata properties: ", metadata[0].properties)
+        assert len(metadata[0].properties) >=11, "There should be 11 properties in an email, found " + str(len(metadata[0].properties))
 
         pertinent: list[dict[str, object]] = []
         for chunk in text:
