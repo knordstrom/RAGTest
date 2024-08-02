@@ -201,14 +201,6 @@ class BriefingSupport:
                 summary = summary,
                 last_response = messages.messages[-1].ts
             ))
-            summary = self.summarizer.summarize_with_prompt(prompt, {'Conversation': conversation})
-            result.append(SlackConversationEntry(
-                text = conversation,
-                thread_id = thread['thread_id'],
-                channel_id = thread['channel_id'],
-                summary = summary,
-                last_response = messages.messages[-1].ts
-            ))
         return result
     
     def context_for(self, event: Event, source: WeaviateSchemas, meta_source: WeaviateSchemas, id_prop: str, certainty: float = None) -> list[dict[str, any]]:
