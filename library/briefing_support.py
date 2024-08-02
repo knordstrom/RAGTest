@@ -173,15 +173,10 @@ class BriefingSupport:
         for conversation in summarized_conversations.values():
             result.append(EmailConversationEntry(
                 text = conversation.conversation,
-            result.append(EmailConversationEntry(
-                text = conversation.conversation,
                 thread_id = conversation.thread_id, 
                 summary = conversation.summary,
-                last_response = conversation.last_response
-                ))
-                summary = conversation.summary,
-                last_response = conversation.last_response
-                ))
+                last_response = conversation.last_response,
+            ))
 
         return result
     
