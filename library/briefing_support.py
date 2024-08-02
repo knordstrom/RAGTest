@@ -5,6 +5,7 @@ from collections import defaultdict
 from library import weaviate
 from library.api_models import BriefContext, BriefResponse, DocumentEntry, DocumentMetadata, EmailConversationEntry, MeetingAttendee, MeetingContext, MeetingSupport, SlackConversationEntry, SlackThreadResponse
 from library.importance import ImportanceService
+
 from library.models.briefing_summarizer import BriefingSummarizer
 from library.models.event import Event
 import library.neo4j as neo
@@ -84,6 +85,20 @@ class BriefingSupport:
                     provider = doc.get('provider'),
                     summary = doc['text'],
             ))
+            response.append(DocumentEntry(
+                    document_id = doc['document_id'],
+                    doc_type = doc['doc_type'], 
+                    metadata = DocumentMetadata(
+                        created_time =  doc['metadata']['createdTime'],
+                        metadata_id =  doc['metadata']['metadata_id'],
+                        modified_time =  doc['metadata']['modifiedTime'],
+                        mime_type =  doc['metadata']['mimeType'],
+                        name =  doc['metadata']['name'],
+                        last_response =  doc['metadata']['modifiedTime'],
+                    ),
+                    provider = doc.get('provider'),
+                    summary = doc['text'],
+            ))
         return response
 
     def construct_conversation_and_summary(self, emails_dict: dict[str, list[EmailTextWithFrom]]) -> dict[str,EmailConversationWithSummary]:
@@ -100,6 +115,8 @@ class BriefingSupport:
                 text = details.text
                 conversation += f"\n{sender_name}: {text}"
             conversation_summary = self.summarizer.summarize('Summarizer.email_summarizer', {'Conversation': conversation})
+            response[thread_id] = EmailConversationWithSummary(thread_id= thread_id, conversation=conversation, summary=conversation_summary,
+                                                               last_response=emails[-1].date)
             response[thread_id] = EmailConversationWithSummary(thread_id= thread_id, conversation=conversation, summary=conversation_summary,
                                                                last_response=emails[-1].date)
         return response
@@ -172,7 +189,12 @@ class BriefingSupport:
         for conversation in summarized_conversations.values():
             result.append(EmailConversationEntry(
                 text = conversation.conversation,
+            result.append(EmailConversationEntry(
+                text = conversation.conversation,
                 thread_id = conversation.thread_id, 
+                summary = conversation.summary,
+                last_response = conversation.last_response
+                ))
                 summary = conversation.summary,
                 last_response = conversation.last_response
                 ))
@@ -192,6 +214,14 @@ class BriefingSupport:
             for message in messages.messages:
                 conversation += "\n" + message.sender + ": " + "".join(message.text)
             
+            summary = self.summarizer.summarize_with_prompt(prompt, {'Conversation': conversation})
+            result.append(SlackConversationEntry(
+                text = conversation,
+                thread_id = thread['thread_id'],
+                channel_id = thread['channel_id'],
+                summary = summary,
+                last_response = messages.messages[-1].ts
+            ))
             summary = self.summarizer.summarize_with_prompt(prompt, {'Conversation': conversation})
             result.append(SlackConversationEntry(
                 text = conversation,
