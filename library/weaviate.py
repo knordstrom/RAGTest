@@ -80,7 +80,7 @@ class Weaviate(VDB):
         collection = self.collection(key)
         collection.config.add_reference(reference)
 
-    def upsert(self, obj, collection_key: WeaviateSchemas, id_property: str = None, attempts=0) -> bool:
+    def upsert(self, obj: dict[str, str], collection_key: WeaviateSchemas, id_property: str = None, attempts=0) -> bool:
         collection = self.collection(collection_key)   
         identifier = w.util.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
         
@@ -92,6 +92,7 @@ class Weaviate(VDB):
                 )
             failed_objs_a = collection.batch.failed_objects  # Get failed objects from the batch import
             failed_refs_a = collection.batch.failed_references
+            print()
             print("failed_objs_a: ", failed_objs_a)
             print("failed_refs_a: ", failed_refs_a)
         except w.exceptions.WeaviateClosedClientError as e:
@@ -241,22 +242,28 @@ class Weaviate(VDB):
         return None
 
     def get_thread_email_messages_by_id(self, thread_id: str) -> list[EmailTextWithFrom]:
-        results = self.collection(WeaviateSchemas.EMAIL_TEXT).query.fetch_objects(
+        email_text_chunks = self.collection(WeaviateSchemas.EMAIL_TEXT).query.fetch_objects(
             filters=Filter.by_property("thread_id").equal(thread_id),
             sort=Sort.by_property(name="date", ascending = True),
         )
-        email_ids = {}
-        for email in results.objects:
-            email_ids[email.properties.get('email_id')] = email.properties.get('text')
-        email_metadata: list[Object[Properties, References]] = self.get_by_ids(WeaviateSchemas.EMAIL, "email_id", list(email_ids.keys()))
-        from_map: dict[str, dict[str,str]] = {}
-        for email in email_metadata:
-            from_map[email.properties.get('email_id')] = email.properties.get('from',  email.properties.get('from_'))
+        email_text_by_ids: dict[str, dict[str, any]] = {}
+        for email_text_chunk in email_text_chunks.objects:
+            email_id = email_text_chunk.properties.get('email_id')
+            email_text_by_ids[email_id] = email_text_chunk.properties
+        email_metadata: list[Object[Properties, References]] = self.get_by_ids(WeaviateSchemas.EMAIL, "email_id", list(email_text_by_ids.keys()))
+        for email_meta_entry in email_metadata:
+            email_id = email_meta_entry.properties.get('email_id')
+            text_entry = email_text_by_ids.get(email_id)
+            kept = {}
+            for k,v in text_entry.items():
+                if v is not None:
+                    kept[k] = v
+            email_meta_entry.properties.update(kept)
 
-        return Weaviate._collate_emails(email_metadata, from_map)
+        return Weaviate._collate_emails(email_metadata)
         
     @staticmethod
-    def _collate_emails(email_metadata_date_sorted: list[Object[Properties, References]], from_map: dict[str, dict[str,str]]) -> list[EmailTextWithFrom]:
+    def _collate_emails(email_metadata_date_sorted: list[Object[Properties, References]]) -> list[EmailTextWithFrom]:
         """Takes email text, which may have multiple parts, and collates them into a single email message for inclusion in a list of complete
         email messages in a thread. The email text is sorted by ordinal and then concatenated into a single text field. 
         IMPORTANT: Assumes email_metadata_date_sorted is sorted by date and thus that all email ids are consecutive entries."""
@@ -267,14 +274,15 @@ class Weaviate(VDB):
         for obj in email_metadata_date_sorted:
             props: dict[str, any] = obj.properties
             email_id = props.get('email_id')
-            print("Processing email ", email_id, current_item, current_email_text_list)
+            print("Processing email ", email_id, current_item, current_email_text_list, obj.properties)
             if current_item is None:
                 current_email_text_list = [{"text":props.get('text'), "ordinal":props.get('ordinal')}]
                 current_item = EmailTextWithFrom(text = "", 
                     email_id=email_id, 
                     thread_id=props.get("thread_id"), 
                     ordinal=props.get("ordinal"), 
-                    from_=from_map.get(email_id))   
+                    date=props.get("date"),
+                    from_=props.get('from_'))   
             elif current_item.email_id != email_id:
                 current_email_text_list = sorted(current_email_text_list, key=lambda x: x.get('ordinal'))
                 current_item.text = "".join([x.get('text') for x in current_email_text_list])
@@ -284,7 +292,8 @@ class Weaviate(VDB):
                     email_id=email_id, 
                     thread_id=props.get("thread_id"), 
                     ordinal=props.get("ordinal"), 
-                    from_=from_map.get(email_id))   
+                    date=props.get("date"),
+                    from_=props.get('from_'))   
             else:
                 current_email_text_list.append({"text":props.get('text'), "ordinal":props.get('ordinal')})   
         if current_item is not None:

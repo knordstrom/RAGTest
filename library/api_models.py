@@ -2,7 +2,6 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import AliasChoices, BaseModel, EmailStr, Field, ConfigDict
 
-import typing
 from typing import List, Optional, Union, TypeVar, Generic
 from dataclasses import dataclass, Field, fields as dataclassFields
 
@@ -34,18 +33,21 @@ class SlackConversationEntry(BaseModel):
     thread_id: str 
     channel_id: str 
     summary: str 
+    last_response: datetime
 
 class EmailConversationEntry(BaseModel):
     text: str 
     thread_id: str 
     summary: str 
+    last_response: datetime
 
 class DocumentMetadata(BaseModel):
-    createdTime: datetime 
+    created_time: datetime 
     metadata_id: str 
-    modifiedTime: datetime 
-    mimeType: str 
+    modified_time: datetime 
+    mime_type: str 
     name: str 
+    last_response: datetime
 
 class DocumentEntry(BaseModel):
     document_id: str 
