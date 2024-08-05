@@ -7,6 +7,9 @@ from requests.exceptions import ConnectionError
 from library.utils import Utils
 from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 from tests.integration.library.integration_test_base import IntegrationTestBase
+from weaviate.collections.collection import Collection
+from weaviate.collections.classes.internal import Object
+from weaviate.collections.classes.types import Properties, References
 
 class TestEmailWeaviate(IntegrationTestBase):
     
@@ -36,7 +39,7 @@ class TestEmailWeaviate(IntegrationTestBase):
         }
 
     def test_email_model_create(self, service):
-        weave = w.Weaviate(port=service['port'], host=service['host'])
+        weave: w.Weaviate = w.Weaviate(port=service['port'], host=service['host'])
         assert weave is not None
 
         response: dict[str, object] = weave.client.collections.list_all(simple=False)
@@ -64,7 +67,7 @@ class TestEmailWeaviate(IntegrationTestBase):
 
     def test_email_save(self, service):
         print("Testing Weaviate at ", service)
-        weave = w.Weaviate(port=service['port'], host=service['host'])
+        weave: w.Weaviate = w.Weaviate(port=service['port'], host=service['host'])
         assert weave is not None
         
         emails, texts = self.prepare_email_collections(weave)
@@ -107,14 +110,13 @@ class TestEmailWeaviate(IntegrationTestBase):
                 "name": "Someone Important"
             },
             "provider": "Google",
-            "provider": "Google",
             "date": "2021-01-01T12:34:56-06:00",
             "body": Utils.string_multiply("All work and no play makes for silly movies. ", 1000)
 
         })
 
-        metadata = [e for e in emails.iterator()]
-        text = [t for t in texts.iterator()]
+        metadata: list[Object[Properties, None]] = [e for e in emails.iterator()]
+        text: list[Object[Properties, None]] = [t for t in texts.iterator()]
 
         assert len(text) > 1, "The email text should be chunked into multiple segments"
         assert len(metadata) == 1, "There should be a single email metadata model saved"
@@ -137,6 +139,7 @@ class TestEmailWeaviate(IntegrationTestBase):
         assert len(metadata[0].properties) >=11, "There should be 11 properties in an email, found " + str(len(metadata[0].properties))
 
         pertinent: list[dict[str, object]] = []
+        chunk: Object[Properties, None]
         for chunk in text:
             if chunk.properties.get('email_id') == "abcdef":
                 pertinent.append(chunk)
@@ -163,11 +166,10 @@ class TestEmailWeaviate(IntegrationTestBase):
         for i in range(3):
             weave.upsert_text_vectorized(text_to_insert, {'email_id': 'ok', 'thread_id':'still ok'}, WeaviateSchemas.EMAIL_TEXT)  
             vals = [t for t in texts.iterator() if t.properties.get('email_id') == 'ok']
-            vals = [t for t in texts.iterator() if t.properties.get('email_id') == 'ok']
             assert len(vals) == 2, f"There should be 2 text chunks saved on iteration {i}"
         
 
-    def prepare_email_collections(self, weave):
+    def prepare_email_collections(self, weave) -> tuple[Collection[Properties, References], Collection[Properties, References]]:
         emails = self.truncate_collection_and_return(weave, WeaviateSchemas.EMAIL)
         texts = self.truncate_collection_and_return(weave, WeaviateSchemas.EMAIL_TEXT)
 
