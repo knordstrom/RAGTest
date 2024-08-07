@@ -1,12 +1,227 @@
 [
     {
         "kind": "calendar#event",
-        "etag": "\"3444575579392000\"",
+        "etag": "\"3444576027338000\"",
+        "id": "3qa97fc0gvtluqdcsi5366uqbc",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=M3FhOTdmYzBndnRsdXFkY3NpNTM2NnVxYmMgZW1tYXNtaXRoY3RvNjMwNkBt",
+        "created": "2024-07-29T21:20:12.000Z",
+        "updated": "2024-07-29T21:20:13.669Z",
+        "summary": "Compliance and Regulation Update",
+        "description": "Stay informed about the latest compliance requirements and regulatory changes affecting our industry. This meeting will cover important updates and discuss how they impact our operations. Legal, HR, and finance teams must attend to ensure our practices remain compliant.",
+        "creator": {
+            "email": "arjunkhannaceo9079@gmail.com"
+        },
+        "organizer": {
+            "email": "arjunkhannaceo9079@gmail.com"
+        },
+        "start": {
+            "dateTime": "2024-07-29T11:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-07-29T12:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "3qa97fc0gvtluqdcsi5366uqbc@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "arjunkhannaceo9079@gmail.com",
+                "organizer": true,
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "johnbrowncpo8808@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "self": true,
+                "responseStatus": "needsAction"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/gxm-oxik-nsm",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/gxm-oxik-nsm",
+                    "label": "meet.google.com/gxm-oxik-nsm"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "gxm-oxik-nsm"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    },
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444567910348000\"",
+        "id": "4t58k2qnfgbolmc3cr3d0t05fc",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NHQ1OGsycW5mZ2JvbG1jM2NyM2QwdDA1ZmMgZW1tYXNtaXRoY3RvNjMwNkBt",
+        "created": "2024-07-29T20:05:25.000Z",
+        "updated": "2024-07-29T20:12:35.174Z",
+        "summary": "Integration Challenges and Solutions",
+        "description": "Identify potential integration issues between the chatbot feature and existing systems and brainstorm solutions.",
+        "creator": {
+            "email": "emmasmithcto6306@gmail.com",
+            "self": true
+        },
+        "organizer": {
+            "email": "emmasmithcto6306@gmail.com",
+            "self": true
+        },
+        "start": {
+            "dateTime": "2024-07-29T13:30:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-07-29T14:30:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "4t58k2qnfgbolmc3cr3d0t05fc@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "arjunkhannaceo9079@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "johnbrowncpo8808@gmail.com",
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "organizer": true,
+                "self": true,
+                "responseStatus": "accepted"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/evp-jwyp-tfd",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/evp-jwyp-tfd",
+                    "label": "meet.google.com/evp-jwyp-tfd"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "evp-jwyp-tfd"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    },
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444575173298000\"",
+        "id": "3qnvcdun6t6rlucpqsb0fq9uas",
+        "status": "confirmed",
+        "htmlLink": "https://www.google.com/calendar/event?eid=M3FudmNkdW42dDZybHVjcHFzYjBmcTl1YXMgZW1tYXNtaXRoY3RvNjMwNkBt",
+        "created": "2024-07-29T20:14:26.000Z",
+        "updated": "2024-07-29T21:13:06.649Z",
+        "summary": "Load Testing and Stress Testing:",
+        "description": "Plan and implement load testing for upcoming features to ensure system robustness under high traffic conditions.",
+        "creator": {
+            "email": "joytaylorintern1106@gmail.com"
+        },
+        "organizer": {
+            "email": "joytaylorintern1106@gmail.com"
+        },
+        "start": {
+            "dateTime": "2024-07-29T15:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "end": {
+            "dateTime": "2024-07-29T16:00:00-07:00",
+            "timeZone": "America/Los_Angeles"
+        },
+        "iCalUID": "3qnvcdun6t6rlucpqsb0fq9uas@google.com",
+        "sequence": 0,
+        "attendees": [
+            {
+                "email": "joytaylorintern1106@gmail.com",
+                "organizer": true,
+                "responseStatus": "accepted"
+            },
+            {
+                "email": "arjunkhannaceo9079@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "johnbrowncpo8808@gmail.com",
+                "responseStatus": "needsAction"
+            },
+            {
+                "email": "emmasmithcto6306@gmail.com",
+                "self": true,
+                "responseStatus": "accepted"
+            }
+        ],
+        "hangoutLink": "https://meet.google.com/rbo-aykf-yow",
+        "conferenceData": {
+            "entryPoints": [
+                {
+                    "entryPointType": "video",
+                    "uri": "https://meet.google.com/rbo-aykf-yow",
+                    "label": "meet.google.com/rbo-aykf-yow"
+                }
+            ],
+            "conferenceSolution": {
+                "key": {
+                    "type": "hangoutsMeet"
+                },
+                "name": "Google Meet",
+                "iconUri": "https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-512dp/logo_meet_2020q4_color_2x_web_512dp.png"
+            },
+            "conferenceId": "rbo-aykf-yow"
+        },
+        "reminders": {
+            "useDefault": true
+        },
+        "eventType": "default",
+        "source": "gmail",
+        "provider": "google"
+    },
+    {
+        "kind": "calendar#event",
+        "etag": "\"3444575579408000\"",
         "id": "7pcparrk26qgijg8rgk2as28qu",
         "status": "confirmed",
-        "htmlLink": "https://www.google.com/calendar/event?eid=N3BjcGFycmsyNnFnaWpnOHJnazJhczI4cXUgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "htmlLink": "https://www.google.com/calendar/event?eid=N3BjcGFycmsyNnFnaWpnOHJnazJhczI4cXUgZW1tYXNtaXRoY3RvNjMwNkBt",
         "created": "2024-07-29T21:16:28.000Z",
-        "updated": "2024-07-29T21:16:29.696Z",
+        "updated": "2024-07-29T21:16:29.704Z",
         "summary": "Project Orion Demo Prep - Urgent Discussion Needed",
         "creator": {
             "email": "arjunkhannaceo9079@gmail.com"
@@ -27,7 +242,6 @@
         "attendees": [
             {
                 "email": "joytaylorintern1106@gmail.com",
-                "self": true,
                 "responseStatus": "needsAction"
             },
             {
@@ -41,6 +255,7 @@
             },
             {
                 "email": "emmasmithcto6306@gmail.com",
+                "self": true,
                 "responseStatus": "needsAction"
             }
         ],
@@ -71,20 +286,18 @@
     },
     {
         "kind": "calendar#event",
-        "etag": "\"3444575506028000\"",
+        "etag": "\"3444575508140000\"",
         "id": "76ofvq77l4je9comhu01d0l0b1",
         "status": "confirmed",
-        "htmlLink": "https://www.google.com/calendar/event?eid=NzZvZnZxNzdsNGplOWNvbWh1MDFkMGwwYjEgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NzZvZnZxNzdsNGplOWNvbWh1MDFkMGwwYjEgZW1tYXNtaXRoY3RvNjMwNkBt",
         "created": "2024-07-29T21:15:53.000Z",
-        "updated": "2024-07-29T21:15:53.014Z",
+        "updated": "2024-07-29T21:15:54.070Z",
         "summary": "Joy <> Emma One-on-One Mentorship and Progress Review with CTO",
         "creator": {
-            "email": "joytaylorintern1106@gmail.com",
-            "self": true
+            "email": "joytaylorintern1106@gmail.com"
         },
         "organizer": {
-            "email": "joytaylorintern1106@gmail.com",
-            "self": true
+            "email": "joytaylorintern1106@gmail.com"
         },
         "start": {
             "dateTime": "2024-07-30T12:00:00-07:00",
@@ -100,11 +313,11 @@
             {
                 "email": "joytaylorintern1106@gmail.com",
                 "organizer": true,
-                "self": true,
                 "responseStatus": "accepted"
             },
             {
                 "email": "emmasmithcto6306@gmail.com",
+                "self": true,
                 "responseStatus": "needsAction"
             }
         ],
@@ -135,12 +348,12 @@
     },
     {
         "kind": "calendar#event",
-        "etag": "\"3444575168172000\"",
+        "etag": "\"3444575168180000\"",
         "id": "46km782kmgjnuq9r2iub0if9sq",
         "status": "confirmed",
-        "htmlLink": "https://www.google.com/calendar/event?eid=NDZrbTc4MmttZ2pudXE5cjJpdWIwaWY5c3Egam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NDZrbTc4MmttZ2pudXE5cjJpdWIwaWY5c3EgZW1tYXNtaXRoY3RvNjMwNkBt",
         "created": "2024-07-29T20:12:22.000Z",
-        "updated": "2024-07-29T21:13:04.086Z",
+        "updated": "2024-07-29T21:13:04.090Z",
         "summary": "Data Privacy and Compliance Review",
         "description": "Review current data privacy policies and ensure all new features comply with GDPR and other relevant regulations.",
         "creator": {
@@ -162,7 +375,6 @@
         "attendees": [
             {
                 "email": "joytaylorintern1106@gmail.com",
-                "self": true,
                 "responseStatus": "needsAction"
             },
             {
@@ -176,6 +388,7 @@
             },
             {
                 "email": "emmasmithcto6306@gmail.com",
+                "self": true,
                 "responseStatus": "accepted"
             }
         ],
@@ -206,12 +419,12 @@
     },
     {
         "kind": "calendar#event",
-        "etag": "\"3444575804414000\"",
+        "etag": "\"3444575804410000\"",
         "id": "76eb716adg3nhafk85ens1jhfg",
         "status": "confirmed",
-        "htmlLink": "https://www.google.com/calendar/event?eid=NzZlYjcxNmFkZzNuaGFmazg1ZW5zMWpoZmcgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NzZlYjcxNmFkZzNuaGFmazg1ZW5zMWpoZmcgZW1tYXNtaXRoY3RvNjMwNkBt",
         "created": "2024-07-29T21:18:21.000Z",
-        "updated": "2024-07-29T21:18:22.207Z",
+        "updated": "2024-07-29T21:18:22.205Z",
         "summary": "Sales Pipeline Review",
         "description": "A critical review of our sales pipeline to evaluate current prospects, discuss strategies for accelerating the sales cycle, and address challenges in conversion rates. Sales team leads are expected to present updates on key accounts and forecast the next quarter's revenue.",
         "creator": {
@@ -233,7 +446,6 @@
         "attendees": [
             {
                 "email": "joytaylorintern1106@gmail.com",
-                "self": true,
                 "responseStatus": "needsAction"
             },
             {
@@ -247,6 +459,7 @@
             },
             {
                 "email": "emmasmithcto6306@gmail.com",
+                "self": true,
                 "responseStatus": "needsAction"
             }
         ],
@@ -277,12 +490,12 @@
     },
     {
         "kind": "calendar#event",
-        "etag": "\"3444575690282000\"",
+        "etag": "\"3444575690278000\"",
         "id": "6t26jjsb9ram9hj4on97h7lr91",
         "status": "confirmed",
-        "htmlLink": "https://www.google.com/calendar/event?eid=NnQyNmpqc2I5cmFtOWhqNG9uOTdoN2xyOTEgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NnQyNmpqc2I5cmFtOWhqNG9uOTdoN2xyOTEgZW1tYXNtaXRoY3RvNjMwNkBt",
         "created": "2024-07-29T21:17:24.000Z",
-        "updated": "2024-07-29T21:17:25.141Z",
+        "updated": "2024-07-29T21:17:25.139Z",
         "summary": "Meeting with Sarah - Pitch Deck ",
         "creator": {
             "email": "arjunkhannaceo9079@gmail.com"
@@ -303,7 +516,6 @@
         "attendees": [
             {
                 "email": "joytaylorintern1106@gmail.com",
-                "self": true,
                 "responseStatus": "needsAction"
             },
             {
@@ -317,6 +529,7 @@
             },
             {
                 "email": "emmasmithcto6306@gmail.com",
+                "self": true,
                 "responseStatus": "needsAction"
             }
         ],
@@ -347,19 +560,21 @@
     },
     {
         "kind": "calendar#event",
-        "etag": "\"3444575146254000\"",
+        "etag": "\"3444575144092000\"",
         "id": "7mchnhcjkvideg296js6ahr11s",
         "status": "confirmed",
-        "htmlLink": "https://www.google.com/calendar/event?eid=N21jaG5oY2prdmlkZWcyOTZqczZhaHIxMXMgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "htmlLink": "https://www.google.com/calendar/event?eid=N21jaG5oY2prdmlkZWcyOTZqczZhaHIxMXMgZW1tYXNtaXRoY3RvNjMwNkBt",
         "created": "2024-07-29T21:12:52.000Z",
-        "updated": "2024-07-29T21:12:53.127Z",
+        "updated": "2024-07-29T21:12:52.046Z",
         "summary": "AI and Machine Learning Integration",
         "description": "Explore opportunities for integrating AI and machine learning into the product to enhance user experience and feature set.",
         "creator": {
-            "email": "emmasmithcto6306@gmail.com"
+            "email": "emmasmithcto6306@gmail.com",
+            "self": true
         },
         "organizer": {
-            "email": "emmasmithcto6306@gmail.com"
+            "email": "emmasmithcto6306@gmail.com",
+            "self": true
         },
         "start": {
             "dateTime": "2024-07-31T14:30:00-07:00",
@@ -374,7 +589,6 @@
         "attendees": [
             {
                 "email": "joytaylorintern1106@gmail.com",
-                "self": true,
                 "responseStatus": "needsAction"
             },
             {
@@ -388,6 +602,7 @@
             {
                 "email": "emmasmithcto6306@gmail.com",
                 "organizer": true,
+                "self": true,
                 "responseStatus": "accepted"
             }
         ],
@@ -418,12 +633,12 @@
     },
     {
         "kind": "calendar#event",
-        "etag": "\"3444575949630000\"",
+        "etag": "\"3444575949618000\"",
         "id": "1ja2426sqctt569tcb7s31ac5i",
         "status": "confirmed",
-        "htmlLink": "https://www.google.com/calendar/event?eid=MWphMjQyNnNxY3R0NTY5dGNiN3MzMWFjNWkgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "htmlLink": "https://www.google.com/calendar/event?eid=MWphMjQyNnNxY3R0NTY5dGNiN3MzMWFjNWkgZW1tYXNtaXRoY3RvNjMwNkBt",
         "created": "2024-07-29T21:19:33.000Z",
-        "updated": "2024-07-29T21:19:34.815Z",
+        "updated": "2024-07-29T21:19:34.809Z",
         "summary": "Competitor Analysis Roundup",
         "description": "A focused discussion on our main competitors, analyzing their strategies, market positioning, and product offerings. Insights gathered here will help us refine our competitive edge and identify areas of opportunity. Marketing and strategy teams should come with prepared analyses.",
         "creator": {
@@ -445,7 +660,6 @@
         "attendees": [
             {
                 "email": "joytaylorintern1106@gmail.com",
-                "self": true,
                 "responseStatus": "needsAction"
             },
             {
@@ -459,6 +673,7 @@
             },
             {
                 "email": "emmasmithcto6306@gmail.com",
+                "self": true,
                 "responseStatus": "needsAction"
             }
         ],
@@ -489,12 +704,12 @@
     },
     {
         "kind": "calendar#event",
-        "etag": "\"3444575165260000\"",
+        "etag": "\"3444575165250000\"",
         "id": "4nfef7ribhrp97fiusfair799m",
         "status": "confirmed",
-        "htmlLink": "https://www.google.com/calendar/event?eid=NG5mZWY3cmliaHJwOTdmaXVzZmFpcjc5OW0gam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NG5mZWY3cmliaHJwOTdmaXVzZmFpcjc5OW0gZW1tYXNtaXRoY3RvNjMwNkBt",
         "created": "2024-07-29T19:57:57.000Z",
-        "updated": "2024-07-29T21:13:02.630Z",
+        "updated": "2024-07-29T21:13:02.625Z",
         "summary": "Initial Meeting on Analytics Feature Development",
         "description": "<li>Overview of the proposed analytics feature.</li><li>Discussion on technical requirements and infrastructure (Led by Emma).</li><li>UI/UX design considerations and need for a frontend expert (Led by John).</li><li>Plan for user feedback collection and analysis (Led by Joy).</li><li>Performance and security standards.</li><li>Setting timelines and assigning tasks.</li>",
         "creator": {
@@ -516,7 +731,6 @@
         "attendees": [
             {
                 "email": "joytaylorintern1106@gmail.com",
-                "self": true,
                 "responseStatus": "needsAction"
             },
             {
@@ -530,6 +744,7 @@
             },
             {
                 "email": "emmasmithcto6306@gmail.com",
+                "self": true,
                 "responseStatus": "accepted"
             }
         ],
@@ -560,12 +775,12 @@
     },
     {
         "kind": "calendar#event",
-        "etag": "\"3444575884332000\"",
+        "etag": "\"3444575884460000\"",
         "id": "4o3qbl846f4o77ebmn959j58b3",
         "status": "confirmed",
-        "htmlLink": "https://www.google.com/calendar/event?eid=NG8zcWJsODQ2ZjRvNzdlYm1uOTU5ajU4YjMgam95dGF5bG9yaW50ZXJuMTEwNkBt",
+        "htmlLink": "https://www.google.com/calendar/event?eid=NG8zcWJsODQ2ZjRvNzdlYm1uOTU5ajU4YjMgZW1tYXNtaXRoY3RvNjMwNkBt",
         "created": "2024-07-29T21:19:01.000Z",
-        "updated": "2024-07-29T21:19:02.166Z",
+        "updated": "2024-07-29T21:19:02.230Z",
         "summary": "UX/UI Feedback Loop",
         "description": "This session is dedicated to reviewing our product's user experience and interface. We'll analyze user feedback, discuss UI improvements, and brainstorm UX enhancements to better meet our customers' needs. Designers, developers, and product managers should come prepared with data and user insights.",
         "creator": {
@@ -587,7 +802,6 @@
         "attendees": [
             {
                 "email": "joytaylorintern1106@gmail.com",
-                "self": true,
                 "responseStatus": "needsAction"
             },
             {
@@ -601,6 +815,7 @@
             },
             {
                 "email": "emmasmithcto6306@gmail.com",
+                "self": true,
                 "responseStatus": "needsAction"
             }
         ],
