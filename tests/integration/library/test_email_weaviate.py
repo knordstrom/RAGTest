@@ -7,6 +7,9 @@ from requests.exceptions import ConnectionError
 from library.utils import Utils
 from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 from tests.integration.library.integration_test_base import IntegrationTestBase
+from weaviate.collections.collection import Collection
+from weaviate.collections.classes.internal import Object
+from weaviate.collections.classes.types import Properties, References
 
 class TestEmailWeaviate(IntegrationTestBase):
     
@@ -36,9 +39,19 @@ class TestEmailWeaviate(IntegrationTestBase):
         }
 
     def test_email_model_create(self, service):
-        weave = w.Weaviate(port=service['port'], host=service['host'])
+        weave: w.Weaviate = w.Weaviate(port=service['port'], host=service['host'])
         assert weave is not None
 
+        response: dict[str, object] = weave.client.collections.list_all(simple=False)
+        assert len(response.keys()) == len(WeaviateSchema.class_objs), "There should be collections in the Weaviate instance for each schema object"
+
+        print("Collections: ", response)
+
+        assert response.get("Email") is not None
+        assert response.get("EmailText") is not None
+        assert response.get("EmailThread") is not None
+
+        self.show_nested_properties_match(response, WeaviateSchemas.EMAIL_THREAD)
         response: dict[str, object] = weave.client.collections.list_all(simple=False)
         assert len(response.keys()) == len(WeaviateSchema.class_objs), "There should be collections in the Weaviate instance for each schema object"
 
@@ -54,10 +67,14 @@ class TestEmailWeaviate(IntegrationTestBase):
 
     def test_email_save(self, service):
         print("Testing Weaviate at ", service)
-        weave = w.Weaviate(port=service['port'], host=service['host'])
+        weave: w.Weaviate = w.Weaviate(port=service['port'], host=service['host'])
         assert weave is not None
         
         emails, texts = self.prepare_email_collections(weave)
+
+        response = weave.client.collections.list_all(simple=False)
+        print("Collections: ")
+        [print(p) for p in response['Email'].properties]
 
         response = weave.client.collections.list_all(simple=False)
         print("Collections: ")
@@ -98,10 +115,12 @@ class TestEmailWeaviate(IntegrationTestBase):
 
         })
 
-        metadata = [e for e in emails.iterator()]
-        text = [t for t in texts.iterator()]
+        metadata: list[Object[Properties, None]] = [e for e in emails.iterator()]
+        text: list[Object[Properties, None]] = [t for t in texts.iterator()]
 
         assert len(text) > 1, "The email text should be chunked into multiple segments"
+        assert len(metadata) == 1, "There should be a single email metadata model saved"
+        
         assert len(metadata) == 1, "There should be a single email metadata model saved"
         
         assert metadata[0].properties['email_id'] == "abcdef"
@@ -115,9 +134,12 @@ class TestEmailWeaviate(IntegrationTestBase):
                     "name": "Him"
                 }
             ]
-        assert len(metadata[0].properties) ==11, "There should be 11 properties in an email, found " + str(len(metadata[0].properties))
+        assert metadata[0].properties.get('body') is None
+        print("Metadata properties: ", metadata[0].properties)
+        assert len(metadata[0].properties) >=11, "There should be 11 properties in an email, found " + str(len(metadata[0].properties))
 
         pertinent: list[dict[str, object]] = []
+        chunk: Object[Properties, None]
         for chunk in text:
             if chunk.properties.get('email_id') == "abcdef":
                 pertinent.append(chunk)
@@ -127,6 +149,8 @@ class TestEmailWeaviate(IntegrationTestBase):
         for chunk in pertinent:
             assert chunk.properties.get('email_id') == "abcdef"
             assert chunk.properties.get('thread_id') == "mnopqr"
+            assert chunk.properties.get('ordinal') is not None
+            assert chunk.properties.get('date').isoformat() == "2021-01-01T12:34:56-06:00"
             assert chunk.properties.get('ordinal') is not None
             assert chunk.properties.get('date').isoformat() == "2021-01-01T12:34:56-06:00"
 
@@ -145,7 +169,7 @@ class TestEmailWeaviate(IntegrationTestBase):
             assert len(vals) == 2, f"There should be 2 text chunks saved on iteration {i}"
         
 
-    def prepare_email_collections(self, weave):
+    def prepare_email_collections(self, weave) -> tuple[Collection[Properties, References], Collection[Properties, References]]:
         emails = self.truncate_collection_and_return(weave, WeaviateSchemas.EMAIL)
         texts = self.truncate_collection_and_return(weave, WeaviateSchemas.EMAIL_TEXT)
 

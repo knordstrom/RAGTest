@@ -34,12 +34,14 @@ class SlackConversationEntry(BaseModel):
     channel_id: str 
     summary: str 
     last_response: datetime
+    importance: Optional[float] = None
 
 class EmailConversationEntry(BaseModel):
     text: str 
     thread_id: str 
     summary: str 
     last_response: datetime
+    importance: Optional[float] = None
 
 class DocumentMetadata(BaseModel):
     created_time: datetime 
@@ -55,6 +57,7 @@ class DocumentEntry(BaseModel):
     metadata: DocumentMetadata 
     provider: Optional[str] = None
     summary: str 
+    importance: Optional[float] = None
 
 class MeetingSupport(BaseModel):
     docs: List[DocumentEntry] = []

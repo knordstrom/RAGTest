@@ -186,6 +186,12 @@ class Weaviate(VDB):
             filters= Filter.by_property(id_prop).contains_any(ids),
         ).objects
     
+    def get_email_metadatas_in_thread(self, thread_id: str) -> list[EmailMessage]:
+        results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
+            filters=Filter.by_property("thread_id").equal(thread_id),
+        )
+        return [EmailMessage.model_validate(x.properties) for x in results.objects]
+
     def get_email_by_id(self, email_id: str) -> EmailMessage:
         results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
             filters=Filter.by_property("email_id").equal(email_id),

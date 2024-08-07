@@ -183,3 +183,29 @@ class TestEmployeeNeo4j(IntegrationTestBase):
         assert 'C00001' in reports14
         assert '000019' in reports15
         assert 'C00002' in reports15
+
+    
+    def test_get_full_employee(self, service):
+        graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
+
+        employee: Employee = graph.get_employee_with_full_org_chart('cgubbins@superbigmegacorp.com')
+        assert employee.name == 'Cleo Gubbins'
+        assert employee.distance_to('cgubbins@superbigmegacorp.com') == 0
+        assert employee.distance_to('zjones@superbigmegacorp.com') == 1
+        assert employee.distance_to('jdoe@superbigmegacorp.com') == 2
+        assert employee.distance_to('wgatos@superbigmegacorp.com') == -1
+        assert employee.distance_to('selle@superbigmegacorp.com') == -2
+        assert employee.distance_to('notanemail') is None
+        assert employee.distance_to('ahigginbotham@superbigmegacorp.com') is None
+
+
+        employee: Employee = graph.get_employee_with_full_org_chart('jdoe@superbigmegacorp.com')
+        assert employee.name == 'John Doe'
+        
+        assert employee.distance_to('jdoe@superbigmegacorp.com') == 0
+        assert employee.distance_to('zjones@superbigmegacorp.com') == -1
+        assert employee.distance_to('cgubbins@superbigmegacorp.com') == -2
+        assert employee.distance_to('wgatos@superbigmegacorp.com') == -3
+        assert employee.distance_to('selle@superbigmegacorp.com') == -4
+        assert employee.distance_to('notanemail') is None
+        assert employee.distance_to('ahigginbotham@superbigmegacorp.com') == -4

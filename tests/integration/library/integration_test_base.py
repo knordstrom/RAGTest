@@ -1,9 +1,12 @@
 import pytest
 import requests
 
+from library.weaviate import Weaviate
 from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 from weaviate.classes.query import Filter
-
+from weaviate.collections.collection import Collection
+from weaviate.collections.classes.internal import Object
+from weaviate.collections.classes.types import Properties, References
 class IntegrationTestBase:
 
     def get_truncation_property(self, schema: dict) -> str:
@@ -24,7 +27,7 @@ class IntegrationTestBase:
                     break
         return property
     
-    def truncate_collection_and_return(self, weave, key: WeaviateSchemas):
+    def truncate_collection_and_return(self, weave: Weaviate, key: WeaviateSchemas) -> Collection[Properties, References]:
         """Truncates the values in a weaviate collection and returns it for use"""
         schema = WeaviateSchema.class_map[key]
         c = weave.collection(key)
