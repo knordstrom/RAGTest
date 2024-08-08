@@ -15,19 +15,19 @@ from library.weaviate_schemas import Event as WeaviateEvent
 from library.models.event import Event
 
 class EventPersonRelationships:
-    attendance_map = {}
-    person_map = {}
-    organizer_map = {}
+    attendance_map: dict[str, dict[str, any]] = {}
+    person_map: dict[str, dict[str, any]]  = {}
+    organizer_map: dict[str, dict[str, any]]  = {}
 
     @property
-    def attendance_list(self):
+    def attendance_list(self) -> list[dict[str, any]]:
         return list(self.attendance_map.values())
     
     @property
-    def person_list(self):
+    def person_list(self) -> list[dict[str, any]]:
         return list(self.person_map.values())
     
-    def add_attendee(self, person_email, event_id, status, name):
+    def add_attendee(self, person_email: str, event_id: str, status, name: str) -> None:
         p = Person(name, person_email)
         attendee_id = p.identifier()
         attend_rel_id = attendee_id + event_id
@@ -50,7 +50,7 @@ class Neo4j:
     PERSON = "Person"
     EVENT = "Event"
 
-    def __init__(self, host = None, port = None, protocol = None, user = None, password = None):
+    def __init__(self, host: str = None, port: str = None, protocol: str = None, user: str = None, password: str = None):
         dotenv.load_dotenv(dotenv_path = os.path.join(os.path.dirname(__file__), '../.env'))
         protocol = os.getenv("NEO4J_PROTOCOL", "bolt") if protocol is None else protocol
         self.db_host = os.getenv("NEO4J_DB_HOST", "localhost") if host is None else host
@@ -61,7 +61,7 @@ class Neo4j:
         self.driver = GraphDatabase.driver(self.url, auth=(self.username, self.password))
         self.connect()
 
-    def connect(self):
+    def connect(self) -> None:
         print("url is: ", self.url)
         try:
             with self.driver.session() as session:
@@ -73,10 +73,10 @@ class Neo4j:
             print(inst.args)     # arguments stored in .args
             print(inst)  
 
-    def close(self):
+    def close(self) -> None:
         self.driver.close()
 
-    def query(self, query):
+    def query(self, query) -> Result:
         return self.driver.execute_query(query)
 
     def get_schedule(self, email: str, start_time: datetime, end_time: datetime) -> list[Event]:
@@ -94,7 +94,7 @@ class Neo4j:
             print("Results were", results)
             return Neo4j.collate_schedule_response(results)
 
-    def merge_node(self, label, identifier, properties):
+    def merge_node(self, label: str, identifier: str, properties: dict[str, any]) -> Result:
         query = f"""
         MERGE (n:{label} {{{identifier}: $id}})
         ON CREATE SET n += $properties
@@ -102,9 +102,10 @@ class Neo4j:
         """
         print(f"Merging node: {label} with properties {properties}")
         with self.driver.session() as session:
-            session.run(query, id=properties[identifier], properties=properties)
+            return session.run(query, id=properties[identifier], properties=properties)
 
-    def create_relationship(self, start_node_label, start_node_key, start_node_value, rel_type, end_node_label, end_node_key, end_node_value, properties):
+    def create_relationship(self, start_node_label: str, start_node_key: str, start_node_value: str, rel_type: str, 
+                            end_node_label: str, end_node_key: str, end_node_value: str, properties: dict[str, any]) -> Result:
         query = f"""
         MATCH (start:{start_node_label} {{{start_node_key}: $start_node_value}})
         MATCH (end:{end_node_label} {{{end_node_key}: $end_node_value}})
@@ -113,10 +114,10 @@ class Neo4j:
         """
         print(f"Creating relationship: {rel_type} between {start_node_label} {start_node_value} and {end_node_label} {end_node_value}")
         with self.driver.session() as session:
-            session.run(query, start_node_value=start_node_value, end_node_value=end_node_value, rel_id=properties['id'], properties=properties)
+            return session.run(query, start_node_value=start_node_value, end_node_value=end_node_value, rel_id=properties['id'], properties=properties)
 
     ### Employee ###
-    def process_org_chart(self, org: list[Employee]):
+    def process_org_chart(self, org: list[Employee]) -> None:
         # performance: do without recursion?
 
         for employee in org:
@@ -277,7 +278,7 @@ class Neo4j:
             self.extract_attendees_info(event, event_dict, relationships)
         self.add_to_db(events_list, relationships)
 
-    def extract_event_info(self, event):
+    def extract_event_info(self, event: dict[str, any]) -> dict[str, any]:
         event_dict = {
             "id": event.get("id"),
             "status": event.get("status", ""),
@@ -290,13 +291,13 @@ class Neo4j:
         }
         return event_dict
 
-    def extract_attendees_info(self, event: dict, event_dict: dict, relationships: EventPersonRelationships):
+    def extract_attendees_info(self, event: dict[str, any], event_dict: dict[str, any], relationships: EventPersonRelationships):
         for item in event.get("attendees", []):
             email = item.get("email", "")
             relationships.add_attendee(email, event_dict["id"], item.get("responseStatus", "Unknown"), item.get("displayName", email))
         relationships.organizer_map[event_dict["id"]] = event.get("organizer", {})
 
-    def add_to_db(self, events_list, relationships: EventPersonRelationships):
+    def add_to_db(self, events_list: list[dict[str, any]], relationships: EventPersonRelationships):
         for person in relationships.person_list:
             self.merge_node(self.PERSON, "id", person)
 
@@ -338,7 +339,7 @@ class Neo4j:
     
 
     @staticmethod
-    def create_attendee(record: dict) -> dict :
+    def create_attendee(record: dict[str, str]) -> dict[str, str] :
         return {
                     'name': record['attendee.name'],
                     'email': record['attendee.email'],
@@ -346,7 +347,7 @@ class Neo4j:
                 }
 
     @staticmethod
-    def create_new_record(record: dict) -> dict:
+    def create_new_record(record: dict[str, any]) -> dict[str, str]:
         record_dict = {}
         record_dict.update(record)
         record_dict['attendees'] = []

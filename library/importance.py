@@ -21,14 +21,14 @@ class ImportanceService:
 
     _graph: Neo4j = None
     @property
-    def graph(self):
+    def graph(self) -> Neo4j:
         if self._graph is None:
             self._graph = Neo4j()
         return self._graph
     
     _vector: Weaviate = None
     @property
-    def vector(self):
+    def vector(self) -> Weaviate:
         if self._vector is None:
             self._vector = Weaviate()
         return self._vector

@@ -1,22 +1,25 @@
 import datetime
 import json
 import os
+from cachetools import TTLCache, cached
 import dotenv
 import requests
+from library.decorators import Decorators as d
 
 class PromptManager:
 
-    base_url = "https://reineed-be-3qiddja7xa-ts.a.run.app/api/v1/"
-    branch_id = "6669c0d6e881c714f04e4a49"
+    api_key: str = None
+    base_url: str = "https://reineed-be-3qiddja7xa-ts.a.run.app/api/v1/"
+    branch_id: str = "6669c0d6e881c714f04e4a49"
 
-    headers = {
+    headers: dict[str, str] = {
         "accept": "application/json",
         "api-key": "htfzvt8Mv0PyoIuJemScykmljemyHA2mNMYZ13XmprYxqF2KbC"
     }
 
     prompt_cache = {}
-    cache_complete = None
-    cache_timeout_seconds = 300 # 5 minutes
+    cache_complete: datetime.datetime = None
+    cache_timeout_seconds: int = 300 # 5 minutes
 
     def __new__(cls) -> None:
         if not hasattr(cls, 'instance'):
@@ -27,15 +30,15 @@ class PromptManager:
             self.cache_prompt_keys()
         return cls.instance    
     
-    def cache_expired(self):
+    def cache_expired(self) -> bool:
         return (datetime.datetime.now() - self.cache_complete).seconds > self.cache_timeout_seconds
     
-    def name_to_id(self, name: str):
-        prompt_id = self.prompt_cache.get(name)
+    def name_to_id(self, name: str) -> str:
+        prompt_id: str = self.prompt_cache.get(name)
         if prompt_id is None or self.cache_expired():
             self.cache_prompt_keys()
             self.prompt_cache.get(name)
-            prompt_id = self.prompt_cache.get(name)
+            prompt_id: str = self.prompt_cache.get(name)
         if prompt_id is None:
             raise PromptMissingException(f"Prompt not found for name `{name}`")
         return prompt_id
@@ -51,26 +54,28 @@ class PromptManager:
             raise PromptMissingException(f"No template found for prompt `{name}`: {prompt}")
         return template
 
-    def get_prompt(self, name: str):
-        prompt_id = self.name_to_id(name)
-        result = self.get_response("get-prompt", {"prompt_id": prompt_id})
+    def get_prompt(self, name: str) -> dict[str, str]:
+        prompt_id: str = self.name_to_id(name)
+        result: dict[str, str] = self.get_response("get-prompt", {"prompt_id": prompt_id})
         return result
 
-    def cache_prompt_keys(self):
-        prompts = self.get_prompts()
+    def cache_prompt_keys(self) -> None:
+        prompts: dict[str, any] = self.get_prompts()
         self.prompt_cache = {prompt["name"]: prompt["id"] for prompt in prompts}
-        self.cache_complete = datetime.datetime.now()
+        self.cache_complete: datetime.datetime = datetime.datetime.now()
         print("Prompt cache completed: ", self.prompt_cache)
 
-    def get_prompts(self):
+    def get_prompts(self) -> dict[str, any]:
         result = self.get_response("get-prompts", {})
         return result
 
-
-    def get_response(self, request: str, params: dict) -> dict:
-        url = self.base_url + request
-        params.update({"branch_id": self.branch_id, "api-key": self.api_key})
-        response = requests.get(url, headers=self.headers, params=params)
+    @d.deep_freeze_args
+    @cached(cache=TTLCache(maxsize=1024, ttl=86400))
+    def get_response(self, request: str, params: dict[str, any]) -> dict[str, any]:
+        url: str = self.base_url + request
+        req_params = {"branch_id": self.branch_id, "api-key": self.api_key}
+        req_params.update(params)
+        response = requests.get(url, headers=self.headers, params=req_params)
         return json.loads(response.text)
     
 class PromptMissingException(Exception):

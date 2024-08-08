@@ -104,17 +104,16 @@ class GoogleSchemas(enum.Enum):
     
 class GSuite(GSuiteServiceProvider):
 
-    SCOPES = ['https://mail.google.com/', 
+    SCOPES: list[str] = ['https://mail.google.com/', 
               'https://www.googleapis.com/auth/calendar.readonly',
               'https://www.googleapis.com/auth/drive', 
               'https://www.googleapis.com/auth/documents',
             #   'https://www.googleapis.com/auth/meetings.space.readonly'
               ]
     
+    TOKEN_FILE: str = 'token.json'
 
-    TOKEN_FILE = 'token.json'
-
-    MIME_TYPE = {"pdf": "mimeType='application/pdf'",
+    MIME_TYPE: dict[str, str] = {"pdf": "mimeType='application/pdf'",
                 "docx": "mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'",
                 "google_doc": "mimeType='application/vnd.google-apps.document'"}
 
@@ -122,7 +121,7 @@ class GSuite(GSuiteServiceProvider):
         credentials = self.__authenticate()
         return build(google_schema.value, GoogleSchemas.v(google_schema), credentials=credentials)
 
-    def __init__(self, email, creds, docs_folder:str = "."):
+    def __init__(self, email: str, creds: str, docs_folder:str = "."):
         self.email = email
         self.creds = creds
         self.docs_folder = docs_folder
@@ -150,11 +149,11 @@ class GSuite(GSuiteServiceProvider):
         return creds
         
 
-    def list_emails(self, userId='me', pageToken = None, maxResults = None) -> list[dict[str,str]]:
+    def list_emails(self, userId: str='me', pageToken: str = None, maxResults: int = None) -> list[dict[str,str]]:
         with self.service(GoogleSchemas.GMAIL) as service:
             return service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults).execute()
     
-    def get_email(self, id, userId='me', format='full') -> dict[str, str]:
+    def get_email(self, id: str, userId: str='me', format: str='full') -> dict[str, str]:
         with self.service(GoogleSchemas.GMAIL) as service:
              result = service.users().messages().get(userId=userId, id=id, format = format).execute()  
              self.__get_attachments(result, userId) 
@@ -164,7 +163,7 @@ class GSuite(GSuiteServiceProvider):
     def events(self, now: datetime.datetime, count: int = 10) -> list[dict[str, str]]:
         with self.service(GoogleSchemas.CALENDAR) as service:
             print("Getting the upcoming 10 events")
-            events_result = (
+            events_result: dict[str, any] = (
                 service.events()
                 .list(
                     calendarId="primary",
@@ -183,7 +182,7 @@ class GSuite(GSuiteServiceProvider):
             return events
 
     
-    def __get_attachments(self, message: dict, userId='me'):
+    def __get_attachments(self, message: dict[str, any], userId: str='me') -> None:
         attachments = []
         with self.service(GoogleSchemas.GMAIL) as service:
             for part in  message['payload'].get('parts',[]):
@@ -198,7 +197,7 @@ class GSuite(GSuiteServiceProvider):
             if len(attachments) > 0:
                 message['attachments'] = attachments
 
-    def list_meetings(self, count: int = 10):
+    def list_meetings(self, count: int = 10) -> list[dict, str, any]:
         client = meet_v2.ConferenceRecordsServiceAsyncClient()
 
         # Initialize request argument(s)
@@ -208,7 +207,7 @@ class GSuite(GSuiteServiceProvider):
         page_result = client.list_conference_records(request=request)
         return page_result
 
-    def list_transcripts(self, parent_value, count: int = 10):
+    def list_transcripts(self, parent_value: str, count: int = 10) -> list[dict[str, any]]:
         client = meet_v2.ConferenceRecordsServiceAsyncClient()
 
         # Initialize request argument(s)
@@ -218,10 +217,10 @@ class GSuite(GSuiteServiceProvider):
         )
 
         # Make the request
-        page_result = client.list_transcripts(request=request)
+        page_result: list[dict[str, any]] = client.list_transcripts(request=request)
         return page_result
 
-    def get_document_ids(self, type):
+    def get_document_ids(self, type: str) -> dict[str, str]:
         with self.service(GoogleSchemas.DRIVE) as service:
             results = (
                 service.files()
@@ -241,9 +240,9 @@ class GSuite(GSuiteServiceProvider):
                 doc_ids[item['id']] = item['name']
         return doc_ids
 
-    def get_file_metadata(self, doc_id_name):
-        metadata = {}
-        doc_ids = list(doc_id_name.keys())
+    def get_file_metadata(self, doc_id_name: dict[str, any]) -> dict[str, dict[str, any]]:
+        metadata: dict[str, dict[str, any]] = {}
+        doc_ids: list[str] = list(doc_id_name.keys())
         with self.service(GoogleSchemas.DRIVE) as service:
             for doc in doc_ids:
                 file_id = doc
@@ -254,7 +253,7 @@ class GSuite(GSuiteServiceProvider):
                 metadata[doc] = file_metadata_cleaned
         return metadata
     
-    def rename_id_field(self, file_metadata):
+    def rename_id_field(self, file_metadata: dict[str, any]) -> dict[str, any]:
             file_metadata["metadata_id"] = file_metadata["id"]
             del file_metadata["id"]
             if "permissions" in file_metadata:
@@ -263,7 +262,7 @@ class GSuite(GSuiteServiceProvider):
                     del d["id"] 
             return file_metadata
 
-    def extract_content(self, doc_body):
+    def extract_content(self, doc_body: str) -> str:
         content = []
         for element in doc_body.get('content', []):
             if 'paragraph' in element:
@@ -272,10 +271,10 @@ class GSuite(GSuiteServiceProvider):
                         content.append(para_element['textRun']['content'])
         return ''.join(content)
 
-    def get_gdocs_content(self, doc_ids_name: dict):
+    def get_gdocs_content(self, doc_ids_name: dict) -> dict[str, any]:
         doc_ids = list(doc_ids_name.keys())
         with self.service(GoogleSchemas.DOCUMENTS) as service:
-            doc_info = {}
+            doc_info: dict[str, any] = {}
             for doc in doc_ids:
             # Retrieve the documents contents from the Docs service.
                 doc_structure = {}
@@ -288,7 +287,7 @@ class GSuite(GSuiteServiceProvider):
                 doc_info[doc] = doc_structure
         return doc_info
     
-    def get_3p_content(self, doc_dict: dict, parser: document_parser.DocumentParser):
+    def get_3p_content(self, doc_dict: dict[str, any], parser: document_parser.DocumentParser) -> dict[str, any]:
 
         print(" Getting 3p content for ", doc_dict.keys())
         with self.service(GoogleSchemas.DRIVE) as service:
@@ -312,10 +311,10 @@ class GSuite(GSuiteServiceProvider):
                 doc_info[doc] = doc_structure
         return doc_info
 
-    def get_pdf_content(self, pdf_dict):
+    def get_pdf_content(self, pdf_dict: dict[str, any]) -> dict[str, any]:
         return self.get_3p_content(pdf_dict, document_parser.PdfParser())
                 
-    def get_docx_content(self, docx_dict):
+    def get_docx_content(self, docx_dict: dict[str, any]) -> dict[str, any]:
         return self.get_3p_content(docx_dict, document_parser.DocxParser())             
 
     def compile_info(self, document_type: str, content_callback: callable) -> dict[str, any]:

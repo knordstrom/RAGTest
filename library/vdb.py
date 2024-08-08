@@ -3,7 +3,7 @@ class VDB:
     def client(self):
         pass
 
-    def create_schema(self, schema_object) -> None:
+    def create_schema(self, schema_object: dict[str,any]) -> None:
         pass
     
     def upsert(self, text:str) -> bool:

@@ -54,7 +54,7 @@ def slack_auth(destination: Union[str,None] = None) -> str:
 def slack_auth_finish(code:str, state:Union[str,None] = None):
     # Retrieve the auth code and state from the request params
 
-    received_state = ast.literal_eval(state if state else str(default_destination))
+    received_state: dict[str, any] = ast.literal_eval(state if state else str(default_destination))
     s = Slack()
     result = s.finish_auth(code)
     return RedirectResponse(url=received_state.get('destination', default_destination['destination']))

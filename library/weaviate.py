@@ -1,6 +1,7 @@
 import copy
 import enum
 import weaviate as w
+from weaviate.util import generate_uuid5 as weave_uuid5
 #import langchain_experimental.text_splitter as lang_splitter
 from langchain_community.embeddings import GPT4AllEmbeddings
 from library.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse
@@ -14,15 +15,20 @@ from weaviate.collections.classes.grpc import Sort
 from weaviate.collections.collection import Collection
 from weaviate.collections.classes.internal import Object
 from weaviate.collections.classes.types import Properties, References
+from langchain_core.documents import Document
+from weaviate.collections.classes.aggregate import AggregateReturn
 
 class Weaviate(VDB):
 
+    host: str
+    port: str
+    url: str
     schemas = {}
     postponded_references = {}
 
-    _client = None
+    _client: w.WeaviateClient = None
     @property
-    def client(self):
+    def client(self) -> w.WeaviateClient:
         if self._client is None:
             print("Connecting to " + self.url)
             self._client = w.connect_to_local(
@@ -31,14 +37,14 @@ class Weaviate(VDB):
             )
         return self._client
 
-    def reset_client(self):
+    def reset_client(self) -> None:
         self._client = None
         
     def collection(self, key: WeaviateSchemas) -> Collection[Properties, References]:
         schema = self.schemas[key]
         return self.client.collections.get(schema['class'])
     
-    def __new__(cls, host = '127.0.0.1', port = '8080', schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> None:
+    def __new__(cls, host = '127.0.0.1', port = '8080', schemas: list[(WeaviateSchemas,dict[str, any])] = WeaviateSchema.class_objs) -> None:
         if not hasattr(cls, 'instance'):
             cls.instance = super(Weaviate, cls).__new__(cls)
             self = cls.instance
@@ -50,22 +56,23 @@ class Weaviate(VDB):
             self.add_references(schemas)
         return cls.instance    
     
-    def create_schemas(self, schemas) -> None:
+    def create_schemas(self, schemas: list[(WeaviateSchemas,dict[str, any])]) -> None:
         for schema_entry in schemas:
             key, schema = schema_entry
             self.create_schema(key, schema)  
             self.schemas[key] = schema 
     
-    def add_references(self, schemas) -> None:
+    def add_references(self, schemas: list[(WeaviateSchemas,dict[str, any])]) -> None:
         for schema_entry in schemas:
             key, schema = schema_entry
             for reference in schema.get('references', []):
                 self.add_reference(key, reference)
 
-    def create_schema(self, key, schema_object) -> None:
+    def create_schema(self, key: WeaviateSchemas, schema_object: dict[str, any]) -> None:
         try:
             vectorizer = wvc.config.Configure.Vectorizer.text2vec_transformers() if schema_object.get('vectorizer') else None
-            properties = [property.name for property in schema_object['properties']]
+            props: list[Property] = schema_object['properties']
+            properties: list[str] = [property.name for property in props]
             print("Creating new schema " + schema_object['class'] + " with vectorizer " + str(vectorizer), " properties ", properties)
             self.client.collections.create(schema_object['class'], 
                     properties = schema_object['properties'], 
@@ -75,14 +82,14 @@ class Weaviate(VDB):
             print("Schema may already exist ")
             print("                  ", schema_object['class'], e)
         
-    def add_reference(self, key, reference) -> None:
+    def add_reference(self, key: WeaviateSchemas, reference: dict[str, any]) -> None:
         print("Adding reference to ", key, " for " + reference.name)
         collection = self.collection(key)
         collection.config.add_reference(reference)
 
-    def upsert(self, obj: dict[str, str], collection_key: WeaviateSchemas, id_property: str = None, attempts=0) -> bool:
+    def upsert(self, obj: dict[str, str], collection_key: WeaviateSchemas, id_property: str = None, attempts: int=0) -> bool:
         collection = self.collection(collection_key)   
-        identifier = w.util.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
+        identifier = weave_uuid5(obj if id_property == None else obj.get(id_property, obj))
         
         try: 
             with collection.batch.rate_limit(requests_per_minute=5) as batch:
@@ -103,27 +110,31 @@ class Weaviate(VDB):
                 raise e
         return True
     
-    def get_value_map(self, obj, schema_object, collection):
-        reference_keys = [property.name for property in schema_object[collection]]
+    def get_value_map(self, obj: dict[str, any], schema_object: dict[str, any], collection: str):
+        props: list[Property] = schema_object[collection]
+        reference_keys: list[str] = [property.name for property in props]
         return {key: obj.get(key) for key in reference_keys if obj.get(key) is not None}
 
 
     def truncate_collection(self, key: WeaviateSchemas) -> None:
         schema = WeaviateSchema.class_map[key]
         c = self.collection(key)
+        props: list[Property] = schema['properties']
         c.data.delete_many(
-            where = Filter.by_property(schema['properties'][0].name).like("*"),
+            where = Filter.by_property(props[0].name).like("*"),
         )
 
     # private method
-    def _upsert_sub_batches(self, collection, sbs, properties, references, attempts=0):
-            count = 0
+    def _upsert_sub_batches(self, collection: Collection[Properties, References], 
+                            sbs: list[list[Document]], 
+                            properties: dict[str, any], references: dict[str, any], attempts: int=0):
+            count: int = 0
             for sub_batch in sbs:
                 with collection.batch.dynamic() as batch:
                         for i, value in enumerate(sub_batch):
                             row = {"text": value.page_content, "ordinal": i}
                             row.update(properties)
-                            identifier = w.util.generate_uuid5(row)
+                            identifier = weave_uuid5(row)
                             print("Upserting ", identifier, "with properties", properties)
 
                             batch.add_object(
@@ -134,15 +145,15 @@ class Weaviate(VDB):
                         count += 1
             return count
  
-    def upsert_text_vectorized(self, text: str, metaObj: dict, collection_key: WeaviateSchemas, attempts=0) -> bool:
-        collection = self.collection(collection_key)
-        schema_object = WeaviateSchema.class_map[collection_key]
-        references = self.get_value_map(metaObj, schema_object, 'references')
-        properties = self.get_value_map(metaObj, schema_object, 'properties')
-        split_text = utils.Utils.split(text)
-        SUB_BATCH_SIZE = 50
-        sub_batches = [split_text[i:i + SUB_BATCH_SIZE] for i in range(0, len(split_text), SUB_BATCH_SIZE)]
-        upserted_count = 0
+    def upsert_text_vectorized(self, text: str, metaObj: dict[str, any], collection_key: WeaviateSchemas, attempts=0) -> bool:
+        collection: Collection[Properties, References] = self.collection(collection_key)
+        schema_object: dict[str, any] = WeaviateSchema.class_map[collection_key]
+        references: dict[str, any] = self.get_value_map(metaObj, schema_object, 'references')
+        properties: dict[str, any] = self.get_value_map(metaObj, schema_object, 'properties')
+        split_text: list[Document] = utils.Utils.split(text)
+        SUB_BATCH_SIZE: int = 50
+        sub_batches: list[list[Document]] = [split_text[i:i + SUB_BATCH_SIZE] for i in range(0, len(split_text), SUB_BATCH_SIZE)]
+        upserted_count: int = 0
         try:
             upserted_count = self._upsert_sub_batches(collection, sub_batches, properties, references)
         except w.exceptions.WeaviateClosedClientError as e:
@@ -154,7 +165,7 @@ class Weaviate(VDB):
             
         return True
     
-    def upsert_chunked_text(self, obj:dict, chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str) -> bool:
+    def upsert_chunked_text(self, obj:dict[str, any], chunked_collection_key: WeaviateSchemas, metadata_collection_key: WeaviateSchemas, splitOn: str) -> bool:
         text = obj[splitOn]        
         del obj[splitOn]
 
@@ -162,15 +173,15 @@ class Weaviate(VDB):
         text = self.upsert_text_vectorized(text, obj, chunked_collection_key)     
         return meta and text
     
-    def count(self, key: WeaviateSchemas) -> object:
+    def count(self, key: WeaviateSchemas) -> AggregateReturn:
         collection = self.collection(key)
         return collection.aggregate.over_all()
     
-    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty = .7) -> list[Object[any, any]]:
+    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7) -> list[dict[str, any]]:
 
         collection: Collection[Properties, References] = self.collection(key)
 
-        response: list[object[any, any]] = collection.query.near_text(
+        response: list[dict[str, any]] = collection.query.near_text(
             query=query,
             limit=limit,
             certainty=certainty,
@@ -181,7 +192,7 @@ class Weaviate(VDB):
 
         return response
     
-    def get_by_ids(self, key: WeaviateSchemas, id_prop: str, ids: list[str]) -> list[Object[any, any]]:
+    def get_by_ids(self, key: WeaviateSchemas, id_prop: str, ids: list[str]) -> list[dict[str, any]]:
         return self.collection(key).query.fetch_objects(
             filters= Filter.by_property(id_prop).contains_any(ids),
         ).objects
@@ -308,6 +319,8 @@ class Weaviate(VDB):
             output.append(current_item)                                              
         return output
     
+    ### slack ###
+    
     def get_slack_message_by_id(self, message_id: str) -> SlackMessage:
         results = self.collection(WeaviateSchemas.SLACK_MESSAGE).query.fetch_objects(
             filters=Filter.by_property("message_id").equal(message_id),
@@ -366,6 +379,8 @@ class Weaviate(VDB):
 
             return SlackThreadResponse.model_validate(thread)
         return None
+    
+    ### documents
     
     def get_document_by_id(self, document_id: str) -> DocumentResponse:
         results = self.collection(WeaviateSchemas.DOCUMENT).query.fetch_objects(
