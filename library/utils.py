@@ -1,26 +1,27 @@
 import datetime
 import re
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import ParseResult, urlparse, urlunparse
 import langchain_text_splitters as lang_splitter
 import neo4j.time
+from langchain_core.documents import Document
 
 class Utils:
     @staticmethod
     def tokenize_urls(email: str) -> tuple[str, dict]:
-        replaced_values = {}
-        modified_string = email.replace("\r", "\n")
-        modified_string = re.sub(r'[\n]{2,}', '\n', modified_string)
+        replaced_values: dict[str, str] = {}
+        modified_string: str = email.replace("\r", "\n")
+        modified_string: str = re.sub(r'[\n]{2,}', '\n', modified_string)
 
         #token replacement
-        urls = re.findall(r"""(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})""", modified_string)
+        urls: list[str] = re.findall(r"""(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})""", modified_string)
         for url in urls:
-            parsed_url = urlparse(url)
+            parsed_url: ParseResult = urlparse(url)
 
-            keep = parsed_url.scheme + "://" + parsed_url.netloc
-            replace = urlunparse(parsed_url).replace(keep, "")
+            keep: str = parsed_url.scheme + "://" + parsed_url.netloc
+            replace: str = urlunparse(parsed_url).replace(keep, "")
 
-            token =  "/" + str(len(replaced_values))
-            modified_string = modified_string.replace(url, keep + token)
+            token: str =  "/" + str(len(replaced_values))
+            modified_string: str = modified_string.replace(url, keep + token)
             replaced_values[token] = replace
 
         return (modified_string, replaced_values)
@@ -30,7 +31,7 @@ class Utils:
         return filename.endswith(".ics") or filename.endswith(".vcf") or filename.endswith(".vcs")
     
     @staticmethod
-    def split(text:str) -> list:
+    def split(text:str) -> list[Document]:
         text_splitter = lang_splitter.RecursiveCharacterTextSplitter(
             separators=["\n\n", "\n", " ", ""],
             chunk_size=1000,
@@ -41,15 +42,15 @@ class Utils:
         return text_splitter.create_documents([text])
     
     @staticmethod
-    def isoify(message, key):
+    def isoify(message: dict[str, any], key: str) -> None:
         if last_read := message.get(key):
-            val = float(last_read)
+            val: float = float(last_read)
             if val > 4070989133:
                 val = val/1000
             message[key] = Utils.get_iso8601_timestamp(val)
 
     @staticmethod
-    def handle_time(value) -> datetime:
+    def handle_time(value: any) -> datetime:
         if isinstance(value, str):
             return datetime.datetime.fromisoformat(value)
         elif isinstance(value, neo4j.time.DateTime):
@@ -58,27 +59,27 @@ class Utils:
             return value
         
     @staticmethod
-    def array_keep_keys(arr, keys):
+    def array_keep_keys(arr: list[dict[str, any]], keys: list[str]):
         return [Utils.dict_keep_keys(d, keys) for d in arr]
     
     @staticmethod
-    def dict_keep_keys(d, keys):
+    def dict_keep_keys(d: dict[str, any], keys: list[str]) -> dict[str, any]:
         return {k: v for k, v in d.items() if k in keys}
     
     @staticmethod
-    def get_iso8601_timestamp(seconds):
+    def get_iso8601_timestamp(seconds: float) -> str:
         timestamp = datetime.datetime.fromtimestamp(seconds, datetime.timezone.utc)
         return timestamp.isoformat()
 
     @staticmethod
-    def string_multiply(s, n):
+    def string_multiply(s: str, n: int) -> str:
         res = ""
         for i in range(n):
             res += s
         return res
 
     @staticmethod
-    def rename_key(d:dict, old_key:str, new_key:str, transform: callable = lambda x: x) -> dict:
+    def rename_key(d:dict, old_key:str, new_key:str, transform: callable = lambda x: x) -> dict[str, any]:
         if old_key in d:
             d[new_key] = transform(d.pop(old_key))
         return d

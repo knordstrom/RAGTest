@@ -4,7 +4,7 @@ import textract
 
 class DocumentParser:
 
-    def parse(self, filename: str):
+    def parse(self, filename: str) -> str:
         pass
 
     @staticmethod
@@ -18,12 +18,13 @@ class DocumentParser:
 
 class DocxParser(DocumentParser):
 
-    def parse(self, filename: str):
-        return textract.process(filename).decode('utf-8').lstrip()
+    def parse(self, filename: str) -> str:
+        f: bytes = textract.process(filename)
+        return f.decode('utf-8').lstrip()
 
 class PdfParser(DocumentParser):
 
-    def parse(self, filename: str):
+    def parse(self, filename: str) -> str:
         reader = pypdf.PdfReader(filename)
         pages = []
         for page in reader.pages:
