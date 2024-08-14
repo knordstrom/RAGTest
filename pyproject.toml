@@ -45,6 +45,8 @@ icalendar = "^5.0.12"
 recurring-ical-events = "^2.2.1"
 fastapi = "^0.111.0"
 uvicorn = "^0.30.3"
+cachetools = "^5.4.0"
+frozendict = "^2.4.4"
 
 
 [tool.poetry.group.dev.dependencies]
