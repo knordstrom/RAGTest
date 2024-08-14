@@ -8,11 +8,12 @@ from google.oauth2.credentials import Credentials
 from slack_sdk.oauth import AuthorizeUrlGenerator
 import datetime
 
+from slack_sdk.web import SlackResponse
 from library.utils import Utils
 
 class Slack:
     users = {}
-    user_names_to_emails = {
+    user_names_to_emails: dict[str, str] = {
         "keith": "keith@cognimate.ai",
         "aditham": "prakash@cognimate.ai",
         "mshash": "mithali@cognimate.ai",
@@ -22,7 +23,7 @@ class Slack:
         "john": "johnbrowncpo8808@gmail.com",
         "joy": "joytaylor1106@gmail.com",
     }
-    user_ids_to_emails = {
+    user_ids_to_emails: dict[str, str] = {
         "U06EP4STTQ8": "keith@cognimate.ai",
         "U06E2R1AYCU": "prakash@cognimate.ai",
         "U06J697E08Y": "mithali@cognimate.ai",
@@ -32,17 +33,21 @@ class Slack:
         "U06DKQZ2J4F": "johnbrowncpo8808@gmail.com",
         "U06JR3TNV10": "joytaylor1106@gmail.com"
     }
+    oauth_scope: list[str]
+    oauth_user_scope: list[str]
+    client: WebClient
+    bot_client: WebClient
 
     @property
-    def emails_to_user_ids(self):
+    def emails_to_user_ids(self) -> dict[str, str]:
         return {v: k for k, v in self.user_ids_to_emails.items()}
     
     @property
-    def emails_to_user_names(self):
+    def emails_to_user_names(self) -> dict[str, str]:
         return {v: k for k, v in self.user_names_to_emails.items()}
 
-    token_file = "slack_token.json"
-    bot_token_file = "slack_bot_token.json"
+    token_file: str = "slack_token.json"
+    bot_token_file: str = "slack_bot_token.json"
     def __init__(self):
         dotenv.load_dotenv()
         self.client_id = os.getenv("SLACK_CLIENT_ID")
@@ -71,44 +76,44 @@ class Slack:
         self.client = WebClient()
         self.bot_client = None
 
-    def api_test(self):
-        response = self.client.api_test()
+    def api_test(self) -> SlackResponse:
+        response: SlackResponse = self.client.api_test()
         return response
 
-    def auth_test(self):
-        response = self.client.auth_test()
+    def auth_test(self) -> SlackResponse:
+        response: SlackResponse = self.client.auth_test()
         return response
     
-    def get_conversations(self):
-        response = self.client.conversations_list(
+    def get_conversations(self) -> SlackResponse:
+        response: SlackResponse = self.client.conversations_list(
             types="public_channel, private_channel"
         )
         return response
     
-    def auth_target(self, state):
+    def auth_target(self, state) -> str:
 
-        authorize_url_generator = AuthorizeUrlGenerator(
+        authorize_url_generator: AuthorizeUrlGenerator = AuthorizeUrlGenerator(
             client_id= self.client_id,
             scopes=self.oauth_scope,
             user_scopes=self.oauth_user_scope
         )
-        url = authorize_url_generator.generate(state)
+        url: str = authorize_url_generator.generate(state)
         print("URL: ", url)
         return url
          
     
-    def check_auth(self):
+    def check_auth(self) -> Credentials:
         creds = None
         if os.path.exists(self.token_file):
-            creds = Credentials.from_authorized_user_file(self.token_file, self.oauth_user_scope)
+            creds: Credentials = Credentials.from_authorized_user_file(self.token_file, self.oauth_user_scope)
             if not creds.expired:
                 self.client = WebClient(token=creds.token)
         return creds
     
-    def check_bot_auth(self):
+    def check_bot_auth(self) -> Credentials:
         creds = None
         if os.path.exists(self.bot_token_file):
-            creds = Credentials.from_authorized_user_file(self.bot_token_file, self.oauth_scope)
+            creds: Credentials = Credentials.from_authorized_user_file(self.bot_token_file, self.oauth_scope)
 
         if not creds.expired:
             self.bot_client = WebClient(token=creds.token)
@@ -118,11 +123,11 @@ class Slack:
         
         return creds
     
-    def finish_auth(self, auth_code):
+    def finish_auth(self, auth_code: str) -> dict[str, any]:
         # verify state received in params matches state we originally sent in auth request
         #if received_state == state:
             # Excha`nge the authorization code for an access token with Slack
-        response = self.client.oauth_v2_access(
+        response: SlackResponse = self.client.oauth_v2_access(
             client_id=self.client_id,
             client_secret=self.client_secret,
             code=auth_code
@@ -133,7 +138,7 @@ class Slack:
 
 
         print("Expires in: ", response.data.get("authed_user",{}).get("expires_in"))
-        formatted = {
+        formatted: dict[str, str] = {
             "token": response.data.get("authed_user",{}).get("access_token"),
             "refresh_token": response.data.get("authed_user",{}).get("refresh_token"),
            # "token_uri": "https://oauth2.googleapis.com/token", 
@@ -150,23 +155,23 @@ class Slack:
         print("Saved to file, responding")
         return response.data
     
-    def read_conversations(self):
-        response = self.client.conversations_list()
-        conversations = response.data
+    def read_conversations(self) -> list[dict[str, any]]:
+        response: SlackResponse = self.client.conversations_list()
+        conversations: dict[str, any] = response.data
 
-        result = []
+        result: list[dict[str, any]] = []
         for convo in conversations.get('channels', []):
-            channel = self.process_channel(convo)
+            channel: dict[str, any] = self.process_channel(convo)
 
-            messages = self.read_messages(convo.get('id'))
+            messages: list[dict[str, any]] = self.read_messages(convo.get('id'))
 
-            threads = []
+            threads: list[dict[str, any]] = []
             for message in messages:
-                thread_id =  f"{channel.get('id')}|{message.get('ts')}"
+                thread_id: str =  f"{channel.get('id')}|{message.get('ts')}"
                 try:
-                    replies = self.client.conversations_replies(channel=convo.get('id'), ts=message.get('ts'))
+                    replies: SlackResponse = self.client.conversations_replies(channel=convo.get('id'), ts=message.get('ts'))
                     print(len(replies.data.get('messages', [])), " replies found for ", convo.get('id'), message.get('ts'))
-                    thread = {
+                    thread: dict[str, any] = {
                         "id": thread_id,
                         "messages": []
                     }
@@ -186,10 +191,10 @@ class Slack:
 
         return result
     
-    user_keep_keys = ["id", "name", "real_name", "email", "deleted", "is_bot"]
-    message_keep_keys = ["user", "text", "ts", "reactions", "reply_users"]
+    user_keep_keys: list[str] = ["id", "name", "real_name", "email", "deleted", "is_bot"]
+    message_keep_keys: list[str] = ["user", "text", "ts", "reactions", "reply_users"]
     
-    def get_user(self, user_id):
+    def get_user(self, user_id: str) -> dict[str, any]:
         if not self.bot_client:
             self.check_bot_auth()
         if user_id in self.users:
@@ -202,27 +207,27 @@ class Slack:
 
         return Utils.dict_keep_keys(user, ["id", "name", "real_name", "email", "deleted", "is_bot"])
     
-    def read_messages(self, channel_id):
-        response = self.client.conversations_history(channel=channel_id)
-        messages = response.data.get("messages", [])
+    def read_messages(self, channel_id: str) -> list[dict[str, any]]:
+        response: SlackResponse = self.client.conversations_history(channel=channel_id)
+        messages: list[dict[str, any]] = response.data.get("messages", [])
         for message in messages:
             self.process_message(message)
         return messages
     
-    def process_channel(self, channel):
+    def process_channel(self, channel: dict[str, any]) -> dict[str, any]:
         print(channel.keys())
         return Utils.dict_keep_keys(channel, ['id', 'name', 'creator', 'is_private', 'is_shared', 'num_members', 'updated'])
     
-    def process_message(self, message):
-        response = Utils.dict_keep_keys(message, ["user", "text", "ts", "attachments", "type", "subtype"])
-        user = self.get_user(message.get('user'))
+    def process_message(self, message: dict[str, any]) -> dict[str, any] :
+        response: dict[str, any] = Utils.dict_keep_keys(message, ["user", "text", "ts", "attachments", "type", "subtype"])
+        user: dict[str, any] = self.get_user(message.get('user'))
         response['email'] = user['email']
-        attachments = message.get("attachments", [])
-        if attachments:
+        attachments: list[dict[str, any]] = message.get("attachments", [])
+        if len(attachments) > 0:
             response['attachments'] = self.process_attachments(attachments)
         return response
 
-    def process_attachments(self, attachments):
+    def process_attachments(self, attachments: list[dict[str, any]] ) -> list[dict[str, any]] :
         return Utils.array_keep_keys(attachments, ["fallback", "from_url", "id", "original_url", "text", "title", "ts"])
     
 

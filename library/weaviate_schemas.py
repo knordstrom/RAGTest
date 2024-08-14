@@ -232,7 +232,7 @@ class TranscriptEntry(BaseModel):
     
 class WeaviateSchema:
 
-    class_objs: list[(WeaviateSchemas,dict)] = [
+    class_objs: list[(WeaviateSchemas,dict[str, any])] = [
         (WeaviateSchemas.EMAIL_THREAD, {  
             "class": "EmailThread",    
             "properties": WeaviateSchemaTransformer.to_props(EmailThread),
@@ -320,5 +320,5 @@ class WeaviateSchema:
         })
     ]
     
-    class_map = dict(class_objs)
+    class_map: dict[WeaviateSchemas,dict[str, any]] = dict(class_objs)
 

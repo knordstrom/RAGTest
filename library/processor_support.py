@@ -1,5 +1,4 @@
 import datetime
-import datetime
 import json
 import os
 from library import weaviate, weaviate_schemas
@@ -14,7 +13,7 @@ class EventRecordWrapper:
 
 class ProcessorSupport:
 
-    def email_event_to_graph_event(email_event: weaviate_schemas.Event, attendees: list[MeetingAttendee]) -> dict:
+    def email_event_to_graph_event(email_event: weaviate_schemas.Event, attendees: list[MeetingAttendee]) -> dict[str, any]:
         event = {
             'id': email_event.event_id,
             'location': email_event.location,
@@ -43,7 +42,7 @@ class ProcessorSupport:
         return EventRecordWrapper(event)
 
     @staticmethod
-    def write_to_vdb(mapped: list, endpoint: callable) -> None:
+    def write_to_vdb(mapped: list, endpoint: Callable[[dict[str, any]], any]) -> None:
         db = os.getenv("VECTOR_DB_HOST", "127.0.0.1")
         db_port = os.getenv("VECTOR_DB_PORT", "8080")
         print("Writing to VDB at " + db + ":" + db_port + " ... " + str(len(mapped)))
@@ -51,14 +50,14 @@ class ProcessorSupport:
         try:
             w = weaviate.Weaviate(db, db_port)
             for j,record in enumerate(mapped):
-                thing: dict = record.value
+                thing: dict[str, any] = record.value
                 endpoint(thing)     
         finally:
             if w is not None:
                 w.close()
 
     @staticmethod
-    def kafka_listen(default_topic: KafkaTopics, group: str, endpoint: callable):
+    def kafka_listen(default_topic: KafkaTopics, group: str, endpoint: Callable[[list[dict[str, any]]], any]) -> None:
         kafka = os.getenv("KAFKA_BROKER", "127.0.0.1:9092")
         topic = os.getenv("KAFKA_TOPIC", default_topic.value)
         topic = os.getenv("KAFKA_TOPIC", default_topic.value)
@@ -82,7 +81,7 @@ class ProcessorSupport:
             while True:
                 print("Tick")
                 try:
-                    message: dict = consumer.poll(timeout_ms=2000)
+                    message: dict[str, list[dict[str, any]]] = consumer.poll(timeout_ms=2000)
                 except Exception as e:
                     print("Error: " + str(e))
                     continue
@@ -104,16 +103,15 @@ class ProcessorSupport:
             consumer.close()
 
     @staticmethod
-    def json_file_listen(file: str, endpoint: callable):
+    def json_file_listen(file: str, endpoint: Callable[[dict[str, any]], any]) -> None:
         print("Starting file processor on " + file + " ...")
         try:
             with open(file, 'r') as f:
                 text = f.read()
                 obj = json.loads(text)
                 for j,record in enumerate(obj):
-                    thing: dict = record
-                    endpoint(thing)
-                
+                    thing: dict[str, any] = record
+                    endpoint(thing)           
         finally:
             print("Closing file")
 

@@ -15,7 +15,7 @@ from library import neo4j
 
 warnings.simplefilter("ignore", ResourceWarning)
 
-def write_emails_to_vdb(mapped: list) -> None:
+def write_emails_to_vdb(mapped: list[dict[str, any]]) -> None:
     db = os.getenv("VECTOR_DB_HOST", "127.0.0.1")
     db_port = os.getenv("VECTOR_DB_PORT", "8080")
     print("Writing to VDB at " + db + ":" + db_port + " ... " + str(len(mapped)))
@@ -69,7 +69,7 @@ def write_events_to_neo4j(events: list[event.Event]) -> None:
     graph = neo4j.Neo4j()
     graph.process_events(events)
 
-def write_doc_to_vdb(docs):
+def write_doc_to_vdb(docs: list[dict[str, any]]):
     db = os.getenv("VECTOR_DB_HOST", "127.0.0.1")
     db_port = os.getenv("VECTOR_DB_PORT", "8080")
     print("Writing to VDB at " + db + ":" + db_port + " ... " + str(len(docs)))
