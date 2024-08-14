@@ -10,8 +10,9 @@ packages = [{include = "library"}, {include = "processor"}]
 processor = "processor.main:start"
 event_processor = "processor.main:start_kafka_calendar"
 document_processor = "processor.main:start_kafka_documents"
-employee_processor = "employees.main:start"
-slack_processor = "slack.main:start"
+employee_processor = "processor.employees.main:start"
+slack_processor = "processor.slack:start"
+transcripts_processor = "processor.transcripts:start"
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -45,6 +46,8 @@ icalendar = "^5.0.12"
 recurring-ical-events = "^2.2.1"
 fastapi = "^0.111.0"
 uvicorn = "^0.30.3"
+cachetools = "^5.4.0"
+frozendict = "^2.4.4"
 
 
 [tool.poetry.group.dev.dependencies]

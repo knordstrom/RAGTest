@@ -23,6 +23,9 @@ class WeaviateSchemas(enum.Enum):
     SLACK_THREAD = 'slack_thread'
     SLACK_MESSAGE = 'slack_message'
     SLACK_MESSAGE_TEXT = 'slack_message_text'
+    TRANSCRIPT = 'transcript'
+    TRANSCRIPT_ENTRY = 'transcript_entry'
+    TRANSCRIPT_SUMMARY = 'transcript_summary'
 
 class WeaviateSchemaTransformer:
     @staticmethod
@@ -93,7 +96,7 @@ class Email(BaseModel):
     cc: list[EmailParticipant] = Field(default=[])
     bcc: list[EmailParticipant] = Field(default=[])
     subject: str
-    from_: EmailParticipant = Field(alias='from')
+    sender: EmailParticipant
     date: datetime
     provider: str
 
@@ -110,7 +113,7 @@ class EmailTextWithFrom(BaseModel):
     thread_id: str
     ordinal: int
     date: datetime
-    from_: EmailParticipant
+    sender: EmailParticipant
 
 class EmailConversationWithSummary(BaseModel):
     thread_id: str
@@ -126,7 +129,7 @@ class Event(BaseModel):
     end: datetime
     email_id: str
     sent_date: datetime
-    from_: str
+    sender: str
     to: str
     thread_id: str
     name: str
@@ -202,7 +205,7 @@ class SlackThread(BaseModel):
 
 class SlackMessage(BaseModel):
     message_id: str
-    from_: str
+    sender: str
     subtype: str
     ts: datetime
     type: str
@@ -212,6 +215,19 @@ class SlackMessageText(BaseModel):
     text: str
     message_id: str
     thread_id: str
+    ordinal: int
+
+class Transcript(BaseModel):
+    document_id: str
+    meeting_code: str
+    title: str
+    provider: str
+    attendee_names: list[str]
+
+class TranscriptEntry(BaseModel):
+    meeting_code: str
+    speaker: str
+    text: str
     ordinal: int
     
 class WeaviateSchema:
@@ -287,6 +303,18 @@ class WeaviateSchema:
         (WeaviateSchemas.SLACK_MESSAGE_TEXT, {   
                 "class": "SlackMessageText",
                 "properties": WeaviateSchemaTransformer.to_props(SlackMessageText),
+                "references": [],
+                "vectorizer": True,
+        }),
+        (WeaviateSchemas.TRANSCRIPT, {   
+                "class": "Transcript",
+                "properties": WeaviateSchemaTransformer.to_props(Transcript),
+                "references": [],
+                "vectorizer": True,
+        }),
+        (WeaviateSchemas.TRANSCRIPT_ENTRY, {   
+                "class": "TranscriptEntry",
+                "properties": WeaviateSchemaTransformer.to_props(TranscriptEntry),
                 "references": [],
                 "vectorizer": True,
         })

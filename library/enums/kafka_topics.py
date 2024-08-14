@@ -5,3 +5,5 @@ class KafkaTopics(enum.Enum):
     CALENDAR = "calendar"
     SLACK = "slack"
     DOCUMENTS = "documents"
+    CONFERENCES = "conferences"
+    TRANSCRIPTS = "transcripts"

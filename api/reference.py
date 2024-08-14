@@ -1,6 +1,6 @@
 from typing import List
 
-from library.api_models import ApiResponse, DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse
+from library.api_models import ApiResponse, DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, TranscriptConversation
 from library.apisupport import APISupport
 
 from library.weaviate import Weaviate
@@ -77,3 +77,17 @@ async def armaggedon(collection: str) -> str:
     w = Weaviate()
     w.truncate_collection(WeaviateSchemas[collection])
     return f"Collection {collection} truncated"
+
+@route.get('/references/conferences/transcripts')
+async def conference_transcripts() -> ApiResponse[List[TranscriptConversation]]:
+    """Retrieve transcripts for a conference by meeting code for the current user."""
+    w: Weaviate = Weaviate()
+    results = w.get_transcript_conversations()
+    return ApiResponse.create(results)
+
+@route.get('/references/conferences/transcripts/{meeting_code}')
+async def conference_transcripts(meeting_code: str) -> ApiResponse[TranscriptConversation]:
+    """Retrieve transcripts for a conference by meeting code for the current user."""
+    w: Weaviate = Weaviate()
+    results = w.get_transcript_conversation_by_meeting_code(meeting_code)
+    return ApiResponse.create(results) if results else APISupport.error_response(404, f"Transcripts for meeting code {meeting_code} not found")

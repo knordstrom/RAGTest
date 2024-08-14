@@ -34,7 +34,7 @@ class TestWeaviateSchemas(unittest.TestCase):
                                     ])
 
         assert props[7] == Property(name = 'subject', data_type=DataType.TEXT)
-        assert props[8] == Property(name = 'from', data_type=DataType.OBJECT, nested_properties=[
+        assert props[8] == Property(name = 'sender', data_type=DataType.OBJECT, nested_properties=[
             Property(name = 'email', data_type=DataType.TEXT),
             Property(name = 'name', data_type=DataType.TEXT)
         ])
@@ -61,7 +61,7 @@ class TestWeaviateSchemas(unittest.TestCase):
                 Property(name = "end", data_type=DataType.DATE),
                 Property(name="email_id", data_type=DataType.TEXT),
                 Property(name="sent_date", data_type=DataType.DATE),
-                Property(name="from", data_type=DataType.TEXT),
+                Property(name="sender", data_type=DataType.TEXT),
                 Property(name="to", data_type=DataType.TEXT),
                 Property(name="thread_id", data_type=DataType.TEXT),
                 Property(name="name", data_type=DataType.TEXT),
@@ -162,7 +162,7 @@ class TestWeaviateSchemas(unittest.TestCase):
         props: list[Property] = WeaviateSchemaTransformer.to_props(SlackMessage)
         assert props == [
                 Property(name = "message_id", data_type=DataType.TEXT),
-                Property(name = "from", data_type=DataType.TEXT),
+                Property(name = "sender", data_type=DataType.TEXT),
                 Property(name = "subtype", data_type=DataType.TEXT),
                 Property(name = "ts", data_type=DataType.DATE),
                 Property(name = "type", data_type=DataType.TEXT),

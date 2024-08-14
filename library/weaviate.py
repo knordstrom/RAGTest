@@ -1,12 +1,15 @@
 import copy
 import enum
+import os
+import dotenv
 import weaviate as w
-#import langchain_experimental.text_splitter as lang_splitter
+
 from langchain_community.embeddings import GPT4AllEmbeddings
-from library.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse
+from library.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, TranscriptConversation, TranscriptLine
 from library.vdb import VDB 
 from library import utils
 import weaviate.classes as wvc
+from weaviate.util import generate_uuid5 as weave_uuid5
 from weaviate.classes.config import Property, DataType
 from library.weaviate_schemas import Email, EmailText, EmailTextWithFrom, WeaviateSchemas, WeaviateSchema
 from weaviate.classes.query import Filter
@@ -38,13 +41,15 @@ class Weaviate(VDB):
         schema = self.schemas[key]
         return self.client.collections.get(schema['class'])
     
-    def __new__(cls, host = '127.0.0.1', port = '8080', schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> None:
+
+    def __new__(cls, host = None, port = None, schemas: list[(WeaviateSchemas,dict[str, any])] = WeaviateSchema.class_objs) -> None:
+        dotenv.load_dotenv()
         if not hasattr(cls, 'instance'):
             cls.instance = super(Weaviate, cls).__new__(cls)
             self = cls.instance
-            self.host = host
-            self.port = port
-            self.url = host + ":" + port
+            self.host = host if host is not None else os.getenv('VECTOR_DB_HOST', '127.0.0.1')
+            self.port = port if port is not None else os.getenv('VECTOR_DB_PORT', '8080')
+            self.url = self.host + ":" + self.port
             
             self.create_schemas(schemas)
             self.add_references(schemas)
@@ -82,8 +87,10 @@ class Weaviate(VDB):
 
     def upsert(self, obj: dict[str, str], collection_key: WeaviateSchemas, id_property: str = None, attempts=0) -> bool:
         collection = self.collection(collection_key)   
-        identifier = w.util.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
-        
+
+        identifier = weave_uuid5(obj if id_property == None else obj.get(id_property, obj))
+        print("Upserting ", identifier, "with properties", obj, "into", collection_key)
+
         try: 
             with collection.batch.rate_limit(requests_per_minute=5) as batch:
                 batch.add_object(
@@ -204,16 +211,13 @@ class Weaviate(VDB):
             print("Results", len(results.objects), " with text ", len(text_results.objects), "(",[x.uuid for x in text_results.objects],")")
             response = results.objects[0].properties
             response['text'] = [x.properties.get('text') for x in text_results.objects]
-            utils.Utils.rename_key(response, 'from', 'sender')
-            utils.Utils.rename_key(response, 'from_', 'sender')
+            self.email_update(response)
             return EmailMessage.model_validate(response)
         return None
 
     def email_update(self, props: dict[str, any]) -> None:
-        if props.get('from') is not None:
-            utils.Utils.rename_key(props, 'from', 'sender')
-        else:
-            utils.Utils.rename_key(props, 'from_', 'sender')
+        utils.Utils.rename_key(props, 'from', 'sender')
+        utils.Utils.rename_key(props, 'from_', 'sender')
             
     def get_emails(self) -> list[EmailMessage]:
         result = []
@@ -239,10 +243,7 @@ class Weaviate(VDB):
         ).objects
         if len(results)>0:
             props = results[0].properties
-            if props.get('from_') is None:
-                props['from_'] = props.get('from')
-            if props.get('from') is None:
-                props['from'] = props.get('from_')
+            self.email_update(props)
 
             return Email.model_validate(props)
         return None
@@ -288,7 +289,7 @@ class Weaviate(VDB):
                     thread_id=props.get("thread_id"), 
                     ordinal=props.get("ordinal"), 
                     date=props.get("date"),
-                    from_=props.get('from_'))   
+                    sender=props.get('sender'))   
             elif current_item.email_id != email_id:
                 current_email_text_list = sorted(current_email_text_list, key=lambda x: x.get('ordinal'))
                 current_item.text = "".join([x.get('text') for x in current_email_text_list])
@@ -299,7 +300,7 @@ class Weaviate(VDB):
                     thread_id=props.get("thread_id"), 
                     ordinal=props.get("ordinal"), 
                     date=props.get("date"),
-                    from_=props.get('from_'))   
+                    sender=props.get('sender'))   
             else:
                 current_email_text_list.append({"text":props.get('text'), "ordinal":props.get('ordinal')})   
         if current_item is not None:
@@ -389,6 +390,41 @@ class Weaviate(VDB):
     
     def get_documents(self) -> list[DocumentResponse]:
         return [DocumentResponse.model_validate(x.properties) for x in self.collection(WeaviateSchemas.DOCUMENT).iterator()]
+
+    #conferences
+
+    def get_transcript_conversations(self) -> list[TranscriptConversation]:
+        return [TranscriptConversation.from_weaviate_properties(x.properties) for x in self.collection(WeaviateSchemas.TRANSCRIPT).iterator()]
+
+    def get_transcript_conversation_entries_for_id(self, meeting_code: str) -> list[TranscriptLine]:
+        message_results = self.collection(WeaviateSchemas.TRANSCRIPT_ENTRY).query.fetch_objects(
+                filters=Filter.by_property("meeting_code").equal(meeting_code),
+                sort=Sort.by_property(name="ordinal", ascending=True),
+                limit=1000
+            )
+
+        conversation: list[TranscriptLine] = []
+        for x in message_results.objects:
+            conversation.append(TranscriptLine(
+                speaker=x.properties.get('speaker'),
+                text=x.properties.get('text'),
+                ordinal=x.properties.get('ordinal')
+            ))
+
+        conversation.sort(key=lambda x: x.ordinal)
+        return conversation
+    
+    def get_transcript_conversation_by_meeting_code(self, meeting_code: str) -> TranscriptConversation:
+        results = self.collection(WeaviateSchemas.TRANSCRIPT).query.fetch_objects(
+            filters=Filter.by_property("meeting_code").equal(meeting_code),
+        )
+        if len(results.objects)>0:
+            thread = [x.properties for x in results.objects][0]
+            conversation = self.get_transcript_conversation_entries_for_id(meeting_code)
+            return TranscriptConversation.from_weaviate_properties(thread, conversation)
+            
+        return None
+    
 
     def close(self):       
         self.client.close()

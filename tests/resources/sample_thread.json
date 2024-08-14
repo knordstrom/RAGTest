@@ -3,7 +3,7 @@
         {
             "text": "Thanks Pradeep.\nDid we want to have a slide about market opportunity (TAM, etc.)? I don't see one in here.\nKeith",
             "email_id": "18fdb37b9f4c47a9",
-            "from_": {
+            "sender": {
                 "email": "keith@here.com",
                 "name" : "Keith"
             },
@@ -15,7 +15,7 @@
             "text": "Thanks for sharing the PPT deck Pradeep.\n\nA couple of minor things in addition to Keith's comment above:\n\n   - I think we can lose the Agenda slide - we are following a standard\n   format for all pitches, so not really needed\n   - From a narrative perspective, the \"Introducing Sofia\" slide doesn't\n   seem to describe how we are solving for the Information or Cognitive\n   overload problem. I vote for introducing the current graphic with data\n   sources and outputs to help clearly describe \"What is it?\" before we dive\n   into technical capabilities in the next slide.\n   - Perhaps combine technical detail in the context of: why building a\n   personalized decision support Agent within a B2B setting  is a non-trivial\n   problem where generalized LLMs can't compete directly.\n   -  Do we combine proposed GTM motion with Revenue Model slide?\n\nThanks\nPrakash",
             "email_id": "18fdb329646ea117",
             "ordinal": 0,
-            "from_": {
+            "sender": {
                 "email": "prakassh@here.com",
                 "name" : "Prakash"
             },
@@ -25,7 +25,7 @@
         {
             "text": "Agree with all of these. Mind taking a crack at it? Im outside.Pradeep JavangulaFrom my iPhone: 650-245-9329On Jun 2, 2024, at 4:04PM, Prakash Aditham <prakash@cognimate.ai> wrote:Thanks for sharing the PPT deck Pradeep.A couple of minor things in addition to Keith's comment above:I think we can lose the Agenda slide - we are following a standard format for all pitches, so not really neededFrom a narrative perspective, the \"Introducing Sofia\" slide doesn't seem to describe how we are solving for the Information or Cognitive overload problem. I vote forintroducing the current graphic withdata sources and outputs to help clearly describe \"What is it?\" before we dive into technical capabilities in the next slide.Perhaps combine technical detail in the context of: why building a personalized decision support Agent within a B2B setting is a non-trivial problem where generalized LLMs can't compete directly.Do we combine proposed GTM motion with Revenue Model slide?ThanksPrakashOn Sun, Jun 2,",
             "email_id": "18fdb37b9f4c47a9",
-            "from_": {
+            "sender": {
                 "email": "pradeep@here.com",
                 "name" : "Pradeep"
             },
@@ -36,7 +36,7 @@
         {
             "text": "support Agent within a B2B setting is a non-trivial problem where generalized LLMs can't compete directly.Do we combine proposed GTM motion with Revenue Model slide?ThanksPrakashOn Sun, Jun 2, 2024 at 3:22PM <keith@cognimate.ai> wrote:",
             "email_id": "18fdb37b9f4c47a9",
-            "from_": {
+            "sender": {
                 "email": "prakassh@here.com",
                 "name" : "Prakash"
             },
@@ -48,7 +48,7 @@
             "text": "Did it in powerpoint.  Google slides takes too long for me….\n\nWill upload to GDrive and see how bad it gets.",
             "email_id": "18fda76d210fb708",
             "ordinal": 0,
-            "from_": {
+            "sender": {
                 "email": "pradeep@here.com",
                 "name" : "Pradeep"
             },
@@ -60,7 +60,7 @@
         {
             "text": "Invitation: Mithali:Keith @ Thu Jun 27, 2024 4:30pm - 5:30pm (PDT) (mithali@cognimate.ai)",
             "email_id": "1905c06b129ea57d",
-            "from_": {
+            "sender": {
                 "email": "keith@here.com",
                 "name" : "Keith"
             },

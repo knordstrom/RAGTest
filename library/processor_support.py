@@ -4,8 +4,8 @@ import json
 import os
 from library import weaviate, weaviate_schemas
 from kafka import KafkaConsumer, TopicPartition
-
-from library.api_models import MeetingAttendee
+from collections.abc import Callable
+from library.api_models import MeetingAttendee, TranscriptConversation, TranscriptLine
 from library.enums.kafka_topics import KafkaTopics
 
 class EventRecordWrapper:
@@ -24,7 +24,7 @@ class ProcessorSupport:
         }
 
         event['creator'] = {
-            'email': email_event.from_
+            'email': email_event.sender
         }
         event['organizer'] = event["creator"]
         event['attendees'] = [e.model_dump() for e in attendees]
@@ -116,3 +116,31 @@ class ProcessorSupport:
                 
         finally:
             print("Closing file")
+
+    @staticmethod
+    def process_google_transcript(transcript_text: str, document_id: str, meeting_code: str) -> TranscriptConversation:
+        lines = transcript_text.splitlines()  
+        title = lines[0]    
+        attendees: list[str] = []
+        transcript: list[str] = []
+
+        if lines[1].startswith("Attendees"): 
+            attendees = lines[2].split(",")
+        if lines[3].startswith("Transcript"):
+            transcript = lines[5:]
+
+        transcript_entries = []
+        ordinal: int = 0
+        for line in transcript:
+            try:
+                [sender, comment] = line.split(":", 1)
+                sender = sender.strip()
+                comment = comment.strip()
+                if sender in attendees:
+                    transcript_entries.append(TranscriptLine(speaker=sender, text=comment, ordinal=ordinal))
+                    ordinal += 1
+            except ValueError:
+                pass
+            
+        return TranscriptConversation(transcript_id=document_id, title=title, attendee_names=attendees, 
+            provider="google", conversation=transcript_entries, meeting_code = meeting_code)   

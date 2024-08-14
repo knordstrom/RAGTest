@@ -21,7 +21,7 @@ class Message(BaseModel):
     cc: list[EmailParticipant]
     bcc: list[EmailParticipant]
     subject: Union[str, None] = None
-    from_: EmailParticipant
+    sender: EmailParticipant
     body: str
     events: list[Event] = []
 
@@ -30,7 +30,7 @@ class Message(BaseModel):
         cc: list[EmailParticipant] = Field(default = [])
         bcc: list[EmailParticipant] = Field(default = [])
         subject: str
-        from_: EmailParticipant
+        sender: EmailParticipant
 
     @staticmethod
     def from_gsuite_payload(message: dict[str, str]) -> 'Message':
@@ -47,7 +47,7 @@ class Message(BaseModel):
             cc = data.cc,
             bcc = data.bcc,
             subject = data.subject,
-            from_ = data.from_,
+            sender = data.sender,
             body = Message.try_get_body(message),
             events = Message.try_get_attachments(message)
         )
@@ -144,7 +144,7 @@ class Message(BaseModel):
             'cc': [],
             'bcc': [],
             'subject': None,
-            'from_': None,
+            'sender': None,
         }
 
         # check the headers to get the rest of the fields
@@ -167,7 +167,7 @@ class Message(BaseModel):
 
             # get the name and email of sender
             if header['name'] == 'From':
-                result['from_'] = Message.try_get_from(header)
+                result['sender'] = Message.try_get_from(header)
                 
         return Message.MessageHeaderData.model_validate(result)
 
