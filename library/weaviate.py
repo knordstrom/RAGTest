@@ -119,12 +119,9 @@ class Weaviate(VDB):
 
 
     def truncate_collection(self, key: WeaviateSchemas) -> None:
-        schema = WeaviateSchema.class_map[key]
-        c = self.collection(key)
-        props: list[Property] = schema['properties']
-        c.data.delete_many(
-            where = Filter.by_property(props[0].name).like("*"),
-        )
+        schema: dict[str, any] = WeaviateSchema.class_map[key]
+        self.client.collections.delete(schema['class'])
+        self.create_schema(key, schema)
 
     # private method
     def _upsert_sub_batches(self, collection: Collection[Properties, References], 
