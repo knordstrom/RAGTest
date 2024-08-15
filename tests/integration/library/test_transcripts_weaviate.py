@@ -1,6 +1,7 @@
 import pytest
 import requests
 from library import weaviate as w
+from library.api_models import TranscriptConversation, TranscriptLine
 import library.handlers as h
 from requests.exceptions import ConnectionError
 
@@ -49,3 +50,90 @@ class TestTransccriptsWeaviate(IntegrationTestBase):
 
         assert response.get("Transcript") is not None
         assert response.get("TranscriptEntry") is not None
+
+        self.show_nested_properties_match(response, WeaviateSchemas.TRANSCRIPT)
+        self.show_nested_properties_match(response, WeaviateSchemas.TRANSCRIPT_ENTRY)
+
+    def test_transcript_save(self, service):
+        weave: w.Weaviate = w.Weaviate(port=service['port'], host=service['host'])
+        assert weave is not None
+
+        transcripts, transcript_entries = self.prepare_collections(weave)
+
+        assert len(transcripts) == 0
+        assert len(transcript_entries) == 0
+
+        handler = h.Handlers(weave)
+        handler.handle_transcript(TranscriptConversation(
+            transcript_id="1",
+            meeting_code="1",
+            provider="Zoom",
+            title="Meeting",
+            attendee_names=["Alice", "Bob"],
+            conversation=[
+                TranscriptLine(
+                    speaker="Alice",
+                    text="Hello",
+                    ordinal=0
+                ),
+                TranscriptLine(
+                    speaker="Bob",
+                    text="Hi",
+                    ordinal=1
+                )
+            ]
+        ))
+
+        conversations = weave.get_transcript_conversations()
+        assert len(conversations) == 1
+        assert conversations[0] == TranscriptConversation(
+            transcript_id="1",
+            meeting_code="1",
+            provider="Zoom",
+            title="Meeting",
+            attendee_names=["Alice", "Bob"],
+            conversation=[
+                
+            ]
+        )
+
+        entries = weave.get_transcript_conversation_entries_for_id("1")
+        assert len(entries) == 2
+        assert entries[0] == TranscriptLine(
+            speaker="Alice",
+            text="Hello",
+            ordinal=0
+        )
+        assert entries[1] == TranscriptLine(
+            speaker="Bob",
+            text="Hi",
+            ordinal=1
+        )
+
+        convo = weave.get_transcript_conversation_by_meeting_code("1")
+        assert convo == TranscriptConversation(
+            transcript_id="1",
+            meeting_code="1",
+            provider="Zoom",
+            title="Meeting",
+            attendee_names=["Alice", "Bob"],
+            conversation=[
+                TranscriptLine(
+                    speaker="Alice",
+                    text="Hello",
+                    ordinal=0
+                ),
+                TranscriptLine(
+                    speaker="Bob",
+                    text="Hi",
+                    ordinal=1
+                )
+            ]
+        )
+
+
+    def prepare_collections(self, weave) -> tuple[Collection[Properties, References], Collection[Properties, References]]:
+        transcripts = self.truncate_collection_and_return(weave, WeaviateSchemas.TRANSCRIPT)
+        transcript_entries = self.truncate_collection_and_return(weave, WeaviateSchemas.TRANSCRIPT_ENTRY)
+
+        return transcripts, transcript_entries   

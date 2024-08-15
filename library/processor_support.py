@@ -123,7 +123,7 @@ class ProcessorSupport:
         transcript: list[str] = []
 
         if lines[1].startswith("Attendees"): 
-            attendees = lines[2].split(",")
+            attendees = [a.strip() for a in lines[2].split(",")]
         if lines[3].startswith("Transcript"):
             transcript = lines[5:]
 
