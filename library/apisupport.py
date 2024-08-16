@@ -10,11 +10,13 @@ from library.enums.kafka_topics import KafkaTopics
 from library.enums.kafka_topics import KafkaTopics
 from library.models.event import Event
 from library.models.message import Message
+from library.promptmanager import PromptManager
 import library.weaviate as weaviate
 from library.groq_client import GroqClient
 import library.neo4j as neo
 from library.gsuite import GSuite, GmailLogic
 from weaviate.collections.classes.internal import Object
+from library.api_models import ConferenceCall
 
 from groq import Groq
 from dotenv import load_dotenv
@@ -41,17 +43,26 @@ class APISupport:
         APISupport.write_to_kafka(written, KafkaTopics.EMAILS, provider,  lambda item: str(item['to'][0]))
 
     @staticmethod
-    def write_slack_to_kafka(slacks: list[dict]) -> None:
+    def write_slack_to_kafka(slacks: list[dict[str, any]]) -> None:
         APISupport.write_to_kafka(slacks, KafkaTopics.SLACK, DataSources.SLACK, lambda item: str(item['name']))
 
     @staticmethod
-    def write_cal_to_kafka(events: list[dict], provider: DataSources) -> None:
+    def write_cal_to_kafka(events: list[dict[str, any]], provider: DataSources) -> None:
         APISupport.write_to_kafka(events, KafkaTopics.CALENDAR, provider)
 
     @staticmethod
-    def write_docs_to_kafka(docs: list[dict], provider: DataSources) -> None:  
+    def write_docs_to_kafka(docs: list[dict[str, any]], provider: DataSources) -> None:  
         APISupport.write_to_kafka(docs, KafkaTopics.DOCUMENTS,  provider)
 
+    @staticmethod
+    def write_conferences_to_kafka(conferences: list[ConferenceCall], provider: DataSources) -> None:
+        written = [conference.model_dump() for conference in conferences]
+        APISupport.write_to_kafka(written, KafkaTopics.CONFERENCES, provider)
+
+    @staticmethod
+    def write_transcripts_to_kafka(transcripts: dict[str,any], provider: DataSources) -> None:
+        written = [transcript for transcript in transcripts.values()]
+        APISupport.write_to_kafka(written, KafkaTopics.TRANSCRIPTS, provider)
 
     def handle_json(obj):
         if isinstance(obj, (datetime.datetime, datetime.date)):
@@ -94,15 +105,8 @@ class APISupport:
         print("Context " + mail_context)
 
         # LANGCHAIN IMPLEMENTATION
-        prompt='''### Instruction:
-        Question: {Question}
-        Context: {Context}
-
-        You are a chief of staff for the person asking the question given the Context. 
-        Please provide a response to the question in no more than 5 sentences. If the answer is not contained in Context,
-        please respond with "I do not know the answer to that question."
-
-        ### Response:'''
+        pm: PromptManager = PromptManager()
+        prompt= pm.get_prompt('ApiSupport.perform_ask')
 
         texts = []
         for o in context:

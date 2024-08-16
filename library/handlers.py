@@ -1,4 +1,5 @@
 import groq
+from library.api_models import TranscriptConversation
 from library.models.event import Event
 from library.promptmanager import PromptManager
 from library.slack import Slack
@@ -18,26 +19,36 @@ class Handlers:
         self.w = w
         self.summarizer = Summarizer(g)
 
-    def handle_email(self, email: dict):
+    def handle_email(self, email: dict[str, any]) -> bool:
         if email.get('body', '') == '':
             email['body'] = email['subject']
-        self.w.upsert_chunked_text(email, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'body')
+        return self.w.upsert_chunked_text(email, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'body')
 
-    def handle_event(self, event: Event):
+    def handle_event(self, event: Event) -> bool:
         if event.description == '' or event.description is None:
             event.description = event.summary
         event_dict = event.model_dump(exclude_none = True)
-        Utils.rename_key(event_dict, 'from_', 'from')
-        self.w.upsert_chunked_text(event_dict, WeaviateSchemas.EVENT_TEXT, WeaviateSchemas.EVENT, 'description')
+        return self.w.upsert_chunked_text(event_dict, WeaviateSchemas.EVENT_TEXT, WeaviateSchemas.EVENT, 'description')
 
-    def handle_document(self, document: dict, filename: str = None):
+    def handle_document(self, document: dict[str, any], filename: str = None) -> bool:
         text = document.get("text")
         summary = self.summarizer.summarize(text)
         self.w.upsert_chunked_text(document, WeaviateSchemas.DOCUMENT_TEXT, WeaviateSchemas.DOCUMENT, 'text')
-        self.w.upsert({'text': summary, 
+        return self.w.upsert({'text': summary, 
         'document_id': document.get('document_id')}, WeaviateSchemas.DOCUMENT_SUMMARY)
+    
+    def handle_transcript(self, transcript: TranscriptConversation) -> bool:
+        call: dict[str, str] = transcript.model_dump()
+        call.pop('conversation')
+        Utils.rename_key(call, 'transcript_id', 'document_id')
+        result: bool = self.w.upsert(call, WeaviateSchemas.TRANSCRIPT, 'transcript_id')
+        for line in transcript.conversation:
+            entry: dict[str, str] = line.model_dump()
+            entry['meeting_code'] = transcript.meeting_code
+            result &= self.w.upsert_text_vectorized(line.text, entry,  WeaviateSchemas.TRANSCRIPT_ENTRY)
+        return result
 
-    def get_file(self, document: dict):
+    def get_file(self, document: dict[str, any]) -> str:
         url = document['url']
         response = requests.get(url)
         contents = response.text
@@ -48,7 +59,7 @@ class Handlers:
 
         return temp_filename
         
-    def format_channel(self, slack: dict):
+    def format_channel(self, slack: dict[str, any]) -> dict[str, any]:
         properties = map( lambda p: p.name, WeaviateSchema.class_map[WeaviateSchemas.SLACK_CHANNEL]["properties"])
         channel = {key: slack.get(key) for key in properties}
         channel['channel_id'] = slack['id'] 
@@ -56,13 +67,13 @@ class Handlers:
         Utils.isoify(channel, 'updated')
         return channel
 
-    def format_thread(self, thread: dict, channel_id: str):
+    def format_thread(self, thread: dict[str, any], channel_id: str) -> dict[str, any]:
         return {
             'thread_id': thread['id'],
             'channel_id': channel_id,
         }
 
-    def format_message(self, message, thread_id):
+    def format_message(self, message: dict[str, any], thread_id: str) -> tuple[dict[str, any], dict[str, any]]:
 
         message_vdb = {
             'message_id': f"{thread_id}|{message['ts']}",
@@ -83,7 +94,7 @@ class Handlers:
         return message_vdb, message_text_vdb
 
 
-    def handle_slack_channel(self, slack: dict):
+    def handle_slack_channel(self, slack: dict[str, any]) -> None:
         print("Handling slack channel", slack.get('name', '???'), slack.keys())
 
         # upsert channel itself on channel id

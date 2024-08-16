@@ -112,13 +112,13 @@ class TestEventExtracts(unittest.TestCase):
             assert MeetingAttendee(name='Gary Bresien' , email='gary@recruiter.com') in event.attendees 
             assert MeetingAttendee(name='keith@myhouse.com' , email='keith@myhouse.com') in event.attendees 
 
-    def test_gsuite_event_from_ics(self):
+    def test_gsuite_event_senderics(self):
         attendees = [MeetingAttendee(**x) for x in self.ics_event_dict["attendees"]]
         full_dict = self.ics_event_dict
         full_dict.update({
             "email_id": "435623645",
             "sent_date": "2024-06-13T15:00:00-06:00",
-            "from_": "he@she.com",
+            "sender": "he@she.com",
             "to": "she@he.com",
             "thread_id": "34534555",
             "name" : self.ics_event_dict["summary"],

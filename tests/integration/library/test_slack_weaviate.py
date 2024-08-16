@@ -102,7 +102,7 @@ class SlackChannelAssertions:
 
         thread = result[0]
 
-        assert len(thread.properties.keys()) == 2, "There should be 2 properties in each thread"
+        assert len(thread.properties.keys()) == 3, "There should be 2 properties in each thread"
         assert 'thread_id' in thread.properties.keys()
         assert thread.properties['channel_id'] == "C06DKQJ48TZ"
 

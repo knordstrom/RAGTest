@@ -1,4 +1,3 @@
-from library import neo4j
 from library.api_models import ApiResponse, LoginRequest, TokenResponse
 from fastapi import APIRouter
 

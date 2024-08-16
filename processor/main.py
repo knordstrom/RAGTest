@@ -33,7 +33,7 @@ def write_emails_to_vdb(mapped: list[dict[str, any]]) -> None:
             graph_events = []
             for event in events:
                 event['source'] = 'email'      
-                print("Upserting event ", event, " on from ", email['from_'])
+                print("Upserting event ", event, " on from ", email['sender'])
                 print("Email was", email)     
 
                 event_obj = Event(
@@ -44,7 +44,7 @@ def write_emails_to_vdb(mapped: list[dict[str, any]]) -> None:
                     end=datetime.fromisoformat(event['end']), 
                     email_id=email['email_id'], 
                     sent_date=datetime.fromisoformat(email['date']), 
-                    from_=event['organizer']['email'],
+                    sender=event['organizer']['email'],
                     to=email['to'][0]['email'], 
                     thread_id=email['thread_id'], 
                     name=email['subject'], 

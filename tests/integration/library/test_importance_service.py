@@ -78,14 +78,6 @@ class TestImportanceService(IntegrationTestBase):
         assert ImportanceService._identity_importance(sb4_2, sb3_2.work_email) == 100, "A direct messageee from manager should have importance 100"
         assert ImportanceService._identity_importance(sb4_2, sb2_2.work_email) == 50, "A message from two up should have importance 50"
 
-    
-    # def generate_email_message(self, sender: Employee, receivers: list[Employee], thread_id: int):
-    #     e = EmailMessage(email_id=random.randint(1, 9999),history_id=random.randint(1, 9999),
-    #                      thread_id=thread_id,subject=uuid.uuid4().hex,
-    #                      from_=sender.work_email,to=receiver.work_email
-    #                      )
-    #     return e
-
     def generate_employee(self, email: str, manager: Optional[Employee]):
         e = Employee(
             employee_id=str(random.randint(1, 9999)),

@@ -13,15 +13,15 @@ class TestPromptManager(IntegrationTestBase):
         pt = PromptManager()
         assert pt is not None
         assert pt.prompt_cache is not None
-        assert 'APISupport.create_briefings_for' in pt.prompt_cache.keys()
+        assert 'BriefingSupport.create_briefings_for' in pt.prompt_cache.keys()
     
     def test_prompt_teams_gets_prompt(self, service): 
         pt = PromptManager()
         assert pt is not None
-        prompt = pt.get_prompt('APISupport.create_briefings_for')
+        prompt = pt.get_prompt('BriefingSupport.create_briefings_for')
         print(prompt)
         assert prompt is not None
-        assert prompt['name'] == 'APISupport.create_briefings_for'
+        assert prompt['name'] == 'BriefingSupport.create_briefings_for'
         assert prompt.get('versions') is not None
         assert len(prompt['versions']) > 0
 

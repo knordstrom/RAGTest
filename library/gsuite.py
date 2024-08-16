@@ -1,29 +1,26 @@
 import datetime
 import enum
 import os
-import pickle
 from library import document_parser
 
 # Gmail API utils
-from googleapiclient.discovery import build
+from googleapiclient.discovery import build, Resource
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google.apps.meet_v2.services.conference_records_service import pagers
 # for encoding/decoding messages in base64
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 # for dealing with attachement MIME types
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.image import MIMEImage
-from email.mime.audio import MIMEAudio
-from email.mime.base import MIMEBase
 from mimetypes import guess_type as guess_mime_type
 import os
 from googleapiclient.http import MediaIoBaseDownload
-import json
 
 from google.apps import meet_v2
+from google.apps.meet_v2.types import ConferenceRecord
+from google.apps.meet_v2.types import resource
 
+from library.api_models import ConferenceCall, ConferenceRecording, ConferenceSpace, ConferenceTranscript
 from library.models import message
 
 # interface for the Gmail API wrapper
@@ -108,7 +105,8 @@ class GSuite(GSuiteServiceProvider):
               'https://www.googleapis.com/auth/calendar.readonly',
               'https://www.googleapis.com/auth/drive', 
               'https://www.googleapis.com/auth/documents',
-            #   'https://www.googleapis.com/auth/meetings.space.readonly'
+              'https://www.googleapis.com/auth/meetings.space.readonly',
+              'https://www.googleapis.com/auth/meetings.space.created'
               ]
     
     TOKEN_FILE: str = 'token.json'
@@ -117,11 +115,30 @@ class GSuite(GSuiteServiceProvider):
                 "docx": "mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'",
                 "google_doc": "mimeType='application/vnd.google-apps.document'"}
 
-    def service(self, google_schema: GoogleSchemas):
+    def service(self, google_schema: GoogleSchemas) -> Resource:
         credentials = self.__authenticate()
+        print("Retrieved crednetials", credentials)
         return build(google_schema.value, GoogleSchemas.v(google_schema), credentials=credentials)
+    
+    _meet_client: meet_v2.ConferenceRecordsServiceAsyncClient = None
+    @property
+    def meet_client(self) -> meet_v2.ConferenceRecordsServiceAsyncClient:
+        credentials = self.__authenticate()
+        print("Retrieved credentials", credentials)
+        if self._meet_client is None:
+            self._meet_client = meet_v2.ConferenceRecordsServiceAsyncClient(credentials=credentials)
+        return self._meet_client
 
-    def __init__(self, email: str, creds: str, docs_folder:str = "."):
+    _spaces_client: meet_v2.SpacesServiceAsyncClient = None
+    @property
+    def meet_spaces_client(self) -> meet_v2.SpacesServiceAsyncClient:
+        credentials = self.__authenticate()
+        print("Retrieved credentials", credentials)
+        if self._spaces_client is None:
+            self._spaces_client = meet_v2.SpacesServiceAsyncClient(credentials=credentials)
+        return self._spaces_client
+
+    def __init__(self, email, creds, docs_folder:str = "."):
         self.email = email
         self.creds = creds
         self.docs_folder = docs_folder
@@ -138,11 +155,14 @@ class GSuite(GSuiteServiceProvider):
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                print("INstalling creds", self.creds)
                 flow = InstalledAppFlow.from_client_secrets_file(
                     self.creds, self.SCOPES
                 )
-                creds = flow.run_local_server(port=3000)
+                creds = flow.run_local_server(
+                    # open_browser=False, 
+                    # bind_addr="0.0.0.0", port=3000
+                    port=3000
+                    )
             # save the credentials for the next run
             with open(self.TOKEN_FILE, "w") as token:
                 token.write(creds.to_json())
@@ -161,6 +181,7 @@ class GSuite(GSuiteServiceProvider):
         return result
     
     def events(self, now: datetime.datetime, count: int = 10) -> list[dict[str, str]]:
+        service: Resource
         with self.service(GoogleSchemas.CALENDAR) as service:
             print("Getting the upcoming 10 events")
             events_result: dict[str, any] = (
@@ -197,28 +218,48 @@ class GSuite(GSuiteServiceProvider):
             if len(attachments) > 0:
                 message['attachments'] = attachments
 
-    def list_meetings(self, count: int = 10) -> list[dict, str, any]:
-        client = meet_v2.ConferenceRecordsServiceAsyncClient()
-
-        # Initialize request argument(s)
+    async def list_meetings(self, count: int = 10) -> list[ConferenceCall]:
         request = meet_v2.ListConferenceRecordsRequest()
+        page_result: pagers.ListConferenceRecordsAsyncPager = await self.meet_client.list_conference_records(request=request)
+        
+        result: list[dict[str, any]] = []
+        async for response in page_result:
+            space = await self.get_space(response.space)
+            recordings = await self.list_recordings(response.name)
+            transcripts = await self.list_transcripts(response.name, space, count=10)
 
-        # Make the request
-        page_result = client.list_conference_records(request=request)
-        return page_result
+            call: ConferenceCall = ConferenceCall.from_protobuf(response, space, recordings, transcripts)
+            result.append(call)     
+        return result
+    
+    async def list_recordings(self, conference_name: str) -> ConferenceRecording:
+        client = self.meet_client
+        request = meet_v2.ListRecordingsRequest( parent=conference_name)
+        page_result: pagers.ListRecordingsAsyncPager = await client.list_recordings(request=request)
 
-    def list_transcripts(self, parent_value: str, count: int = 10) -> list[dict[str, any]]:
-        client = meet_v2.ConferenceRecordsServiceAsyncClient()
+        result = []
+        async for response in page_result:
+            result.append(ConferenceRecording.from_protobuf(response))
+        return result
+    
+    async def get_space(self, space_name: str) -> ConferenceSpace:
+        client = self.meet_spaces_client
+        request = meet_v2.GetSpaceRequest(
+            name=space_name,
+        )
+        response: resource.Space = await client.get_space(request=request)
+        return ConferenceSpace.from_protobuf(response)
 
-        # Initialize request argument(s)
+    async def list_transcripts(self, parent_value: str, space: ConferenceSpace, count: int = 10) -> list[ConferenceTranscript]:
         request = meet_v2.ListTranscriptsRequest(
             parent=parent_value, 
             page_size=count
         )
-
-        # Make the request
-        page_result: list[dict[str, any]] = client.list_transcripts(request=request)
-        return page_result
+        page_result: pagers.ListTranscriptsAsyncPager = await self._meet_client.list_transcripts(request=request)
+        result = []
+        async for response in page_result:
+            result.append(ConferenceTranscript.from_protobuf(response, space))
+        return result
 
     def get_document_ids(self, type: str) -> dict[str, str]:
         with self.service(GoogleSchemas.DRIVE) as service:
@@ -276,10 +317,8 @@ class GSuite(GSuiteServiceProvider):
         with self.service(GoogleSchemas.DOCUMENTS) as service:
             doc_info: dict[str, any] = {}
             for doc in doc_ids:
-            # Retrieve the documents contents from the Docs service.
-                doc_structure = {}
-
-                document = service.documents().get(documentId=doc).execute()
+                doc_structure: dict[str, any] = {}
+                document: dict[str, any] = service.documents().get(documentId=doc).execute()
                 text = self.extract_content(document.get('body'))
 
                 doc_structure["text"] = text

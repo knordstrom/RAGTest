@@ -4,7 +4,8 @@ from pydantic import AliasChoices, BaseModel, EmailStr, Field, ConfigDict
 
 from typing import List, Optional, Union, TypeVar, Generic
 from dataclasses import dataclass, Field, fields as dataclassFields
-
+from google.apps.meet_v2.types import ConferenceRecord, Recording
+from google.apps.meet_v2.types import resource
 
 
 T = TypeVar('T')
@@ -59,10 +60,19 @@ class DocumentEntry(BaseModel):
     summary: str 
     importance: Optional[float] = None
 
+class TranscriptEntry(BaseModel):
+    document_id: str 
+    meeting_code: str 
+    provider: Optional[str] = None 
+    title: str 
+    attendee_names: List[str] 
+    summary: str
+
 class MeetingSupport(BaseModel):
     docs: List[DocumentEntry] = []
     email: List[EmailConversationEntry] = []
     slack: List[SlackConversationEntry] = []
+    calls: List[TranscriptEntry] = []
 
 class MeetingAttendee(BaseModel):
     email: EmailStr 
@@ -112,10 +122,6 @@ class ScheduleResponse(BaseModel):
 ## /references
 
 class EmailMessage(BaseModel):
-    model_config = ConfigDict(from_attributes=True, fields = {
-            'sender': 'from'
-        })
-
     email_id: str
     history_id: str
     thread_id: str
@@ -203,3 +209,83 @@ class TokenResponse(BaseModel):
     token: Optional[str] = None
     email: EmailStr
     expiry: Optional[datetime] = None
+
+class ConferenceSpace(BaseModel):
+    name: str
+    meeting_uri: str
+    meeting_code: str
+    access_type: str
+    entry_point_access: str
+
+    @staticmethod
+    def from_protobuf(pb: resource.Space) -> 'ConferenceSpace':
+        return ConferenceSpace(name = pb.name, meeting_uri = pb.meeting_uri, 
+                                meeting_code = pb.meeting_code, access_type = pb.config.access_type.name, 
+                                entry_point_access = pb.config.entry_point_access.name)
+
+class ConferenceTranscript(BaseModel):
+    name: str
+    document: str
+    export_uri: str
+    start_time: datetime
+    end_time: datetime
+    space: ConferenceSpace
+
+    @staticmethod
+    def from_protobuf(pb: resource.Transcript, space: ConferenceSpace) -> 'ConferenceTranscript':
+        print("Transcript", pb)
+        return ConferenceTranscript(name = pb.name, document = pb.docs_destination.document,      
+                                    export_uri = pb.docs_destination.export_uri, space = space,                          
+                                    start_time = pb.start_time, end_time = pb.end_time)
+
+class ConferenceRecording(BaseModel):
+    start_time: datetime
+    end_time: datetime
+    file: str
+    export_uri: str
+
+    @staticmethod
+    def from_protobuf(pb: Recording) -> 'ConferenceRecording':
+        return ConferenceRecording(start_time = pb.start_time, end_time = pb.end_time, 
+                                   file = pb.drive_destination.file, 
+                                   export_uri = pb.drive_destination.export_uri)
+
+class ConferenceCall(BaseModel):
+    name: str
+    start_time: datetime
+    end_time: datetime
+    expire_time: datetime
+    recordings: List[ConferenceRecording]
+    space: ConferenceSpace
+    transcripts: List[ConferenceTranscript]
+
+    @staticmethod
+    def from_protobuf(pb: ConferenceRecord, space: ConferenceSpace, recordings: list[ConferenceRecording],
+                      transcripts: list[ConferenceTranscript]) -> 'ConferenceCall':
+        return ConferenceCall(name = pb.name, start_time = pb.start_time, 
+                                end_time = pb.end_time, expire_time = pb.expire_time, space=space, 
+                                recordings = recordings, transcripts = transcripts)
+    
+class TranscriptLine(BaseModel):
+    speaker: str
+    text: str
+    ordinal: int
+
+class TranscriptConversation(BaseModel):
+    transcript_id: str
+    meeting_code: str
+    provider: str
+    title: str
+    attendee_names: List[str]
+    conversation: list[TranscriptLine]
+
+    @staticmethod
+    def from_weaviate_properties(props: dict[str, str], conversation: list[TranscriptEntry] = []) -> 'TranscriptConversation':
+        return TranscriptConversation(
+                transcript_id=props.get('document_id'),
+                meeting_code=props.get('meeting_code'),
+                provider=props.get('provider'),
+                title=props.get('title'),
+                attendee_names=props.get('attendee_names'),
+                conversation=conversation
+            )

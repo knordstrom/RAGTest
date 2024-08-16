@@ -11,7 +11,7 @@ test-all:
 	poetry run coverage run -m pytest tests/ && poetry run coverage report -m
 
 run:
-	uvicorn api.main:app --reload --host 0.0.0.0 --port 5010
+	uvicorn api.main:app --reload --reload-exclude processor --host 0.0.0.0 --port 5010
 
 docker-processor:
 	docker build -f ProcessorDockerfile -t context-processor:0.1.1 .

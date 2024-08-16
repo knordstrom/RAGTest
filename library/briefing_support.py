@@ -3,13 +3,14 @@ from datetime import datetime
 import os
 from collections import defaultdict
 from library import weaviate
-from library.api_models import BriefContext, BriefResponse, DocumentEntry, DocumentMetadata, EmailConversationEntry, MeetingAttendee, MeetingContext, MeetingSupport, SlackConversationEntry, SlackThreadResponse
+from library.api_models import BriefContext, BriefResponse, DocumentEntry, DocumentMetadata, EmailConversationEntry, MeetingAttendee, MeetingContext, MeetingSupport, SlackConversationEntry, SlackThreadResponse, TranscriptConversation, TranscriptEntry
 from library.importance import ImportanceService
 
 from library.models.briefing_summarizer import BriefingSummarizer
 from library.models.event import Event
 import library.neo4j as neo
 from dotenv import load_dotenv
+from library.promptmanager import PromptManager
 from library.utils import Utils
 from library.weaviate_schemas import Email, EmailConversationWithSummary, EmailParticipant, EmailText, EmailTextWithFrom, WeaviateSchemas
 from weaviate.collections.classes.internal import Object
@@ -20,7 +21,7 @@ class BriefingSupport:
         self.summarizer: BriefingSummarizer = summarizer
 
     def create_briefings_for_summary(self, email: str, start_time: datetime, end_time: datetime, schedule: list[dict]) -> str:
-        out = self.summarizer.summarize('APISupport.create_briefings_for', {
+        out = self.summarizer.summarize('BriefingSupport.create_briefings_for', {
             'email': email,
             'start_time': start_time.isoformat(),
             'end_time': end_time.isoformat(),
@@ -60,11 +61,13 @@ class BriefingSupport:
         sum_docs: list[DocumentEntry] = self.doc_context_for(event, certainty)
         sum_email: list[EmailConversationEntry] = self.email_context_for(event, certainty)
         sum_slack: list[SlackConversationEntry] = self.slack_context_for(event, certainty)
+        sum_transcripts: list[TranscriptEntry] = self.transcript_context_for(event, certainty)
 
         return MeetingSupport(
             docs=sum_docs,
             email=sum_email,
-            slack=sum_slack
+            slack=sum_slack,
+            calls=sum_transcripts
         )
     
     def doc_context_for(self, event: Event, certainty: float = None) -> list[DocumentEntry]:
@@ -97,7 +100,7 @@ class BriefingSupport:
             if len(emails) == 0:
                 continue
             for details in emails:
-                sender_name = details.from_.name
+                sender_name = details.sender.name
                 text = details.text
                 conversation += f"\n{sender_name}: {text}"
             conversation_summary = self.summarizer.summarize('Summarizer.email_summarizer', {'Conversation': conversation})
@@ -116,9 +119,9 @@ class BriefingSupport:
             for email_text in email_texts_using_thread_id:
                 email_id = email_text.email_id
                 if email_map.get(email_id):
-                    from_ = email_map.get(email_id).from_
+                    sender = email_map.get(email_id).sender
                     m = email_text.model_dump()
-                    m['from_'] = from_
+                    m['sender'] = sender
                     threads[thread].append(EmailTextWithFrom(**m))
         return threads
 
@@ -127,7 +130,7 @@ class BriefingSupport:
         for email in emails:
             text.append(email.text)
         return EmailTextWithFrom(email_id=emails[0].email_id, thread_id=emails[0].thread_id, ordinal=emails[0].ordinal, 
-                                 text=" ".join(text), from_=emails[0].from_)
+                                 text=" ".join(text), sender=emails[0].sender)
 
     def group_messages_by_thread_id(self, threads: dict[str,list[EmailTextWithFrom]]) -> dict[str, list[EmailTextWithFrom]]:
         grouped_messages: dict[str, list[EmailTextWithFrom]] = {}
@@ -182,9 +185,7 @@ class BriefingSupport:
     
     def slack_context_for(self, event: Event, certainty: float = None) -> list[SlackConversationEntry]:
         sum_slack = self.context_for(event, WeaviateSchemas.SLACK_MESSAGE_TEXT, WeaviateSchemas.SLACK_THREAD, 'thread_id', certainty)
-        prompt = """Please summarize the following conversation in a few sentences.
-        
-        {Conversation}"""
+        prompt = PromptManager().get_latest_prompt_template("BriefingSupport.slack_context_for")
         w: weaviate.Weaviate = weaviate.Weaviate()
         result: list[SlackConversationEntry] = []
         for thread in sum_slack:
@@ -200,6 +201,28 @@ class BriefingSupport:
                 channel_id = thread['channel_id'],
                 summary = summary,
                 last_response = messages.messages[-1].ts
+            ))
+        return result
+    
+    def transcript_context_for(self, event: Event, certainty: float) -> list[TranscriptEntry]:
+        sum_transcript = self.context_for(event, WeaviateSchemas.TRANSCRIPT_ENTRY, WeaviateSchemas.TRANSCRIPT, 'meeting_code', certainty)
+        prompt = PromptManager().get_latest_prompt_template("BriefingSupport.transcript_context_for")
+        w: weaviate.Weaviate = weaviate.Weaviate()
+        result: list[TranscriptEntry] = []
+        for transcript in sum_transcript:
+            record: TranscriptConversation = w.get_transcript_conversation_by_meeting_code(transcript['meeting_code'])
+            conversation = ""
+            for message in record.conversation:
+                conversation += "\n" + message.speaker + ": " + "".join(message.text)
+            
+            summary = self.summarizer.summarize_with_prompt(prompt, {'Conversation': conversation})
+            result.append(TranscriptEntry(
+                document_id = record.transcript_id,
+                meeting_code = record.meeting_code,
+                provider = record.provider,
+                title = record.title,
+                attendee_names = record.attendee_names,
+                summary= summary
             ))
         return result
     
