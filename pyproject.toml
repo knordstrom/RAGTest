@@ -48,6 +48,7 @@ fastapi = "^0.111.0"
 uvicorn = "^0.30.3"
 cachetools = "^5.4.0"
 frozendict = "^2.4.4"
+google-apps-meet = "^0.1.8"
 
 
 [tool.poetry.group.dev.dependencies]

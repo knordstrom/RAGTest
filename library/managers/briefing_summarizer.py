@@ -1,6 +1,6 @@
 import os
-from library.groq_client import GroqClient
-from library.promptmanager import PromptManager
+from library.llms.groq_client import GroqClient
+from library.llms.promptmanager import PromptManager
 
 
 class BriefingSummarizer:

@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 import unittest
 
-from library.weaviate import Weaviate
+from library.data.local.weaviate import Weaviate
 from weaviate.collections.classes.internal import Object
 
-from library.weaviate_schemas import EmailParticipant, EmailTextWithFrom
+from library.models.weaviate_schemas import EmailParticipant, EmailTextWithFrom
 
 
 class TestWeavviate(unittest.TestCase):

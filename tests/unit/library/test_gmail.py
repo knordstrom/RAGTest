@@ -1,6 +1,6 @@
 #import and create pytest tests for the GmailLogic class in library
 from library.models import message    
-from library.gsuite import GmailLogic, GSuiteServiceProvider
+from library.data.external.gsuite import GmailLogic, GSuiteServiceProvider
 import pytest
 import unittest
 

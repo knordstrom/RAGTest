@@ -1,6 +1,6 @@
 
 import warnings
-from library.neo4j import Neo4j
+from library.data.local.neo4j import Neo4j
 from library.workday import Workday, Employee
 import dotenv
 import os

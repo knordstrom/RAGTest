@@ -20,7 +20,7 @@ from google.apps import meet_v2
 from google.apps.meet_v2.types import ConferenceRecord
 from google.apps.meet_v2.types import resource
 
-from library.api_models import ConferenceCall, ConferenceRecording, ConferenceSpace, ConferenceTranscript
+from library.models.api_models import ConferenceCall, ConferenceRecording, ConferenceSpace, ConferenceTranscript
 from library.models import message
 
 # interface for the Gmail API wrapper

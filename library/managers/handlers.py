@@ -1,11 +1,11 @@
 import groq
-from library.api_models import TranscriptConversation
+from library.models.api_models import TranscriptConversation
 from library.models.event import Event
-from library.promptmanager import PromptManager
-from library.slack import Slack
+from library.llms.promptmanager import PromptManager
+from library.data.external.slack import Slack
 from library.utils import Utils
-import library.weaviate as weaviate
-from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
+import library.data.local.weaviate as weaviate
+from library.models.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 from groq import Groq
 from dotenv import load_dotenv
 import os

@@ -2,16 +2,16 @@ from datetime import datetime
 from groq import Groq
 from kafka import TopicPartition
 import os
-from library import neo4j
-from library.api_models import MeetingAttendee
+from library.data.local import neo4j
+from library.models.api_models import MeetingAttendee
 from library.enums.kafka_topics import KafkaTopics
-from library.processor_support import ProcessorSupport
-import library.weaviate as weaviate
-from library.weaviate_schemas import Event, WeaviateSchemas
+from library.managers.processor_support import ProcessorSupport
+import library.data.local.weaviate as weaviate
+from library.models.weaviate_schemas import Event, WeaviateSchemas
 import library.models.event as event
-import library.handlers as h
+import library.managers.handlers as h
 import warnings
-from library import neo4j
+from library.data.local import neo4j
 
 warnings.simplefilter("ignore", ResourceWarning)
 

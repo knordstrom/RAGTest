@@ -1,10 +1,11 @@
-from library import handlers, weaviate as w
+from library.managers import handlers
+from library.data.local import weaviate as w
 from library.utils import Utils
 import warnings
-from library.processor_support import ProcessorSupport
-from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
-from library.slack import Slack
-from library.handlers import Handlers
+from library.managers.processor_support import ProcessorSupport
+from library.models.weaviate_schemas import WeaviateSchema, WeaviateSchemas
+from library.data.external.slack import Slack
+from library.managers.handlers import Handlers
 
 warnings.simplefilter("ignore", ResourceWarning)
 

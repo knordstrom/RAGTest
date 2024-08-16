@@ -1,12 +1,12 @@
 import pytest
 import requests
-from library import weaviate as w
-from library.api_models import TranscriptConversation, TranscriptLine
-import library.handlers as h
+from library.data.local import weaviate as w
+from library.models.api_models import TranscriptConversation, TranscriptLine
+import library.managers.handlers as h
 from requests.exceptions import ConnectionError
 
 from library.utils import Utils
-from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
+from library.models.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 from tests.integration.library.integration_test_base import IntegrationTestBase
 from weaviate.collections.collection import Collection
 from weaviate.collections.classes.internal import Object

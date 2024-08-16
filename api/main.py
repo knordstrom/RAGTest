@@ -1,11 +1,11 @@
 import datetime
 from typing import Union
 
-from library.api_models import ApiResponse, AskResponse, BriefResponse, ScheduleResponse
-from library.apisupport import APISupport
-from library.briefing_support import BriefingSupport
-from library.models.briefing_summarizer import GroqBriefingSummarizer
-import library.weaviate as weaviate
+from library.models.api_models import ApiResponse, AskResponse, BriefResponse, ScheduleResponse
+from library.managers.api_support import APISupport
+from library.managers.briefing_support import BriefingSupport
+from library.managers.briefing_summarizer import GroqBriefingSummarizer
+import library.data.local.weaviate as weaviate
 import warnings 
 
 from api.reference import route as refs

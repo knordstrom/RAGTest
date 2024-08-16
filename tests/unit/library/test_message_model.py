@@ -1,12 +1,12 @@
 import ast
 from library.models import message    
-from library.api_models import MeetingAttendee
-from library.gsuite import GmailLogic, GSuiteServiceProvider
+from library.models.api_models import MeetingAttendee
+from library.data.external.gsuite import GmailLogic, GSuiteServiceProvider
 import pytest
 import unittest
 import os
 
-from library.weaviate_schemas import EmailParticipant
+from library.models.weaviate_schemas import EmailParticipant
 
 class TestMessage(unittest.TestCase):
 

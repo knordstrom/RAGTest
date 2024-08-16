@@ -1,10 +1,10 @@
 import unittest
 import os
 
-from library.api_models import MeetingAttendee
+from library.models.api_models import MeetingAttendee
 from library.models.event import Event as EventModel
-from library.processor_support import EventRecordWrapper, ProcessorSupport
-from library.weaviate_schemas import EmailParticipant, Event
+from library.managers.processor_support import EventRecordWrapper, ProcessorSupport
+from library.models.weaviate_schemas import EmailParticipant, Event
 
 class TestEventExtracts(unittest.TestCase):
 

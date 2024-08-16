@@ -2,17 +2,17 @@
 from datetime import datetime
 import os
 from collections import defaultdict
-from library import weaviate
-from library.api_models import BriefContext, BriefResponse, DocumentEntry, DocumentMetadata, EmailConversationEntry, MeetingAttendee, MeetingContext, MeetingSupport, SlackConversationEntry, SlackThreadResponse, TranscriptConversation, TranscriptEntry
-from library.importance import ImportanceService
+from library.data.local import weaviate
+from library.models.api_models import BriefContext, BriefResponse, DocumentEntry, DocumentMetadata, EmailConversationEntry, MeetingAttendee, MeetingContext, MeetingSupport, SlackConversationEntry, SlackThreadResponse, TranscriptConversation, TranscriptEntry
+from library.managers.importance import ImportanceService
 
-from library.models.briefing_summarizer import BriefingSummarizer
+from library.managers.briefing_summarizer import BriefingSummarizer
 from library.models.event import Event
-import library.neo4j as neo
+import library.data.local.neo4j as neo
 from dotenv import load_dotenv
-from library.promptmanager import PromptManager
+from library.llms.promptmanager import PromptManager
 from library.utils import Utils
-from library.weaviate_schemas import Email, EmailConversationWithSummary, EmailParticipant, EmailText, EmailTextWithFrom, WeaviateSchemas
+from library.models.weaviate_schemas import Email, EmailConversationWithSummary, EmailParticipant, EmailText, EmailTextWithFrom, WeaviateSchemas
 from weaviate.collections.classes.internal import Object
 
 class BriefingSupport:

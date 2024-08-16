@@ -1,5 +1,5 @@
-from library.employee import Employee
-from library.neo4j import Neo4j
+from library.models.employee import Employee
+from library.data.local.neo4j import Neo4j
 
 
 class EmployeeManager:

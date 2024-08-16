@@ -4,11 +4,11 @@ import unittest
 # import groq
 import sys
 
-from library.api_models import EmailConversationEntry
-from library.models.briefing_summarizer import BriefingSummarizer
-from library.weaviate_schemas import EmailTextWithFrom
+from library.models.api_models import EmailConversationEntry
+from library.managers.briefing_summarizer import BriefingSummarizer
+from library.models.weaviate_schemas import EmailTextWithFrom
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..')))
-import library.briefing_support as bs
+import library.managers.briefing_support as bs
 import json
 import pickle
 

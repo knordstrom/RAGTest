@@ -1,7 +1,7 @@
-from library.api_models import ApiResponse, LoginRequest, TokenResponse
+from library.models.api_models import ApiResponse, LoginRequest, TokenResponse
 from fastapi import APIRouter
 
-from library.auth_manager import AuthManager
+from library.managers.auth_manager import AuthManager
 
 route = APIRouter(tags=["Auth"])
 
