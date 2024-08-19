@@ -14,9 +14,6 @@ from library.promptmanager import PromptManager
 from library.utils import Utils
 from library.weaviate_schemas import Email, EmailConversationWithSummary, EmailParticipant, EmailText, EmailTextWithFrom, WeaviateSchemas
 from weaviate.collections.classes.internal import Object
-from weaviate.classes.query import Filter, Rerank, MetadataQuery
-import weaviate.classes as wvc
-import pandas as pd
 
 class BriefingSupport:
 

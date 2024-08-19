@@ -12,7 +12,7 @@ import weaviate.classes as wvc
 from weaviate.util import generate_uuid5 as weave_uuid5
 from weaviate.classes.config import Property, DataType
 from library.weaviate_schemas import Email, EmailText, EmailTextWithFrom, WeaviateSchemas, WeaviateSchema
-from weaviate.classes.query import Filter, Rerank, MetadataQuery
+from weaviate.classes.query import Filter, Rerank
 from weaviate.collections.classes.grpc import Sort
 from weaviate.collections.collection import Collection
 from weaviate.collections.classes.internal import Object
@@ -219,13 +219,7 @@ class Weaviate(VDB):
         results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
             filters=Filter.by_property("thread_id").equal(thread_id),
         )
-        email_messages = []
-        for x in results.objects:
-            properties = x.properties
-            # Manually rename 'from_' to 'sender' before validation
-            properties['sender'] = properties.pop('from_', None)
-            email_messages.append(EmailMessage.model_validate(properties))
-        # return [EmailMessage.model_validate(x.properties) for x in results.objects]
+        return [EmailMessage.model_validate(x.properties) for x in results.objects]
 
     def get_email_by_id(self, email_id: str) -> EmailMessage:
         results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
