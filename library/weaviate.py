@@ -12,7 +12,7 @@ import weaviate.classes as wvc
 from weaviate.util import generate_uuid5 as weave_uuid5
 from weaviate.classes.config import Property, DataType
 from library.weaviate_schemas import Email, EmailText, EmailTextWithFrom, WeaviateSchemas, WeaviateSchema
-from weaviate.classes.query import Filter
+from weaviate.classes.query import Filter, Rerank, MetadataQuery
 from weaviate.collections.classes.grpc import Sort
 from weaviate.collections.collection import Collection
 from weaviate.collections.classes.internal import Object
@@ -191,6 +191,25 @@ class Weaviate(VDB):
 
         return response
     
+    def search_reranking(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7) -> list[dict[str, any]]:
+        print("doing a reranking")
+        collection: Collection[Properties, References] = self.collection(key)
+
+        response: list[dict[str, any]] = collection.query.near_text(
+            query=query,
+            limit=limit,
+            certainty=certainty,
+            rerank=Rerank(
+                prop="text",
+                query=query
+            ),
+            return_metadata=wvc.query.MetadataQuery(distance=True)
+        ).objects
+        
+        print("Found " + str(len(response)) + " objects")
+
+        return response
+    
     def get_by_ids(self, key: WeaviateSchemas, id_prop: str, ids: list[str]) -> list[dict[str, any]]:
         return self.collection(key).query.fetch_objects(
             filters= Filter.by_property(id_prop).contains_any(ids),
@@ -200,7 +219,13 @@ class Weaviate(VDB):
         results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
             filters=Filter.by_property("thread_id").equal(thread_id),
         )
-        return [EmailMessage.model_validate(x.properties) for x in results.objects]
+        email_messages = []
+        for x in results.objects:
+            properties = x.properties
+            # Manually rename 'from_' to 'sender' before validation
+            properties['sender'] = properties.pop('from_', None)
+            email_messages.append(EmailMessage.model_validate(properties))
+        # return [EmailMessage.model_validate(x.properties) for x in results.objects]
 
     def get_email_by_id(self, email_id: str) -> EmailMessage:
         results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(

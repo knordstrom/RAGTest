@@ -14,6 +14,9 @@ from library.promptmanager import PromptManager
 from library.utils import Utils
 from library.weaviate_schemas import Email, EmailConversationWithSummary, EmailParticipant, EmailText, EmailTextWithFrom, WeaviateSchemas
 from weaviate.collections.classes.internal import Object
+from weaviate.classes.query import Filter, Rerank, MetadataQuery
+import weaviate.classes as wvc
+import pandas as pd
 
 class BriefingSupport:
 
@@ -52,7 +55,7 @@ class BriefingSupport:
             meeting = MeetingContext(attendees=attendees, start=event.start, end=event.end, description=event.description, 
                                      recurring_id = event.recurring_id, name=event.summary, person = MeetingAttendee(name = email, email = email), 
                                      organizer=organizer, support=support)
-            importanceService.add_importance_to_meeting(meeting)
+            # importanceService.add_importance_to_meeting(meeting)
             meetings.append(meeting)
      
         return BriefResponse(email=email, start_time=start_time, end_time=end_time, summary=summary, context=BriefContext(schedule = meetings))
@@ -203,7 +206,7 @@ class BriefingSupport:
                 last_response = messages.messages[-1].ts
             ))
         return result
-    
+
     def transcript_context_for(self, event: Event, certainty: float) -> list[TranscriptEntry]:
         sum_transcript = self.context_for(event, WeaviateSchemas.TRANSCRIPT_ENTRY, WeaviateSchemas.TRANSCRIPT, 'meeting_code', certainty)
         prompt = PromptManager().get_latest_prompt_template("BriefingSupport.transcript_context_for")
@@ -230,8 +233,8 @@ class BriefingSupport:
         w: weaviate.Weaviate = weaviate.Weaviate()
         cv = .3 if not certainty else certainty
         print(event)
-        res: list[Object[any,any]] = w.search(event.summary, source, certainty = cv)
-        dsc_res: list[Object[any,any]] = w.search(event.description, source) if event.description!= None and event.description!= '' else []
+        res: list[Object[any,any]] = w.search_reranking(event.summary, source, certainty = cv)
+        dsc_res: list[Object[any,any]] = w.search_reranking(event.description, source) if event.description!= None and event.description!= '' else []
         result: dict[str, any] = {}
         for o in res:
             props = o.properties
