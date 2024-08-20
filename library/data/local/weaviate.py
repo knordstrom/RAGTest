@@ -12,13 +12,14 @@ import weaviate.classes as wvc
 from weaviate.util import generate_uuid5 as weave_uuid5
 from weaviate.classes.config import Property, DataType
 from library.models.weaviate_schemas import Email, EmailText, EmailTextWithFrom, WeaviateSchemas, WeaviateSchema
-from weaviate.classes.query import Filter
+from weaviate.classes.query import Filter, Rerank
 from weaviate.collections.classes.grpc import Sort
 from weaviate.collections.collection import Collection
 from weaviate.collections.classes.internal import Object
 from weaviate.collections.classes.types import Properties, References
 from langchain_core.documents import Document
 from weaviate.collections.classes.aggregate import AggregateReturn
+import math
 
 class Weaviate(VDB):
 
@@ -205,6 +206,12 @@ class Weaviate(VDB):
             ),
             return_metadata=wvc.query.MetadataQuery(distance=True)
         ).objects
+
+        for o in response:
+            props = o.properties
+            rerank_score = o.metadata.rerank_score
+            normalized_rerank_score = 1/(1 + math.exp (-rerank_score))
+            props['normalized_rerank_score'] = normalized_rerank_score
         
         print("Found " + str(len(response)) + " objects")
 
