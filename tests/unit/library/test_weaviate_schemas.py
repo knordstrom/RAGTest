@@ -1,5 +1,5 @@
 import unittest
-from library.weaviate_schemas import Document, DocumentSummary, DocumentText, Email, EmailText, EmailThread, Event, EventText, SlackChannel, SlackMessage, SlackMessageText, SlackThread, WeaviateSchemaTransformer
+from library.models.weaviate_schemas import Document, DocumentSummary, DocumentText, Email, EmailText, EmailThread, Event, EventText, SlackChannel, SlackMessage, SlackMessageText, SlackThread, WeaviateSchemaTransformer
 from weaviate.classes.config import Property, DataType
 
 class TestWeaviateSchemas(unittest.TestCase):

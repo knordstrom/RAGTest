@@ -1157,6 +1157,8 @@ files = [
 [package.dependencies]
 google-auth = ">=2.14.1,<3.0.dev0"
 googleapis-common-protos = ">=1.56.2,<2.0.dev0"
+grpcio = {version = ">=1.49.1,<2.0dev", optional = true, markers = "python_version >= \"3.11\" and extra == \"grpc\""}
+grpcio-status = {version = ">=1.49.1,<2.0.dev0", optional = true, markers = "python_version >= \"3.11\" and extra == \"grpc\""}
 proto-plus = ">=1.22.3,<2.0.0dev"
 protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.0 || >4.21.0,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4.21.4 || >4.21.4,<4.21.5 || >4.21.5,<6.0.0.dev0"
 requests = ">=2.18.0,<3.0.0.dev0"
@@ -1183,6 +1185,23 @@ google-auth = ">=1.32.0,<2.24.0 || >2.24.0,<2.25.0 || >2.25.0,<3.0.0.dev0"
 google-auth-httplib2 = ">=0.2.0,<1.0.0"
 httplib2 = ">=0.19.0,<1.dev0"
 uritemplate = ">=3.0.1,<5"
+
+[[package]]
+name = "google-apps-meet"
+version = "0.1.8"
+description = "Google Apps Meet API client library"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "google_apps_meet-0.1.8-py3-none-any.whl", hash = "sha256:36e600f61a8bf0cccee6a3c3c0e77736f46da39ccd7bcbf76162971961739d8d"},
+    {file = "google_apps_meet-0.1.8.tar.gz", hash = "sha256:64e0e4a2e5fa1ce00203997ca633c76e2d97809ddf6de42e8ce61bf58d8701e1"},
+]
+
+[package.dependencies]
+google-api-core = {version = ">=1.34.1,<2.0.dev0 || >=2.11.dev0,<3.0.0dev", extras = ["grpc"]}
+google-auth = ">=2.14.1,<2.24.0 || >2.24.0,<2.25.0 || >2.25.0,<3.0.0dev"
+proto-plus = ">=1.22.3,<2.0.0dev"
+protobuf = ">=3.20.2,<4.21.0 || >4.21.0,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4.21.4 || >4.21.4,<4.21.5 || >4.21.5,<6.0.0dev"
 
 [[package]]
 name = "google-auth"
@@ -1417,6 +1436,22 @@ files = [
 ]
 
 [package.dependencies]
+grpcio = ">=1.65.4"
+protobuf = ">=5.26.1,<6.0dev"
+
+[[package]]
+name = "grpcio-status"
+version = "1.65.4"
+description = "Status proto mapping for gRPC"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "grpcio_status-1.65.4-py3-none-any.whl", hash = "sha256:09dd3d84d1a3164940b1d8ed2177688cd8d25a423b1f5ad826b393653ea3de01"},
+    {file = "grpcio_status-1.65.4.tar.gz", hash = "sha256:1803968c4f14d81b4b156f6f2b54e6959bac4f40b0a6ca2bd4c169978438b9dc"},
+]
+
+[package.dependencies]
+googleapis-common-protos = ">=1.5.5"
 grpcio = ">=1.65.4"
 protobuf = ">=5.26.1,<6.0dev"
 
@@ -2209,8 +2244,8 @@ files = [
 [package.dependencies]
 orjson = ">=3.9.14,<4.0.0"
 pydantic = [
-    {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
     {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
+    {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
 ]
 requests = ">=2,<3"
 
@@ -3259,8 +3294,8 @@ files = [
 annotated-types = ">=0.4.0"
 pydantic-core = "2.20.1"
 typing-extensions = [
-    {version = ">=4.6.1", markers = "python_version < \"3.13\""},
     {version = ">=4.12.2", markers = "python_version >= \"3.13\""},
+    {version = ">=4.6.1", markers = "python_version < \"3.13\""},
 ]
 
 [package.extras]
@@ -4857,4 +4892,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "c4846df967158491cb8f42e881ffbd6c23320655bca95ea07607550aa0f1186a"
+content-hash = "5e8e90d0e2a86b620f1193b3db5f21c76808b63db1d081558bf5e24cd63591b8"

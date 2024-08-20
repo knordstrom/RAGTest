@@ -45,7 +45,12 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 RUN mkdir -p /app/processor
 RUN mkdir -p /app/library
+RUN mkdir -p /app/library/data
+RUN mkdir -p /app/library/data/local
+RUN mkdir -p /app/library/data/external
 RUN mkdir -p /app/library/enums
+RUN mkdir -p /app/library/llms
+RUN mkdir -p /app/library/managers
 RUN mkdir -p /app/library/models
 RUN mkdir -p /app/api
 COPY pyproject.toml ./
@@ -53,9 +58,12 @@ RUN poetry lock --no-update
 RUN poetry install
 
 COPY processor/main.py processor/context.py ./processor/
-COPY library/vdb.py library/weaviate.py library/utils.py library/handlers.py library/processor_support.py ./library/
-COPY library/document_parser.py library/neo4j.py library/weaviate_schemas.py library/slack.py library/promptmanager.py library/token_generator.py ./library/
-COPY library/employee.py library/person.py library/api_models.py ./library/
+COPY library/data/local/vdb.py library/data/local/weaviate.py library/data/local/neo4j.py ./library/data/local/
+COPY library/data/external/slack.py ./library/data/external/
+COPY library/managers/handlers.py library/managers/processor_support.py  ./library/managers/
+COPY library/llms/promptmanager.py ./library/llms/
+COPY library/utils.py library/token_generator.py library/document_parser.py library/decorators.py  ./library/
+
 COPY library/enums/*.py ./library/enums/
 COPY library/models/*.py ./library/models/
 

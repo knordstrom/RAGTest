@@ -6,10 +6,10 @@ from typing import List, Optional, Union, TypeVar, Generic
 import dotenv
 from pydantic import BaseModel
 
-from library.api_models import DocumentEntry, DocumentOwner, DocumentResponse, EmailConversationEntry, EmailMessage, EmailThreadResponse, MeetingAttendee, MeetingContext, SlackConversationEntry, SlackMessage, SlackThreadResponse
-from library.employee import Employee
-from library.neo4j import Neo4j
-from library.weaviate import Weaviate
+from library.models.api_models import DocumentEntry, DocumentOwner, DocumentResponse, EmailConversationEntry, EmailMessage, EmailThreadResponse, MeetingAttendee, MeetingContext, SlackConversationEntry, SlackMessage, SlackThreadResponse
+from library.models.employee import Employee
+from library.data.local.neo4j import Neo4j
+from library.data.local.weaviate import Weaviate
 
 
 T = TypeVar('T')
@@ -45,6 +45,8 @@ class ImportanceService:
 
     def add_importance_to_meeting(self, meeting: MeetingContext) -> None:
         full_org = self.graph.get_employee_with_full_org_chart(meeting.person.email)
+        if full_org is None:
+            raise ImportanceServiceException(f"Employee {meeting.person.email} not found in the organization chart")
 
         for item in meeting.support.docs:
             document: DocumentResponse = self.vector.get_document_by_id(item.document_id)

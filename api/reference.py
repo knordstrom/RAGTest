@@ -1,12 +1,12 @@
 from typing import List
 
-from library.api_models import ApiResponse, DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, TranscriptConversation
-from library.apisupport import APISupport
+from library.models.api_models import ApiResponse, DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, TranscriptConversation
+from library.managers.api_support import APISupport
 
-from library.weaviate import Weaviate
-from library.weaviate_schemas import WeaviateSchemas
+from library.data.local.weaviate import Weaviate
+from library.models.weaviate_schemas import WeaviateSchemas
 from fastapi import APIRouter
-from library.weaviate_schemas import WeaviateSchemas
+from library.models.weaviate_schemas import WeaviateSchemas
 from fastapi import APIRouter
 
 route = APIRouter(tags=["References"])

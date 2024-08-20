@@ -1,10 +1,11 @@
 import datetime
 import json
 import os
-from library import weaviate, weaviate_schemas
+from library.models import weaviate_schemas
 from kafka import KafkaConsumer, TopicPartition
 from collections.abc import Callable
-from library.api_models import MeetingAttendee, TranscriptConversation, TranscriptLine
+from library.data.local import weaviate
+from library.models.api_models import MeetingAttendee, TranscriptConversation, TranscriptLine
 from library.enums.kafka_topics import KafkaTopics
 
 class EventRecordWrapper:

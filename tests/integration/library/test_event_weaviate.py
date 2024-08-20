@@ -2,12 +2,12 @@ import ast
 import os
 import pytest
 import requests
-from library import weaviate as w
-import library.handlers as h
+from library.data.local import weaviate as w
+import library.managers.handlers as h
 from requests.exceptions import ConnectionError
 
 from library.models.message import Message
-from library.weaviate_schemas import WeaviateSchemas
+from library.models.weaviate_schemas import WeaviateSchemas
 from tests.integration.library.integration_test_base import IntegrationTestBase
 
 class TestEventWeaviate(IntegrationTestBase):

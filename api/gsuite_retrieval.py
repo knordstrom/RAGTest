@@ -4,10 +4,10 @@ import dotenv
 from pydantic import EmailStr
 from pydantic import EmailStr
 
-from library.api_models import ConferenceCall, ConferenceTranscript
-from library.apisupport import APISupport
+from library.models.api_models import ConferenceCall, ConferenceTranscript
+from library.managers.api_support import APISupport
 from library.enums.data_sources import DataSources
-from library.gsuite import GSuite
+from library.data.external.gsuite import GSuite
 from googleapiclient.errors import HttpError
 from google.api_core import exceptions as exceptions
 from google.apps.meet_v2.types import ConferenceRecord

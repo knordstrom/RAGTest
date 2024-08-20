@@ -7,8 +7,8 @@ from pydantic import BaseModel
 import recurring_ical_events
 import ics
 
-from library.api_models import MeetingAttendee
-from library.weaviate_schemas import EmailParticipant
+from library.models.api_models import MeetingAttendee
+from library.models.weaviate_schemas import EmailParticipant
 
 class Event(BaseModel):
     event_id: str

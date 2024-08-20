@@ -5,14 +5,14 @@ import dotenv
 import weaviate as w
 #import langchain_experimental.text_splitter as lang_splitter
 from langchain_community.embeddings import GPT4AllEmbeddings
-from library.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, TranscriptConversation, TranscriptLine
-from library.vdb import VDB 
+from library.models.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, TranscriptConversation, TranscriptLine
+from library.data.local.vdb import VDB 
 from library import utils
 import weaviate.classes as wvc
 from weaviate.util import generate_uuid5 as weave_uuid5
 from weaviate.classes.config import Property, DataType
-from library.weaviate_schemas import Email, EmailText, EmailTextWithFrom, WeaviateSchemas, WeaviateSchema
-from weaviate.classes.query import Filter, Rerank
+from library.models.weaviate_schemas import Email, EmailText, EmailTextWithFrom, WeaviateSchemas, WeaviateSchema
+from weaviate.classes.query import Filter
 from weaviate.collections.classes.grpc import Sort
 from weaviate.collections.collection import Collection
 from weaviate.collections.classes.internal import Object
