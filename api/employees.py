@@ -1,10 +1,10 @@
 from typing import List
 
-from library.api_models import ApiResponse
-from library.apisupport import APISupport
+from library.models.api_models import ApiResponse
+from library.managers.api_support import APISupport
 
-from library.employee import Employee
-from library.employee_manager import EmployeeManager
+from library.models.employee import Employee
+from library.managers.employee_manager import EmployeeManager
 from fastapi import APIRouter
 
 route = APIRouter(tags=["Employees"])

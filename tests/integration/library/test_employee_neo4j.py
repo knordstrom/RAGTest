@@ -2,8 +2,8 @@ import os
 from neo4j import Record
 import pytest
 import requests
-from library import neo4j
-from library.employee import Employee
+from library.data.local import neo4j
+from library.models.employee import Employee
 from requests.exceptions import ConnectionError
 from library.workday import Workday
 from tests.integration.library.integration_test_base import IntegrationTestBase

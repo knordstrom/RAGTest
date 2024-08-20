@@ -9,7 +9,7 @@ from library import utils
 import re
 
 from library.models.event import Event
-from library.weaviate_schemas import EmailParticipant
+from library.models.weaviate_schemas import EmailParticipant
 
 class Message(BaseModel):
     email_id: str

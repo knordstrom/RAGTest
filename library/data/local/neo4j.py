@@ -6,12 +6,12 @@ import dotenv
 from neo4j import GraphDatabase, Record, Result
 import os
 
-from library.api_models import TokenResponse
+from library.models.api_models import TokenResponse
 from library.token_generator import TokenGenerator
-from library.person import Person
+from library.models.person import Person
 from library.utils import Utils
-from library.employee import Employee
-from library.weaviate_schemas import Event as WeaviateEvent
+from library.models.employee import Employee
+from library.models.weaviate_schemas import Event as WeaviateEvent
 from library.models.event import Event
 
 class EventPersonRelationships:
@@ -28,8 +28,8 @@ class EventPersonRelationships:
         return list(self.person_map.values())
     
     def add_attendee(self, person_email: str, event_id: str, status, name: str) -> None:
-        p = Person(name, person_email)
-        attendee_id = p.identifier()
+        p = Person(name = name, email = person_email)
+        attendee_id = p.identifier
         attend_rel_id = attendee_id + event_id
         invited_rel_id = event_id + attendee_id
 
@@ -292,9 +292,9 @@ class Neo4j:
         return event_dict
 
     def extract_attendees_info(self, event: dict[str, any], event_dict: dict[str, any], relationships: EventPersonRelationships):
-        for item in event.get("attendees", []):
-            email = item.get("email", "")
-            relationships.add_attendee(email, event_dict["id"], item.get("responseStatus", "Unknown"), item.get("displayName", email))
+        for attendee in event.get("attendees", []):
+            email = attendee.get("email", "")
+            relationships.add_attendee(email, event_dict["id"], attendee.get("responseStatus", "Unknown"), attendee.get("displayName", email))
         relationships.organizer_map[event_dict["id"]] = event.get("organizer", {})
 
     def add_to_db(self, events_list: list[dict[str, any]], relationships: EventPersonRelationships):

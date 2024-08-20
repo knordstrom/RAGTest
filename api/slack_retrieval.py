@@ -10,8 +10,8 @@ from typing import Union
 
 from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
-from library.apisupport import APISupport
-from library.slack import Slack, SlackAuthException
+from library.managers.api_support import APISupport
+from library.data.external.slack import Slack, SlackAuthException
 
 route = APIRouter(tags=["Data Acquisition"])
 

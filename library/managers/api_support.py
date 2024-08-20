@@ -4,19 +4,19 @@ import os
 import uuid
 from fastapi import HTTPException
 from kafka import KafkaProducer
-from library.api_models import AskRequestContext, AskResponse, Meeting, ScheduleResponse
+from library.models.api_models import AskRequestContext, AskResponse, Meeting, ScheduleResponse
 from library.enums.data_sources import DataSources
 from library.enums.kafka_topics import KafkaTopics
 from library.enums.kafka_topics import KafkaTopics
 from library.models.event import Event
 from library.models.message import Message
-from library.promptmanager import PromptManager
-import library.weaviate as weaviate
-from library.groq_client import GroqClient
-import library.neo4j as neo
-from library.gsuite import GSuite, GmailLogic
+from library.llms.promptmanager import PromptManager
+import library.data.local.weaviate as weaviate
+from library.llms.groq_client import GroqClient
+import library.data.local.neo4j as neo
+from library.data.external.gsuite import GSuite, GmailLogic
 from weaviate.collections.classes.internal import Object
-from library.api_models import ConferenceCall
+from library.models.api_models import ConferenceCall
 
 from groq import Groq
 from dotenv import load_dotenv

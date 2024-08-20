@@ -1,5 +1,5 @@
 import pytest
-from library.promptmanager import PromptMissingException, PromptManager
+from library.llms.promptmanager import PromptMissingException, PromptManager
 from tests.integration.library.integration_test_base import IntegrationTestBase
 
 

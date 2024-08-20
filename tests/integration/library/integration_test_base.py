@@ -1,8 +1,8 @@
 import pytest
 import requests
 
-from library.weaviate import Weaviate
-from library.weaviate_schemas import WeaviateSchema, WeaviateSchemas
+from library.data.local.weaviate import Weaviate
+from library.models.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 from weaviate.classes.query import Filter
 from weaviate.collections.collection import Collection
 from weaviate.collections.classes.internal import Object

@@ -1,7 +1,7 @@
 
 
 
-from library.employee import Employee
+from library.models.employee import Employee
 
 
 class Workday:

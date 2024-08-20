@@ -7,7 +7,7 @@ import unittest
 import os
 
 from library.models.event import Event
-from library.neo4j import Neo4j
+from library.data.local.neo4j import Neo4j
 
 class TestNeo4j(unittest.TestCase):
 

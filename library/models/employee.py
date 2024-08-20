@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
-from library.person import Person
+from library.models.person import Person
 class Employee(BaseModel):
 
     employee_id:str
@@ -66,7 +66,7 @@ class Employee(BaseModel):
         return []
 
     def to_dict(self):
-        p = Person(self.name, self.work_email)
+        p = Person(name = self.name, email = self.work_email)
         result = p.to_dict()
         result.update({
             'employee_id': self.employee_id,

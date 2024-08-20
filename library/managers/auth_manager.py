@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from hashlib import md5
 from typing import Any
 from uuid import uuid4
-from library.api_models import TokenResponse
-from library.neo4j import Neo4j
+from library.models.api_models import TokenResponse
+from library.data.local.neo4j import Neo4j
 
 
 class AuthManager:

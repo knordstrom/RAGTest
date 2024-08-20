@@ -2,7 +2,7 @@ from neo4j import Record
 import pytest
 import requests
 from requests.exceptions import ConnectionError
-import library.neo4j as neo4j
+import library.data.local.neo4j as neo4j
 from tests.integration.library.integration_test_base import IntegrationTestBase
 
 class WithValue:
