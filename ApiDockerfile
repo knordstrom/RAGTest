@@ -51,6 +51,7 @@ COPY pyproject.toml ./
 RUN poetry lock --no-update
 RUN poetry install
 
+COPY globals.py ./
 COPY api/* ./api/
 COPY library/* ./library/
 COPY library/enums/* ./library/enums
