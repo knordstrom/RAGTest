@@ -44,7 +44,12 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 RUN mkdir -p /app/api
 RUN mkdir -p /app/library
+RUN mkdir -p /app/library/data
+RUN mkdir -p /app/library/data/local
+RUN mkdir -p /app/library/data/external
 RUN mkdir -p /app/library/models
+RUN mkdir -p /app/library/llms
+RUN mkdir -p /app/library/managers
 RUN mkdir -p /app/library/enums
 RUN mkdir -p /app/resources
 COPY pyproject.toml ./
@@ -54,8 +59,12 @@ RUN poetry install
 COPY globals.py ./
 COPY api/* ./api/
 COPY library/* ./library/
+COPY library/data/local/* ./library/data/local
+COPY library/data/external/* ./library/data/external
+COPY library/llms/* ./library/llms
 COPY library/enums/* ./library/enums
 COPY library/models/* ./library/models  
+COPY library/managers/* ./library/managers
 COPY resources/gsuite_creds.json /app/resources
 
 CMD ["uvicorn", "api.main:app", "--port=5010", "--host=0.0.0.0"] 
