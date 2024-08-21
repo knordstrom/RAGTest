@@ -10,18 +10,19 @@ from typing import Union
 
 from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
+from globals import Globals
 from library.managers.api_support import APISupport
 from library.data.external.slack import Slack, SlackAuthException
 
 route = APIRouter(tags=["Data Acquisition"])
 
-root_path = os.path.dirname(os.path.realpath(__file__))
+root_path = Globals().root
 
 default_destination = {'destination': '/data/slack/channels'}
 
-@route.get('/data/slack/channels')
-def slack() -> str:
-    """Retrieve slack channels for the current user. THIS CURRENTLY DOES NOT WORK WITHOUT MANUAL INCLUSION OF SLACK CREDENTIALS."""
+@route.get('/data/slack/channels', response_model=None)
+def slack() -> list[dict[str, any]]:
+    """Retrieve slack channels for the current user."""
     s = Slack()
     creds = s.check_auth()
     if creds:
@@ -31,11 +32,12 @@ def slack() -> str:
             print("Redirecting to auth", creds.valid, creds.expired, creds.expiry)
         return RedirectResponse(url=s.auth_target(default_destination))
     try:
-        conversations = s.read_conversations()
-        with open(root_path + '/../resources/slack_response.json', 'w') as file:
+        conversations: list[dict[str, any]] = s.read_conversations()
+        with open(Globals().resource('slack_response.json'), 'w') as file:
             json.dump(conversations, file)
         APISupport.write_slack_to_kafka(conversations)
     except SlackAuthException as error:
+        print("There was an auth error for slack", error)
         return RedirectResponse(url=s.auth_target(default_destination))
     return conversations
 

@@ -3,6 +3,7 @@ __pycache__/
 library/__pycache__/
 api/__pycache__/
 *.py[cod]
+api/temp/
 
 # C extensions
 *.so

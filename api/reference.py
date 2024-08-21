@@ -86,7 +86,7 @@ async def conference_transcripts() -> ApiResponse[List[TranscriptConversation]]:
     return ApiResponse.create(results)
 
 @route.get('/references/conferences/transcripts/{meeting_code}')
-async def conference_transcripts(meeting_code: str) -> ApiResponse[TranscriptConversation]:
+async def conference_transcript_by_meeting_code(meeting_code: str) -> ApiResponse[TranscriptConversation]:
     """Retrieve transcripts for a conference by meeting code for the current user."""
     w: Weaviate = Weaviate()
     results = w.get_transcript_conversation_by_meeting_code(meeting_code)

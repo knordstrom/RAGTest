@@ -2,6 +2,7 @@ import ast
 import os
 import pytest
 import requests
+from globals import Globals
 from library.data.local import weaviate as w
 import library.managers.handlers as h
 from requests.exceptions import ConnectionError
@@ -51,8 +52,8 @@ class TestEventWeaviate(IntegrationTestBase):
         assert weave is not None
         
         events, texts = self.prepare_event_collections(weave)
-
-        resource = os.path.dirname(__file__) + "/../../resources/sample_email.json"
+        print("GLobal root is", Globals().root)
+        resource = Globals().test_resource("sample_email.json")
         assert os.path.exists(resource), "Resource file at " + resource + " does not exist"
 
         with open(resource, "r") as email_json:

@@ -2,6 +2,7 @@ import json
 import os
 import pytest
 import requests
+from globals import Globals
 from library.data.local import weaviate as w
 import library.managers.handlers as h
 from requests.exceptions import ConnectionError
@@ -52,7 +53,7 @@ class TestSlackWeaviate(IntegrationTestBase):
         
         channels, threads, messages, texts = self.prepare_slack_collections(weave)
 
-        file_path = os.path.join(os.path.dirname(__file__), '../../resources', 'slack_response.json')
+        file_path = Globals().test_resource('slack_response.json')
         with open(file_path) as json_file:
 
             slack = json.load(json_file)

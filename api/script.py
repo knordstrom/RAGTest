@@ -24,7 +24,7 @@ root_path = os.path.dirname(os.path.realpath(__file__))
 default_destination = {'destination': '/data/script'}
 
 @route.get('/data/script')
-def slack() -> str:
+def run_demo_script() -> str:
     """This script is used to ingest demo information from a script to automate data ingestion"""
     with open(root_path + '/../demo_script/calendar.json', 'r') as cal_file:
         cal_data = json.load(cal_file)
