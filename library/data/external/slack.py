@@ -9,34 +9,34 @@ from slack_sdk.oauth import AuthorizeUrlGenerator
 import datetime
 
 from slack_sdk.web import SlackResponse
+from globals import Globals
+from library.models.api_models import SlackUser
 from library.utils import Utils
+import json
 
 class Slack:
-    users = {}
-    user_names_to_emails: dict[str, str] = {
-        "keith": "keith@cognimate.ai",
-        "aditham": "prakash@cognimate.ai",
-        "mshash": "mithali@cognimate.ai",
-        "pradeepjavangula": "pradeep@cognimate.ai",
-        "arjun": "arjunkhanna9079@gmail.com",
-        "emma": "emmasmithcto6306@gmail.com",
-        "john": "johnbrowncpo8808@gmail.com",
-        "joy": "joytaylor1106@gmail.com",
-    }
-    user_ids_to_emails: dict[str, str] = {
-        "U06EP4STTQ8": "keith@cognimate.ai",
-        "U06E2R1AYCU": "prakash@cognimate.ai",
-        "U06J697E08Y": "mithali@cognimate.ai",
-        "U06DKQZ2J4F": "pradeep@cognimate.ai",
-        "U06E2R1AYCZ": "arjunkhanna9079@gmail.com",
-        "U06EP4STTQ8": "emmasmithcto6306@gmail.com",
-        "U06DKQZ2J4F": "johnbrowncpo8808@gmail.com",
-        "U06JR3TNV10": "joytaylor1106@gmail.com"
-    }
-    oauth_scope: list[str]
+    users: dict[str, SlackUser] = None
+    user_names_to_emails: dict[str, str] = None
+    user_ids_to_emails: dict[str, str] = None
+
+    oauth_bot_scope: list[str]
     oauth_user_scope: list[str]
     client: WebClient
     bot_client: WebClient
+
+    def load_users(self):
+        self.users = {}
+        self.user_names_to_emails = {}
+        self.user_ids_to_emails = {}
+        file_path = Globals().resource("slack_users.json")
+
+        with open(file_path, "r") as file:
+            for line in file:
+                s: dict[str, str] = json.loads(line)
+                u = SlackUser(**s)
+                self.users[u.id] = u
+                self.user_names_to_emails[u.name] = u.email
+                self.user_ids_to_emails[u.id] = u.email
 
     @property
     def emails_to_user_ids(self) -> dict[str, str]:
@@ -46,15 +46,15 @@ class Slack:
     def emails_to_user_names(self) -> dict[str, str]:
         return {v: k for k, v in self.user_names_to_emails.items()}
 
-    token_file: str = "slack_token.json"
-    bot_token_file: str = "slack_bot_token.json"
+    token_file: str = Globals().root_resource("slack_token.json")
+    bot_token_file: str = Globals().root_resource("slack_bot_token.json")
     def __init__(self):
         dotenv.load_dotenv()
         self.client_id = os.getenv("SLACK_CLIENT_ID")
         self.client_secret = os.getenv("SLACK_CLIENT_SECRET")
-        
-        self.oauth_scope = [
-            "users:read",
+        self.load_users()
+        self.oauth_bot_scope = [
+            # "users:read",
             #"users:read.history",
             # "links.read",
             # "files.read",
@@ -94,7 +94,7 @@ class Slack:
 
         authorize_url_generator: AuthorizeUrlGenerator = AuthorizeUrlGenerator(
             client_id= self.client_id,
-            scopes=self.oauth_scope,
+            scopes=self.oauth_bot_scope,
             user_scopes=self.oauth_user_scope
         )
         url: str = authorize_url_generator.generate(state)
@@ -113,7 +113,7 @@ class Slack:
     def check_bot_auth(self) -> Credentials:
         creds = None
         if os.path.exists(self.bot_token_file):
-            creds: Credentials = Credentials.from_authorized_user_file(self.bot_token_file, self.oauth_scope)
+            creds: Credentials = Credentials.from_authorized_user_file(self.bot_token_file, self.oauth_bot_scope)
 
         if not creds.expired:
             self.bot_client = WebClient(token=creds.token)
@@ -194,18 +194,19 @@ class Slack:
     user_keep_keys: list[str] = ["id", "name", "real_name", "email", "deleted", "is_bot"]
     message_keep_keys: list[str] = ["user", "text", "ts", "reactions", "reply_users"]
     
-    def get_user(self, user_id: str) -> dict[str, any]:
-        if not self.bot_client:
-            self.check_bot_auth()
-        if user_id in self.users:
-            user = self.users[user_id]
-        else:
-            response = self.bot_client.users_info(user=user_id)
-            user = response.data.get("user", {})
-            user['email'] = self.user_ids_to_emails.get(user_id, "")
-            self.users[user_id] = user
+    # def get_user(self, user_id: str) -> SlackUser:
+        # if not self.bot_client:
+        #     self.check_bot_auth()
+        # if user_id in self.users:
+        #     user = self.users[user_id]
+        # else:
+        #     response = self.bot_client.users_info(user=user_id)
+        #     user = response.data.get("user", {})
+        #     user['email'] = self.user_ids_to_emails.get(user_id, "")
+        #     self.users[user_id] = user
 
-        return Utils.dict_keep_keys(user, ["id", "name", "real_name", "email", "deleted", "is_bot"])
+    def get_user(self, user_id: str) -> SlackUser:
+        return self.users.get(user_id)
     
     def read_messages(self, channel_id: str) -> list[dict[str, any]]:
         response: SlackResponse = self.client.conversations_history(channel=channel_id)
@@ -220,8 +221,8 @@ class Slack:
     
     def process_message(self, message: dict[str, any]) -> dict[str, any] :
         response: dict[str, any] = Utils.dict_keep_keys(message, ["user", "text", "ts", "attachments", "type", "subtype"])
-        user: dict[str, any] = self.get_user(message.get('user'))
-        response['email'] = user['email']
+        user: SlackUser = self.get_user(message.get('user'))
+        response['email'] = user.email if user else ""
         attachments: list[dict[str, any]] = message.get("attachments", [])
         if len(attachments) > 0:
             response['attachments'] = self.process_attachments(attachments)

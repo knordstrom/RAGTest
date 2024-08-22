@@ -55,6 +55,7 @@ COPY pyproject.toml ./
 RUN poetry lock --no-update
 RUN poetry install
 
+COPY globals.py ./
 COPY processor/main.py processor/context.py ./processor/
 COPY library/data/local/vdb.py library/data/local/weaviate.py library/data/local/neo4j.py ./library/data/local/
 COPY library/data/external/slack.py ./library/data/external/

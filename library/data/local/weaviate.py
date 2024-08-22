@@ -46,7 +46,7 @@ class Weaviate(VDB):
         schema = self.schemas[key]
         return self.client.collections.get(schema['class'])
     
-    def __new__(cls, host = '127.0.0.1', port = '8080', schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> None:
+    def __new__(cls, host = '127.0.0.1', port = '8080', schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> 'Weaviate':
         if not hasattr(cls, 'instance'):
             cls.instance = super(Weaviate, cls).__new__(cls)
             self = cls.instance

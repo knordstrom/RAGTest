@@ -2,6 +2,7 @@ import os
 from neo4j import Record
 import pytest
 import requests
+from globals import Globals
 from library.data.local import neo4j
 from library.models.employee import Employee
 from requests.exceptions import ConnectionError
@@ -39,7 +40,7 @@ class TestEmployeeNeo4j(IntegrationTestBase):
             'port': "7688"
         }
 
-        employees = Employee.from_csv(os.path.join(os.path.dirname(__file__), '../../resources', 'employees.csv'))
+        employees = Employee.from_csv(Globals().test_resource('employees.csv'))
         workday = Workday(employees)
         org_chart = workday.org_chart()
 

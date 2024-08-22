@@ -4,6 +4,7 @@ import dotenv
 from pydantic import EmailStr
 from pydantic import EmailStr
 
+from globals import Globals
 from library.models.api_models import ConferenceCall, ConferenceTranscript
 from library.managers.api_support import APISupport
 from library.enums.data_sources import DataSources
@@ -48,7 +49,7 @@ async def documents(email: EmailStr) -> dict[str, Any]:
     print("Getting your documents")
     print("Creds " + creds)
     temp_folder = create_temporary_folder()
-    doc_info: dict[str, any] = GSuite(email, creds, temp_folder).get_doc_info()
+    doc_info: dict[str, any] = GSuite(email, creds).get_doc_info()
     print("doc_info: ", doc_info.keys())
     APISupport.write_docs_to_kafka([x for x in doc_info.values()], DataSources.GOOGLE) 
     return doc_info
@@ -85,6 +86,6 @@ async def list_conferences(email: EmailStr) -> List[ConferenceCall]:
     return events
 
 def create_temporary_folder():
-    temp_folder = os.path.join(root_path, 'temp', 'gsuite')
+    temp_folder = Globals().api_temp_resource('gsuite')
     os.makedirs(temp_folder, exist_ok=True)
     return temp_folder

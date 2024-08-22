@@ -6,6 +6,7 @@ import dotenv
 from neo4j import GraphDatabase, Record, Result
 import os
 
+from globals import Globals
 from library.models.api_models import TokenResponse
 from library.token_generator import TokenGenerator
 from library.models.person import Person
@@ -51,7 +52,7 @@ class Neo4j:
     EVENT = "Event"
 
     def __init__(self, host: str = None, port: str = None, protocol: str = None, user: str = None, password: str = None):
-        dotenv.load_dotenv(dotenv_path = os.path.join(os.path.dirname(__file__), '../.env'))
+        dotenv.load_dotenv(dotenv_path = Globals().root_resource('.env'))
         protocol = os.getenv("NEO4J_PROTOCOL", "bolt") if protocol is None else protocol
         self.db_host = os.getenv("NEO4J_DB_HOST", "localhost") if host is None else host
         self.db_port = os.getenv("NEO4J_DB_PORT", "7687") if port is None else port

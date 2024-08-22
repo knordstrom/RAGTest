@@ -10,7 +10,7 @@ from fastapi import APIRouter
 route = APIRouter(tags=["Employees"])
 
 @route.get('/employees/reports/above')
-async def email_messages(email: str) -> ApiResponse[List[Employee]]:  
+async def employees_above(email: str) -> ApiResponse[List[Employee]]:  
     """Retrieve the reporting chain above the specified user."""
     emp_manager = EmployeeManager()
     chain = emp_manager.get_reporting_chain(email)
@@ -21,7 +21,7 @@ async def email_messages(email: str) -> ApiResponse[List[Employee]]:
     return ApiResponse.create(chain)
 
 @route.get('/employees/reports/below')
-async def email_messages(email: str) -> ApiResponse[Employee]:  
+async def employees_below(email: str) -> ApiResponse[Employee]:  
     """Retrieve user and the organization below them"""
     emp_manager = EmployeeManager()
     report: Employee = emp_manager.get_reports(email)

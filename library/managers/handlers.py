@@ -18,6 +18,7 @@ class Handlers:
     def __init__(self, w: weaviate.Weaviate, g: Groq = None) -> None:
         self.w = w
         self.summarizer = Summarizer(g)
+        self.slack = Slack()
 
     def handle_email(self, email: dict[str, any]) -> bool:
         if email.get('body', '') == '':
@@ -63,7 +64,7 @@ class Handlers:
         properties = map( lambda p: p.name, WeaviateSchema.class_map[WeaviateSchemas.SLACK_CHANNEL]["properties"])
         channel = {key: slack.get(key) for key in properties}
         channel['channel_id'] = slack['id'] 
-        channel['creator'] = Slack.user_ids_to_emails.get(slack['creator'], slack['creator'])
+        channel['creator'] = self.slack.user_ids_to_emails.get(slack['creator'], slack['creator'])
         Utils.isoify(channel, 'updated')
         return channel
 
@@ -78,7 +79,7 @@ class Handlers:
         message_vdb = {
             'message_id': f"{thread_id}|{message['ts']}",
             'thread_id': thread_id,
-            'from': Slack.user_ids_to_emails.get(message['user'], message['user']),
+            'from': self.slack.user_ids_to_emails.get(message['user'], message['user']),
             'ts': message['ts'],
             'type': message['type'],
             'subtype': message.get('subtype'),

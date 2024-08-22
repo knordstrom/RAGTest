@@ -4,6 +4,7 @@ import unittest
 # import groq
 import sys
 
+from globals import Globals
 from library.models.api_models import EmailConversationEntry
 from library.managers.briefing_summarizer import BriefingSummarizer
 from library.models.weaviate_schemas import EmailTextWithFrom
@@ -23,7 +24,7 @@ class BriefingSupportTest(unittest.TestCase):
     # this doesn't test anything but that the result the original code spit out is the same as what the new code will spit out
 
     def test_group_messages_by_thread_id(self):
-        threads = os.path.join(os.path.dirname(__file__), '../../resources', 'sample_thread.json')
+        threads = Globals().test_resource('sample_thread.json')
         
         with open(threads) as f:
             thread_data: dict[str,list[EmailTextWithFrom]] = self.thread_data_becomes_objects(json.load(f))
