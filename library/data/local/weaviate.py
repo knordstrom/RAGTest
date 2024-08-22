@@ -366,11 +366,11 @@ class Weaviate(VDB):
 
             for message in message_results.objects:
                 utils.Utils.rename_key(message.properties, 'from', 'sender')
-                message.properties['text'] = [values.get(message.properties.get('message_id'))]
+                message.properties['text'] = [values.get(message.properties.get('message_id'), '')]
             
             thread['messages'] = [x.properties for x in message_results.objects]
 
-            return SlackThreadResponse.model_validate(thread)
+            return SlackThreadResponse(**thread)
         return None
     
     ### documents

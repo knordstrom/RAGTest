@@ -1,0 +1,318 @@
+{
+  "response": {
+    "email": "keith@cognimate.ai",
+    "start_time": "2024-08-28T00:00:00",
+    "end_time": "2024-08-29T00:00:00",
+    "summary": "Good morning, Keith!\n\nHere's your schedule briefing for August 28, 2024, to August 29, 2024:\n\nYou have two events scheduled:\n\n1. **Bilven:Keith** on August 28, 2024, from 10:00 AM to 10:30 AM. Parikh Bilven (parikhbilven55@gmail.com) is invited and has not yet responded to the meeting invitation (status: needsAction).\n2. **Mithali:Keith** on August 28, 2024, from 6:00 PM to 7:00 PM. Mithali (mithali@cognimate.ai) is attending this meeting (status: accepted).\n\nThere are no events scheduled for August 29, 2024.\n\nNo attendees have declined any events.\n\nHave a productive day, Keith!",
+    "context": {
+      "schedule": [
+        {
+          "attendees": [
+            {
+              "email": "parikhbilven55@gmail.com",
+              "name": "parikhbilven55@gmail.com",
+              "status": "needsAction"
+            }
+          ],
+          "start": "2024-08-28T10:00:00-06:00",
+          "end": "2024-08-28T10:30:00-06:00",
+          "description": "",
+          "recurring_id": "76l4227tk4sc6s6413ofr72c8p",
+          "name": "Bilven:Keith",
+          "person": {
+            "email": "keith@cognimate.ai",
+            "name": "keith@cognimate.ai",
+            "status": null
+          },
+          "organizer": {
+            "email": "keith@cognimate.ai",
+            "name": "keith@cognimate.ai",
+            "status": null
+          },
+          "support": {
+            "docs": [
+              {
+                "document_id": "1WjIpeyKHArY2E1-rInf3c3OM91lrns8Ik9PNYUaGiss",
+                "doc_type": "google_doc",
+                "metadata": {
+                  "created_time": "2024-08-13T00:20:04.983000Z",
+                  "metadata_id": "1WjIpeyKHArY2E1-rInf3c3OM91lrns8Ik9PNYUaGiss",
+                  "modified_time": "2024-08-13T00:20:07.324000Z",
+                  "mime_type": "application/vnd.google-apps.document",
+                  "name": "Cognimate Standup (2024-08-12 18:03 GMT-6) – Transcript",
+                  "last_response": "2024-08-13T00:20:07.324000Z"
+                },
+                "provider": "google",
+                "summary": "Here is a summary of the document:\n\n**Purpose:** The document is a transcript of a standup meeting between Keith Nordstrom and Mithali Shashidhar, discussing various topics related to Cognimate.\n\n**Key Points:**\n\n* Keith is working on finding recordings in the system to fill gaps in the meeting application.\n* They discussed the importance of real-time context in meetings and the need to leverage meeting transcripts to provide relevant information to users.\n* Keith mentioned that the search functionality is primitive and needs improvement.\n* They discussed the concept of buy encoder and cross encoder, and how to use them to improve search accuracy and speed.\n* Mithali mentioned that Pradeep is concerned about the demo and suggested using real inboxes instead of fake ones.\n* Keith agreed and suggested using their own email client to send emails and leverage AI for that.\n\n**Action Items:**\n\n* Keith will continue working on finding recordings in the system.\n* Mithali will read up on the foundational concepts of buy encoder and cross encoder and implement them by the end of the week.\n* Keith will try to get approval from Apple for the Apple account.\n* Keith and Mithali will discuss the demo and how to improve it.",
+                "importance": 0
+              },
+              {
+                "document_id": "1mS4n6clq2mjQirCryBdivjujylN60XpjuUxOh4KQM-s",
+                "doc_type": "google_doc",
+                "metadata": {
+                  "created_time": "2024-08-16T17:20:22.484000Z",
+                  "metadata_id": "1mS4n6clq2mjQirCryBdivjujylN60XpjuUxOh4KQM-s",
+                  "modified_time": "2024-08-16T17:20:27.021000Z",
+                  "mime_type": "application/vnd.google-apps.document",
+                  "name": "Bilven:Keith (2024-08-16 10:21 GMT-6) – Transcript",
+                  "last_response": "2024-08-16T17:20:27.021000Z"
+                },
+                "provider": "google",
+                "summary": "Here is a summary of the document:\n\n**Purpose:** The document is a transcript of a meeting between Keith Nordstrom and Bilven Parikh, discussing the development of an app.\n\n**Key Points:**\n\n1. Keith Nordstrom is working on an API endpoint for the app, which will provide data for the app's features.\n2. Bilven Parikh is responsible for developing the app's UI and will be working on the onboarding flow.\n3. The app will have multiple features, including email, calendar, and messaging.\n4. Keith Nordstrom is using a local database for the demo, but plans to move to a cloud-based solution later.\n5. The team will have regular meetings, with Keith Nordstrom and Bilven Parikh meeting daily and the rest of the team meeting weekly.\n6. Keith Nordstrom will provide Bilven Parikh with a script to generate toy data for the app's features.\n\n**Action Items:**\n\n1. Keith Nordstrom will provide Bilven Parikh with the script to generate toy data.\n2. Bilven Parikh will work on the onboarding flow and UI development.\n3. Keith Nordstrom and Bilven Parikh will meet daily to discuss progress and catch up on updates.\n4. The team will have regular meetings to track progress and discuss any issues that arise.",
+                "importance": 0
+              },
+              {
+                "document_id": "1-LC52luFU5qK2wrXfVV8Vzij7rx_dIhKSnOq2B_GlIs",
+                "doc_type": "google_doc",
+                "metadata": {
+                  "created_time": "2024-08-16T18:58:17.776000Z",
+                  "metadata_id": "1-LC52luFU5qK2wrXfVV8Vzij7rx_dIhKSnOq2B_GlIs",
+                  "modified_time": "2024-08-16T18:58:21.254000Z",
+                  "mime_type": "application/vnd.google-apps.document",
+                  "name": "Pradeep:Keith (2024-08-16 12:23 GMT-6) – Transcript",
+                  "last_response": "2024-08-16T18:58:21.254000Z"
+                },
+                "provider": "google",
+                "summary": "Summary:\n\nThe document is a transcript of a conversation between Keith Nordstrom and Pradeep Javangula, discussing various topics related to their work. Key points include:\n\n* Improving search functionality in their system\n* Mentoring a junior team member who is struggling to adapt to the role\n* Recruiting a new team member, possibly a prominent investor\n* Developing a generative AI component\n* Integrating with Microsoft services, Google services, and Slack\n* Addressing data access and security concerns\n* Focusing on small to medium-sized companies rather than large enterprises\n\nAction items:\n\n* Keith will continue to work on improving search functionality\n* Pradeep will help Keith with mentoring the junior team member\n* Keith will reach out to the prominent investor for recruitment\n* The team will develop a generative AI component\n* The team will integrate with Microsoft services, Google services, and Slack\n* The team will address data access and security concerns\n* The team will focus on small to medium-sized companies rather than large enterprises",
+                "importance": 0
+              }
+            ],
+            "email": [
+              {
+                "text": "\nmeet-transcriptions-noreply@google.com: The meeting transcript has been uploaded.\n\n\nBilven:Keith (2024-08-16 10:21 GMT-6) – Transcript\n\n\nOpen in Drive\n\n\n\nGoogle Drive: Have all your files within reach from any device.\nGoogle LLC, 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA\nYou have received this email because a meeting transcript was initiated in  \nGoogle Meet.",
+                "thread_id": "1915c34778d6b337",
+                "summary": "Here is a concise summary of the email conversations:\n\n**Summary:** A meeting transcript has been uploaded to Google Drive.\n\n**Main Points:**\n\n* A meeting transcript is available in Google Drive.\n* The transcript was initiated in Google Meet.\n* No specific decisions, action items, or key topics are mentioned in the conversation.\n\n**Key Takeaways:**\n\n* The meeting transcript is available for review.\n* The conversation does not provide any specific information about the meeting's content or outcomes.",
+                "last_response": "2024-08-16T11:20:27-06:00",
+                "importance": 0
+              },
+              {
+                "text": "\nmeet-recordings-noreply@google.com: The recording has been uploaded.\n\n\nBilven:Keith (2024-08-16 10:21 GMT-6)\n\n\nOpen in Drive\n\n\n\nGoogle Drive: Have all your files within reach from any device.\nGoogle LLC, 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA\nYou have received this email because a recording was initiated in Google  \nMeet.",
+                "thread_id": "1915c4a0a5c3b7f5",
+                "summary": "There is no conversation to summarize. The provided email is an automated notification from Google Meet, informing the recipient (Bilven) that a recording has been uploaded to Google Drive. The email includes a link to open the recording in Drive and a brief promotional message about Google Drive's features. There is no discussion, decision, or action item to summarize.",
+                "last_response": "2024-08-16T11:44:01-06:00",
+                "importance": 0
+              },
+              {
+                "text": "\nDemetrios Tzortzis: As a quick recap as I know you met many people...\n\nI work with a small, dynamic family office based in Parker, CO, known for\nour innovative financing solutions across diverse industries. Our expertise\nincludes funding for commercial real estate projects, (including marinas\nand mobile parks), as well as the cannabis sector. We offer a range of\nfinancial services, including second and third position loans, bridge\ncapital, mezzanine debt, bond issuances, and ESOPs. No deal is too large,\nwith our funding capabilities reaching up to $2.2 billion. We collaborate\nwith companies generating at least $1 million in annual revenue, with our\nideal clients earning between $10 million and $25 million.\n\nCheck out my new site for more details on the services page -\nwww.TzortzisCap.com <http://www.tzortziscap.com/>\n\nLet me know if there is anything we can do to help your clients.\n\nI look forward to seeing you at future events.\n\nAll the best,\n\nDemetrios\n[image: photo]",
+                "thread_id": "1910fb02f8ed350f",
+                "summary": "There is only one email conversation provided, and it appears to be an introductory email from Demetrios Tzortzis. Here is a concise summary:\n\n**Summary:**\n\nDemetrios Tzortzis introduces himself and his company, Tzortzis Capital, a family office based in Parker, CO. He highlights their expertise in providing innovative financing solutions across various industries, including commercial real estate, cannabis, and more. Their services include second and third position loans, bridge capital, mezzanine debt, bond issuances, and ESOPs, with funding capabilities up to $2.2 billion. They focus on collaborating with companies generating at least $1 million in annual revenue, with an ideal client range of $10 million to $25 million. Demetrios invites the recipient to explore his website for more information and offers assistance with their clients' financing needs.\n\n**Key Takeaways:**\n\n* Demetrios Tzortzis introduces himself and Tzortzis Capital.\n* Tzortzis Capital provides innovative financing solutions across various industries.\n* Their services include a range of financial solutions, with funding capabilities up to $2.2 billion.\n* They focus on collaborating with companies with annual revenue of at least $1 million, with an ideal client range of $10 million to $25 million.\n\n**No decisions, action items, or key topics were discussed in this conversation.**",
+                "last_response": "2024-08-01T14:44:12-06:00",
+                "importance": 0
+              },
+              {
+                "text": "\nJesse Lehrman: Sounds good - appreciate that transparency and please do stay in touch once\nit makes more sense to reconnect. I can keep you updated on our progress in\nGraph as well. Be well and keep in touch!\nKeith Nordstrom: Hi Jesse, thanks for checking in. I think we don't quite have bandwidth to\nexplore this at this point. I suspect this approach might be worth\nexploring in an experiment in our MVP, but given our position at the moment\noutside of our focus.\n\nI'll definitely check out the blog post. Let's stay in touch and re-connect\nwhen this project gets funded.\n\nThanks!\n\nKeith\nJesse Lehrman: Hi Team, sharing the below article that Ben wrote and published recently.  \nAlso want to check if this time works for you all to connect. Please do let  \nme know!  \nhttps://thenewstack.io/better-llm-integration-with-content-centric-knowledge-graphs/\n\nCognimate <> DataStax - retouch base [placeholder]\nThursday Jul 11, 2024 ⋅ 11:30am – 12pm\nPacific Time - Los Angeles\n\n\t\nJoin Zoom Meeting\nhttps://datastax.zoom.us/j/94685195862\n\t\nJoin by phone\n(US) +1 833-928-4608\n(GB) +44 800 358 2817\n\nJoining instructions\nhttps://www.google.com/url?q=https://applications.zoom.us/addon/invitation/detail?meetingUuid%3D17lwAiH9T0qrRKL6w1yPUA%253D%253D%26signature%3D0938a3af4ffe6b213415722084451ff54212c9d340916a88b4cff993564d6bbe%26v%3D1&sa=D&source=calendar&usg=AOvVaw3JQWQc6WVE-TifPamFLnjl\n\t\nJoining notes",
+                "thread_id": "19099d88a83b8d72",
+                "summary": "Here is a concise summary of the email conversations:\n\n**Summary:**\n\nThe conversations revolve around a potential collaboration between Cognimate and DataStax. Jesse Lehrman from Cognimate reaches out to Keith Nordstrom from DataStax to reconnect and discuss a potential project. Keith responds, expressing that they don't have the bandwidth to explore the project at this point, but suggests it might be worth exploring in an experiment in their MVP (Minimum Viable Product) in the future.\n\n**Key Takeaways:**\n\n* The project is not a priority for DataStax at this time, but they are open to revisiting it in the future.\n* Jesse shares a blog post on better LLM integration with content-centric knowledge graphs, which Keith expresses interest in reading.\n* A meeting invite is sent, but it appears to be a placeholder, and no meeting is scheduled or confirmed.\n* No specific decisions or action items are agreed upon, but the parties agree to stay in touch and reconnect when the project gets funded.\n\nOverall, the conversations are exploratory and do not result in any concrete agreements or next steps.",
+                "last_response": "2024-07-09T17:33:41-06:00",
+                "importance": 0
+              },
+              {
+                "text": "\nmeet-transcriptions-noreply@google.com: The meeting transcript has been uploaded.\n\n\nPradeep:Keith (2024-08-16 12:23 GMT-6) – Transcript\n\n\nOpen in Drive\n\n\n\nGoogle Drive: Have all your files within reach from any device.\nGoogle LLC, 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA\nYou have received this email because a meeting transcript was initiated in  \nGoogle Meet.",
+                "thread_id": "1915c8e1f52acaec",
+                "summary": "Here is a concise summary of the email conversations:\n\n**Summary:** A meeting transcript has been uploaded to Google Drive.\n\n**Main Points:**\n\n* A meeting transcript is available in Google Drive.\n* The transcript is from a meeting with Keith on August 16, 2024.\n* The email is a notification from Google Meet.\n\n**Key Takeaways:**\n\n* No decisions, action items, or key topics are discussed in this email conversation, as it is simply a notification that a meeting transcript is available.\n* The recipient is encouraged to open the transcript in Google Drive to review the meeting discussion.",
+                "last_response": "2024-08-16T12:58:23-06:00",
+                "importance": 0
+              }
+            ],
+            "slack": [
+              {
+                "text": "\nmithali@cognimate.ai: Hi all, will we be having the standup today?\n<@U06DKQZ2J4F> <@U06EP4STTQ8> <@U06E2R1AYCU> \nemmasmithcto6306@gmail.com: I'm getting on now\nprakash@cognimate.ai: Sorry just seeing this now. Looks like it was a quick sync. :grinning: \nemmasmithcto6306@gmail.com: There's a recording of it, but it was me and Mithali discussing status of the POC (reranking from her, gsuite meeting connector from me, bilven should be close on the UI but I haven't seen it yet, still waiting on apple developer approval)",
+                "thread_id": "C06ED0J65L1|1723503048.450359",
+                "channel_id": "C06ED0J65L1",
+                "summary": "Here is a summary of the conversation:\n\nThe team was supposed to have a standup meeting, but it appears to have happened without everyone's knowledge. Emma and Mithali had a quick sync and discussed the status of their projects, including a POC, and a recording of the meeting is available.",
+                "last_response": "2024-08-13T00:23:37.170529Z",
+                "importance": 97.56439794722424
+              },
+              {
+                "text": "\nemmasmithcto6306@gmail.com: I just tried out the rimini app for headshots ... then got caught up creating a bunch more shots of \"myself\" in various odd scenarios. You may notice my profile photo here is now some sort of roman centurion on campaign :rolling_on_the_floor_laughing:\n\nFor your amusement: <https://www.dropbox.com/scl/fo/vnv3y4bx7e1apt20ugwtk/ACDp4OI_h4g02sqC159eTmA?rlkey=osn1etngp5h8oc6okiam0jn23&st=ec1kkn7u&dl=0>\n\nI downloaded at least one version that was extremely unflattering as well because it's just funny. I'm not sure there's a human alive who could truly pull off this hairdo, but man, the pure confidence it would take for the person who tries ...\nprakash@cognimate.ai: Keith - you are actually in heart-throb company! We watched Stephen Sanchez recently at Bottlerock Napa - a great singer and performer who channels Elvis, Sinatra and other Rock artists quite well although he's only 21!\n\nNotice something about his hairstyle? :wink:\nemmasmithcto6306@gmail.com: Excellent. Let's dare him to shave the center of his head and see where it goes ;)",
+                "thread_id": "C06DKQJ48TZ|1717526489.213049",
+                "channel_id": "C06DKQJ48TZ",
+                "summary": "Here is a summary of the conversation:\n\nEmma tried out the Rimini app for headshots and got carried away creating funny scenarios, including a Roman centurion profile photo. She shared a Dropbox link to show off her creations, including an unflattering hairdo that's humorous. Prakash responded by mentioning a singer, Stephen Sanchez, who has a similar hairstyle, and Emma jokingly suggested daring him to shave the center of his head.",
+                "last_response": "2024-06-04T22:35:42.252019Z",
+                "importance": 0
+              },
+              {
+                "text": "\nprakash@cognimate.ai: I reached out to a “friendly” VC in the Bat area who is related to me. He graciously offered to give feedback on our pitch. \n\nZoom | Prakash Aditham &lt;&gt; Kittu Kolluri, Monday, Aug 26 · 2–2:30 PM\n\n<https://neotribe.zoom.us/j/82009860292?pwd=eV7p9AC4rKLFWhQVytSnhe14kuTbs9.1|https://neotribe.zoom.us/j/82009860292?pwd=eV7p9AC4rKLFWhQVytSnhe14kuTbs9.1>\n\nI will create a meeting invite with this info.",
+                "thread_id": "C06ED0J65L1|1723689595.907509",
+                "channel_id": "C06ED0J65L1",
+                "summary": "Here is a summary of the conversation:\n\nPrakash reached out to a venture capitalist (VC) who is a relative and lives in the Bay Area, and the VC offered to provide feedback on Prakash's pitch. They scheduled a Zoom meeting for August 26 from 2-2:30 PM, and Prakash will send out a meeting invite with the details.",
+                "last_response": "2024-08-15T02:39:55.907509Z",
+                "importance": 0
+              },
+              {
+                "text": "\njohnbrowncpo8808@gmail.com: Awesome keith. This is terrific. ",
+                "thread_id": "C06J5Q536P8|1718581311.982179",
+                "channel_id": "C06J5Q536P8",
+                "summary": "Here is a summary of the conversation:\n\nJohn Brown expressed enthusiasm and approval to Keith, stating that something is \"awesome\" and \"terrific\".",
+                "last_response": "2024-06-16T23:41:51.982179Z",
+                "importance": 0
+              },
+              {
+                "text": "\nprakash@cognimate.ai: <@U06DKQZ2J4F> - please take a look. Ideally, we should connect on the narrative before getting on tomorrow's call with Cerwin. <https://docs.google.com/presentation/d/14FfPixEoSGR8moD_fIswOKmMDwqdFNny/edit?usp=sharing&amp;ouid=113791746234070013476&amp;rtpof=true&amp;sd=true>\nemmasmithcto6306@gmail.com: One thing that seems pertinent for the differentiation slide is our ability to finely grain permissions internally and prevent sensitive data/conversation leakage. I feel like that's a point buyers will at least be highly concerned with for peace of mind and for things like SOC2 compliance.\n\nCould fit under the security section, though I put it in its own in my bullet points this morning.",
+                "thread_id": "C06ED0J65L1|1717626122.094129",
+                "channel_id": "C06ED0J65L1",
+                "summary": "Here is a summary of the conversation:\n\nPrakash shared a Google presentation with Emma and asked her to review it before a call with Cerwin. Emma suggested adding a point to the differentiation slide about the ability to finely grain permissions internally and prevent sensitive data leakage, which she believes will be a key concern for buyers and important for SOC2 compliance.",
+                "last_response": "2024-06-06T00:11:49.973249Z",
+                "importance": 0
+              }
+            ],
+            "calls": [
+              {
+                "document_id": "1",
+                "meeting_code": "1",
+                "provider": "Zoom",
+                "title": "Meeting",
+                "attendee_names": [
+                  "Alice",
+                  "Bob"
+                ],
+                "summary": "Here is a summary of the conversation:\n\nAlice and Bob exchanged greetings, with Alice saying \"Hello\" and Bob responding with \"Hi\"."
+              }
+            ]
+          }
+        },
+        {
+          "attendees": [
+            {
+              "email": "mithali@cognimate.ai",
+              "name": "mithali@cognimate.ai",
+              "status": "accepted"
+            }
+          ],
+          "start": "2024-08-28T18:00:00-06:00",
+          "end": "2024-08-28T19:00:00-06:00",
+          "description": "",
+          "recurring_id": "3seeu0o2vfbjjs2tg5bousv35d_R20240530T000000",
+          "name": "Mithali:Keith",
+          "person": {
+            "email": "keith@cognimate.ai",
+            "name": "keith@cognimate.ai",
+            "status": null
+          },
+          "organizer": {
+            "email": "keith@cognimate.ai",
+            "name": "keith@cognimate.ai",
+            "status": null
+          },
+          "support": {
+            "docs": [
+              {
+                "document_id": "1WjIpeyKHArY2E1-rInf3c3OM91lrns8Ik9PNYUaGiss",
+                "doc_type": "google_doc",
+                "metadata": {
+                  "created_time": "2024-08-13T00:20:04.983000Z",
+                  "metadata_id": "1WjIpeyKHArY2E1-rInf3c3OM91lrns8Ik9PNYUaGiss",
+                  "modified_time": "2024-08-13T00:20:07.324000Z",
+                  "mime_type": "application/vnd.google-apps.document",
+                  "name": "Cognimate Standup (2024-08-12 18:03 GMT-6) – Transcript",
+                  "last_response": "2024-08-13T00:20:07.324000Z"
+                },
+                "provider": "google",
+                "summary": "Here is a summary of the document:\n\n**Purpose:** The document is a transcript of a standup meeting between Keith Nordstrom and Mithali Shashidhar, discussing various topics related to Cognimate.\n\n**Key Points:**\n\n* Keith is working on finding recordings in the system to fill gaps in the meeting application.\n* They discussed the importance of real-time context in meetings and the need to leverage meeting transcripts to provide relevant information to users.\n* Keith mentioned that the search functionality is primitive and needs improvement.\n* They discussed the concept of buy encoder and cross encoder, and how to use them to improve search accuracy and speed.\n* Mithali mentioned that Pradeep is concerned about the demo and suggested using real inboxes instead of fake ones.\n* Keith agreed and suggested using their own email client to send emails and leverage AI for that.\n\n**Action Items:**\n\n* Keith will continue working on finding recordings in the system.\n* Mithali will read up on the foundational concepts of buy encoder and cross encoder and implement them by the end of the week.\n* Keith will try to get approval from Apple for the Apple account.\n* Keith and Mithali will discuss the demo and how to improve it.",
+                "importance": 0
+              },
+              {
+                "document_id": "1-LC52luFU5qK2wrXfVV8Vzij7rx_dIhKSnOq2B_GlIs",
+                "doc_type": "google_doc",
+                "metadata": {
+                  "created_time": "2024-08-16T18:58:17.776000Z",
+                  "metadata_id": "1-LC52luFU5qK2wrXfVV8Vzij7rx_dIhKSnOq2B_GlIs",
+                  "modified_time": "2024-08-16T18:58:21.254000Z",
+                  "mime_type": "application/vnd.google-apps.document",
+                  "name": "Pradeep:Keith (2024-08-16 12:23 GMT-6) – Transcript",
+                  "last_response": "2024-08-16T18:58:21.254000Z"
+                },
+                "provider": "google",
+                "summary": "Summary:\n\nThe document is a transcript of a conversation between Keith Nordstrom and Pradeep Javangula, discussing various topics related to their work. Key points include:\n\n* Improving search functionality in their system\n* Mentoring a junior team member who is struggling to adapt to the role\n* Recruiting a new team member, possibly a prominent investor\n* Developing a generative AI component\n* Integrating with Microsoft services, Google services, and Slack\n* Addressing data access and security concerns\n* Focusing on small to medium-sized companies rather than large enterprises\n\nAction items:\n\n* Keith will continue to work on improving search functionality\n* Pradeep will help Keith with mentoring the junior team member\n* Keith will reach out to the prominent investor for recruitment\n* The team will develop a generative AI component\n* The team will integrate with Microsoft services, Google services, and Slack\n* The team will address data access and security concerns\n* The team will focus on small to medium-sized companies rather than large enterprises",
+                "importance": 0
+              },
+              {
+                "document_id": "1mS4n6clq2mjQirCryBdivjujylN60XpjuUxOh4KQM-s",
+                "doc_type": "google_doc",
+                "metadata": {
+                  "created_time": "2024-08-16T17:20:22.484000Z",
+                  "metadata_id": "1mS4n6clq2mjQirCryBdivjujylN60XpjuUxOh4KQM-s",
+                  "modified_time": "2024-08-16T17:20:27.021000Z",
+                  "mime_type": "application/vnd.google-apps.document",
+                  "name": "Bilven:Keith (2024-08-16 10:21 GMT-6) – Transcript",
+                  "last_response": "2024-08-16T17:20:27.021000Z"
+                },
+                "provider": "google",
+                "summary": "Here is a summary of the document:\n\n**Purpose:** The document is a transcript of a meeting between Keith Nordstrom and Bilven Parikh, discussing the development of an app.\n\n**Key Points:**\n\n1. Keith Nordstrom is working on an API endpoint for the app, which will provide data for the app's features.\n2. Bilven Parikh is responsible for developing the app's UI and will be working on the onboarding flow.\n3. The app will have multiple features, including email, calendar, and messaging.\n4. Keith Nordstrom is using a local database for the demo, but plans to move to a cloud-based solution later.\n5. The team will have regular meetings, with Keith Nordstrom and Bilven Parikh meeting daily and the rest of the team meeting weekly.\n6. Keith Nordstrom will provide Bilven Parikh with a script to generate toy data for the app's features.\n\n**Action Items:**\n\n1. Keith Nordstrom will provide Bilven Parikh with the script to generate toy data.\n2. Bilven Parikh will work on the onboarding flow and UI development.\n3. Keith Nordstrom and Bilven Parikh will meet daily to discuss progress and catch up on updates.\n4. The team will have regular meetings to track progress and discuss any issues that arise.",
+                "importance": 0
+              }
+            ],
+            "email": [
+              {
+                "text": "\nMithali Shashidhar: Declined: Mithali:Keith @ Wed Jul 17, 2024 6pm - 7pm (MDT) (keith@cognimate.ai)",
+                "thread_id": "190c2ee009b42a2c",
+                "summary": "I apologize, but it seems that there is only one line provided, which appears to be a notification about a declined meeting invitation. There is no conversation to summarize.\n\nThe line indicates that Mithali Shashidhar declined a meeting invitation with Keith at Cognimate.ai, scheduled for July 17, 2024, from 6 pm to 7 pm MDT. There is no further context or conversation to provide a summary of.\n\nIf you could provide the actual email conversations, I would be happy to assist you in summarizing the main points, key takeaways, and any important decisions or action items discussed.",
+                "last_response": "2024-07-17T17:01:35-06:00",
+                "importance": 0
+              },
+              {
+                "text": "\nDemetrios Tzortzis: As a quick recap as I know you met many people...\n\nI work with a small, dynamic family office based in Parker, CO, known for\nour innovative financing solutions across diverse industries. Our expertise\nincludes funding for commercial real estate projects, (including marinas\nand mobile parks), as well as the cannabis sector. We offer a range of\nfinancial services, including second and third position loans, bridge\ncapital, mezzanine debt, bond issuances, and ESOPs. No deal is too large,\nwith our funding capabilities reaching up to $2.2 billion. We collaborate\nwith companies generating at least $1 million in annual revenue, with our\nideal clients earning between $10 million and $25 million.\n\nCheck out my new site for more details on the services page -\nwww.TzortzisCap.com <http://www.tzortziscap.com/>\n\nLet me know if there is anything we can do to help your clients.\n\nI look forward to seeing you at future events.\n\nAll the best,\n\nDemetrios\n[image: photo]",
+                "thread_id": "1910fb02f8ed350f",
+                "summary": "There is only one email conversation provided, and it appears to be an introductory email from Demetrios Tzortzis. Here is a concise summary:\n\n**Summary:**\n\nDemetrios Tzortzis introduces himself and his company, Tzortzis Capital, a family office based in Parker, CO. He highlights their expertise in providing innovative financing solutions across various industries, including commercial real estate, cannabis, and more. He mentions their funding capabilities reach up to $2.2 billion and their ideal clients generate between $10 million and $25 million in annual revenue. He invites the recipient to explore his website for more information and offers his assistance in helping their clients.\n\n**Key Takeaways:**\n\n* Demetrios Tzortzis introduces himself and his company, Tzortzis Capital.\n* The company provides financing solutions across diverse industries.\n* Funding capabilities reach up to $2.2 billion.\n* Ideal clients generate between $10 million and $25 million in annual revenue.\n\n**No decisions, action items, or key topics discussed** as this appears to be an introductory email.",
+                "last_response": "2024-08-01T14:44:12-06:00",
+                "importance": 0
+              },
+              {
+                "text": "\nJesse Lehrman: Sounds good - appreciate that transparency and please do stay in touch once\nit makes more sense to reconnect. I can keep you updated on our progress in\nGraph as well. Be well and keep in touch!\nKeith Nordstrom: Hi Jesse, thanks for checking in. I think we don't quite have bandwidth to\nexplore this at this point. I suspect this approach might be worth\nexploring in an experiment in our MVP, but given our position at the moment\noutside of our focus.\n\nI'll definitely check out the blog post. Let's stay in touch and re-connect\nwhen this project gets funded.\n\nThanks!\n\nKeith\nJesse Lehrman: Hi Team, sharing the below article that Ben wrote and published recently.  \nAlso want to check if this time works for you all to connect. Please do let  \nme know!  \nhttps://thenewstack.io/better-llm-integration-with-content-centric-knowledge-graphs/\n\nCognimate <> DataStax - retouch base [placeholder]\nThursday Jul 11, 2024 ⋅ 11:30am – 12pm\nPacific Time - Los Angeles\n\n\t\nJoin Zoom Meeting\nhttps://datastax.zoom.us/j/94685195862\n\t\nJoin by phone\n(US) +1 833-928-4608\n(GB) +44 800 358 2817\n\nJoining instructions\nhttps://www.google.com/url?q=https://applications.zoom.us/addon/invitation/detail?meetingUuid%3D17lwAiH9T0qrRKL6w1yPUA%253D%253D%26signature%3D0938a3af4ffe6b213415722084451ff54212c9d340916a88b4cff993564d6bbe%26v%3D1&sa=D&source=calendar&usg=AOvVaw3JQWQc6WVE-TifPamFLnjl\n\t\nJoining notes",
+                "thread_id": "19099d88a83b8d72",
+                "summary": "Here is a concise summary of the email conversations:\n\n**Summary:**\n\nThe conversations revolve around a potential collaboration between Cognimate and DataStax. Jesse Lehrman from Cognimate reaches out to Keith Nordstrom from DataStax to reconnect and discuss a potential project. Keith responds, expressing that they don't have the bandwidth to explore the project at this point, but suggests it might be worth exploring in an experiment in their MVP (Minimum Viable Product) in the future.\n\n**Key Takeaways:**\n\n* The project is not a priority for DataStax at this time, but they are open to revisiting it in the future.\n* Jesse shares a blog post on better LLM integration with content-centric knowledge graphs, which Keith expresses interest in reading.\n* A meeting invite is sent, but it appears to be a placeholder, and no meeting is scheduled or confirmed.\n* No specific decisions or action items are agreed upon, but the parties agree to stay in touch and reconnect when the project gets funded.\n\nOverall, the conversations are exploratory and do not result in any concrete agreements or next steps.",
+                "last_response": "2024-07-09T17:33:41-06:00",
+                "importance": 0
+              }
+            ],
+            "slack": [
+              {
+                "text": "\nemmasmithcto6306@gmail.com: I just tried out the rimini app for headshots ... then got caught up creating a bunch more shots of \"myself\" in various odd scenarios. You may notice my profile photo here is now some sort of roman centurion on campaign :rolling_on_the_floor_laughing:\n\nFor your amusement: <https://www.dropbox.com/scl/fo/vnv3y4bx7e1apt20ugwtk/ACDp4OI_h4g02sqC159eTmA?rlkey=osn1etngp5h8oc6okiam0jn23&st=ec1kkn7u&dl=0>\n\nI downloaded at least one version that was extremely unflattering as well because it's just funny. I'm not sure there's a human alive who could truly pull off this hairdo, but man, the pure confidence it would take for the person who tries ...\nprakash@cognimate.ai: Keith - you are actually in heart-throb company! We watched Stephen Sanchez recently at Bottlerock Napa - a great singer and performer who channels Elvis, Sinatra and other Rock artists quite well although he's only 21!\n\nNotice something about his hairstyle? :wink:\nemmasmithcto6306@gmail.com: Excellent. Let's dare him to shave the center of his head and see where it goes ;)",
+                "thread_id": "C06DKQJ48TZ|1717526489.213049",
+                "channel_id": "C06DKQJ48TZ",
+                "summary": "Here is a summary of the conversation:\n\nEmma tried out the Rimini app for headshots and got carried away creating funny scenarios, including a Roman centurion profile photo. She shared a Dropbox link to show off her creations, including an unflattering hairdo that's humorous. Prakash responded by mentioning a singer, Stephen Sanchez, who has a similar hairstyle, and Emma jokingly suggested daring him to shave the center of his head.",
+                "last_response": "2024-06-04T22:35:42.252019Z",
+                "importance": 0
+              },
+              {
+                "text": "\nmithali@cognimate.ai: Hi everyone, I had my graduation commencement today! My cousins are in Seattle for the week and I’ll be taking them to Olympic National Park and Rainier and it might be hard for me to make all the calls this week because of my internet connection. However, I’ll try to make as many as possible. \nemmasmithcto6306@gmail.com: Congratulations Mithali!\nprakash@cognimate.ai: Congrats! Have fun with your cousins! ",
+                "thread_id": "C06ED0J65L1|1717898151.977729",
+                "channel_id": "C06ED0J65L1",
+                "summary": "Here is a summary of the conversation:\n\nMithali shared that they had their graduation commencement and will be taking their cousins to Olympic National Park and Rainier, but may have limited internet access, making it difficult to make calls. Emma and Prakash congratulated Mithali on their graduation and wished them fun with their cousins.",
+                "last_response": "2024-06-09T16:09:28.875099Z",
+                "importance": 81.64907250570349
+              },
+              {
+                "text": "\njohnbrowncpo8808@gmail.com: Hey folks, Gokul got stuck in Seattle and asked to move our meeting to next Friday 8am. \nemmasmithcto6306@gmail.com: OK. Let's push the standup off today then, I'll sync with Mithali on some code stuff.\nprakash@cognimate.ai: Curious if there are there any updates to the deck around Technology approach. \n\nAlso, are there any meetings besides the one with Gokul setup? \njohnbrowncpo8808@gmail.com: working on the tech approach as well as some additions to the narrative. no - no other meetings set up.  couldn’t get them going for this week\nprakash@cognimate.ai: I reached out to a VC in my network. They don’t invest at this stage (before product market fit) but agreed to give feedback to our pitch. \nWill keep you posted when the meeting is setup",
+                "thread_id": "C06ED0J65L1|1719518278.947209",
+                "channel_id": "C06ED0J65L1",
+                "summary": "Here is a summary of the conversation:\n\nThe meeting with Gokul has been rescheduled to next Friday at 8am, and the standup meeting for today has been cancelled. John is working on updates to the technology approach and narrative for the deck. Prakash has reached out to a VC in his network who is willing to provide feedback on their pitch, and will set up a meeting to discuss.",
+                "last_response": "2024-06-27T22:53:29.494529Z",
+                "importance": 0
+              },
+              {
+                "text": "\nprakash@cognimate.ai: I reached out to a “friendly” VC in the Bat area who is related to me. He graciously offered to give feedback on our pitch. \n\nZoom | Prakash Aditham &lt;&gt; Kittu Kolluri, Monday, Aug 26 · 2–2:30 PM\n\n<https://neotribe.zoom.us/j/82009860292?pwd=eV7p9AC4rKLFWhQVytSnhe14kuTbs9.1|https://neotribe.zoom.us/j/82009860292?pwd=eV7p9AC4rKLFWhQVytSnhe14kuTbs9.1>\n\nI will create a meeting invite with this info.",
+                "thread_id": "C06ED0J65L1|1723689595.907509",
+                "channel_id": "C06ED0J65L1",
+                "summary": "Here is a summary of the conversation:\n\nPrakash reached out to a venture capitalist (VC) who is a relative and lives in the Bay Area, and the VC offered to provide feedback on Prakash's pitch. They scheduled a Zoom meeting for August 26 from 2-2:30 PM, and Prakash will send out a meeting invite with the details.",
+                "last_response": "2024-08-15T02:39:55.907509Z",
+                "importance": 0
+              },
+              {
+                "text": "\nemmasmithcto6306@gmail.com: We had a brief discussion this evening about branding and the marginal difficulty of presenting multiple brands.  So I thought it worth reminding that I own the domain <http://sophis.ai|sophis.ai>.\n\nI bought it a few months ago when I had a job, thinking we might come to a point where we weren't entirely pleased with our working title :D\nprakash@cognimate.ai: Thanks for the update. Cognimate isn’t a slam dunk, but I think it is appropriate. Good that we have backups :sweat_smile: \nprakash@cognimate.ai: Branding  however might not be a major issue until we get past the seed stages. I think we spent over a million to rebrand as <http://data.ai|data.ai> from AppAnnie but ultimately it didn’t help \nemmasmithcto6306@gmail.com: <http://data.ai|data.ai> &gt;&gt; appannie in my opinion. Though it also doesn't relate terribly well to what the company did.\n\nBut I don't have any attachment here to changing anything, just providing it because we talked about it.\njohnbrowncpo8808@gmail.com: The issue is - having two different things to talk about - Cognimate suggesting stuff related to cognitive understanding and a “mate” and then Sofia as the actual thing needing real recognition by users. I like sophis which doesn’t mean anything real - and Sofia, as the assistant’s identity. Btw in the deck <@U06E2R1AYCU> you didn’t mention Cognimate. \nprakash@cognimate.ai: That’s one reason why I didn’t mention Congnimate except in the title slide. The product is Sofia. I am not married to Cognimate as the name \njohnbrowncpo8808@gmail.com: I think we shouldn’t go with cognimate. It’s too specific for my taste. I know we picked it together, but the word cognitive has been overused - thanks IBM! \nprakash@cognimate.ai: I considered Cognimate as a place holder - it seemed to describe well what our unique focus was in the world of AI personal assistants. Perhaps it is too literal and \"specific\" as you say. Some people think it is appropriate, while others like my wife just don't care for it. <http://Sophis.ai|Sophis.ai> might have fewer cons - who knows?\n\nAs mentioned earlier, branding is not something I am concerned about at the pre-funding stage.\n<@U06DKQZ2J4F> - Are we looking to incorporate and therefore the name has some finality to it?  (Product names can change quite easily)",
+                "thread_id": "C06ED0J65L1|1716773465.884929",
+                "channel_id": "C06ED0J65L1",
+                "summary": "Here is a summary of the conversation:\n\nThe conversation is about branding and naming for a company and its AI assistant. Emma mentions that she owns the domain sophis.ai, which could be a backup option. The group discusses the pros and cons of using Cognimate as the company name, with some members feeling it's too specific and literal. Prakash, who seems to be the decision-maker, is open to changing the name and doesn't consider branding a major issue at this stage. The group also touches on the idea that the company name and product name can be different, and that they may need to incorporate and finalize a name soon.",
+                "last_response": "2024-05-27T19:14:05.305069Z",
+                "importance": 0
+              }
+            ],
+            "calls": []
+          }
+        }
+      ]
+    }
+  },
+  "timestamp": "2024-08-22T13:19:53.218021",
+  "paging": null
+}
