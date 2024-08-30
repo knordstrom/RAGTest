@@ -47,7 +47,7 @@ class Weaviate(VDB):
         schema = self.schemas[key]
         return self.client.collections.get(schema['class'])
     
-    def __new__(cls, host = '127.0.0.1', port = '8080', schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> None:
+    def __new__(cls, host = '127.0.0.1', port = '8080', schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> 'Weaviate':
         if not hasattr(cls, 'instance'):
             cls.instance = super(Weaviate, cls).__new__(cls)
             self = cls.instance
@@ -392,11 +392,11 @@ class Weaviate(VDB):
 
             for message in message_results.objects:
                 utils.Utils.rename_key(message.properties, 'from', 'sender')
-                message.properties['text'] = [values.get(message.properties.get('message_id'))]
+                message.properties['text'] = [values.get(message.properties.get('message_id'), '')]
             
             thread['messages'] = [x.properties for x in message_results.objects]
 
-            return SlackThreadResponse.model_validate(thread)
+            return SlackThreadResponse(**thread)
         return None
     
     ### documents

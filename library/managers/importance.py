@@ -6,6 +6,7 @@ from typing import List, Optional, Union, TypeVar, Generic
 import dotenv
 from pydantic import BaseModel
 
+from globals import Globals
 from library.models.api_models import DocumentEntry, DocumentOwner, DocumentResponse, EmailConversationEntry, EmailMessage, EmailThreadResponse, MeetingAttendee, MeetingContext, SlackConversationEntry, SlackMessage, SlackThreadResponse
 from library.models.employee import Employee
 from library.data.local.neo4j import Neo4j
@@ -34,7 +35,7 @@ class ImportanceService:
         return self._vector
     
     def __init__(self):
-        dotenv.load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
+        dotenv.load_dotenv(dotenv_path=Globals().root_resource('.env'))
         self.decay_document_days = float(os.getenv('DECAY_DOC_DAYS', '7'))
         self.decay_email_days = float(os.getenv('DECAY_EMAIL_DAYS', '7'))
         self.decay_slack_days = float(os.getenv('DECAY_SLACK_DAYS', '7'))

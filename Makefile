@@ -13,6 +13,9 @@ test-all:
 run:
 	uvicorn api.main:app --reload --reload-exclude processor --host 0.0.0.0 --port 5010
 
+run-fake:
+	uvicorn api_fake.main:app --reload --reload-exclude processor --host 0.0.0.0 --port 5010
+
 docker-processor:
 	docker build -f ProcessorDockerfile -t context-processor:0.1.1 .
 	docker build -f EventProcessorDockerfile -t event-processor:0.1.1 .

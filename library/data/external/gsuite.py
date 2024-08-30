@@ -1,6 +1,7 @@
 import datetime
 import enum
 import os
+from globals import Globals
 from library import document_parser
 
 # Gmail API utils
@@ -109,7 +110,7 @@ class GSuite(GSuiteServiceProvider):
               'https://www.googleapis.com/auth/meetings.space.created'
               ]
     
-    TOKEN_FILE: str = 'token.json'
+    TOKEN_FILE: str = Globals().root_resource('token.json')
 
     MIME_TYPE: dict[str, str] = {"pdf": "mimeType='application/pdf'",
                 "docx": "mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'",
@@ -117,7 +118,7 @@ class GSuite(GSuiteServiceProvider):
 
     def service(self, google_schema: GoogleSchemas) -> Resource:
         credentials = self.__authenticate()
-        print("Retrieved crednetials", credentials)
+        print("Retrieved credentials", credentials)
         return build(google_schema.value, GoogleSchemas.v(google_schema), credentials=credentials)
     
     _meet_client: meet_v2.ConferenceRecordsServiceAsyncClient = None
@@ -138,10 +139,9 @@ class GSuite(GSuiteServiceProvider):
             self._spaces_client = meet_v2.SpacesServiceAsyncClient(credentials=credentials)
         return self._spaces_client
 
-    def __init__(self, email, creds, docs_folder:str = "."):
+    def __init__(self, email, creds):
         self.email = email
         self.creds = creds
-        self.docs_folder = docs_folder
 
     def __authenticate(self):
         creds = None
@@ -335,7 +335,7 @@ class GSuite(GSuiteServiceProvider):
                 doc_structure = {}
 
                 request = service.files().get_media(fileId=doc)
-                target = os.path.join(self.docs_folder, doc_dict[doc])
+                target = Globals().api_temp_resource(doc_dict[doc])
                 print("File target will be", target)
                 fh = open(target, 'wb')
                 downloader = MediaIoBaseDownload(fh, request)

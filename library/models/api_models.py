@@ -289,3 +289,11 @@ class TranscriptConversation(BaseModel):
                 attendee_names=props.get('attendee_names'),
                 conversation=conversation
             )
+    
+class SlackUser(BaseModel):
+    id: str
+    name: str
+    real_name: str
+    email: EmailStr
+    is_bot: bool
+    deleted: bool
