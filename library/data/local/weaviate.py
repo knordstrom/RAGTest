@@ -192,7 +192,7 @@ class Weaviate(VDB):
 
         return response
     
-    def search_reranking(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7) -> list[dict[str, any]]:
+    def search_reranking(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = .5) -> list[dict[str, any]]:
         print("doing a reranking")
         collection: Collection[Properties, References] = self.collection(key)
 
@@ -207,15 +207,19 @@ class Weaviate(VDB):
             return_metadata=wvc.query.MetadataQuery(distance=True)
         ).objects
 
+        filtered_response = []
         for o in response:
             props = o.properties
             rerank_score = o.metadata.rerank_score
             normalized_rerank_score = 1/(1 + math.exp (-rerank_score))
             props['normalized_rerank_score'] = normalized_rerank_score
-        
-        print("Found " + str(len(response)) + " objects")
 
-        return response
+            if normalized_rerank_score >= threshold:
+                filtered_response.append(o)
+        
+        print("Found " + str(len(filtered_response)) + " objects")
+
+        return filtered_response
     
     def get_by_ids(self, key: WeaviateSchemas, id_prop: str, ids: list[str]) -> list[dict[str, any]]:
         return self.collection(key).query.fetch_objects(
