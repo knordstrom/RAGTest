@@ -15,6 +15,9 @@ class Globals:
 
         return cls.instance
     
+    def prompt(self, path: str) -> str:
+        return os.path.join(self.root, "prompts", path)
+    
     def resource(self, path: str) -> str:
         return os.path.join(self.root, "resources", path)
     

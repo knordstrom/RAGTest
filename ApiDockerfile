@@ -1,4 +1,4 @@
-FROM python:3.11-alpine as base
+FROM python:3.11-alpine AS base
 
 ARG DEV=false
 ENV VIRTUAL_ENV=/app/.venv \
@@ -8,7 +8,7 @@ RUN apk update && \
     apk add libpq
 
 
-FROM base as builder
+FROM base AS builder
 
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
@@ -17,7 +17,7 @@ ENV POETRY_NO_INTERACTION=1 \
 
 RUN apk update && \
     apk add linux-headers build-base python3-dev ethtool && \
-    apk add musl-dev gcc gfortran openblas-dev
+    apk add musl-dev gcc gfortran openblas-dev libffi-dev g++
 
 WORKDIR /app
 
@@ -31,7 +31,7 @@ RUN poetry update
 RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR;
 
 
-FROM base as runtime
+FROM base AS runtime
 
 WORKDIR /app
 

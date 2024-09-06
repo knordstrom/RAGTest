@@ -3,8 +3,10 @@ import enum
 import os
 import dotenv
 import weaviate as w
+import weaviate.util as wutil
 #import langchain_experimental.text_splitter as lang_splitter
 from langchain_community.embeddings import GPT4AllEmbeddings
+from library.managers.briefing_summarizer import GroqBriefingSummarizer
 from library.models.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, TranscriptConversation, TranscriptLine
 from library.data.local.vdb import VDB 
 from library import utils
@@ -91,7 +93,7 @@ class Weaviate(VDB):
 
     def upsert(self, obj: dict[str, str], collection_key: WeaviateSchemas, id_property: str = None, attempts: int=0) -> bool:
         collection = self.collection(collection_key)   
-        identifier = w.util.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
+        identifier = wutil.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
         
         try: 
             with collection.batch.rate_limit(requests_per_minute=5) as batch:
@@ -176,15 +178,21 @@ class Weaviate(VDB):
         collection = self.collection(key)
         return collection.aggregate.over_all()
     
-    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7) -> list[dict[str, any]]:
+    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, use_hyde: bool = False) -> list[dict[str, any]]:
 
         collection: Collection[Properties, References] = self.collection(key)
 
+        if use_hyde:
+            search_query: str = GroqBriefingSummarizer().generate_hyde_content(query, key.name)
+            print("Using hyde content ", "from query", query, "to be", search_query)
+        else:
+            search_query = query
+
         response: list[dict[str, any]] = collection.query.near_text(
-            query=query,
-            limit=limit,
-            certainty=certainty,
-            return_metadata=wvc.query.MetadataQuery(distance=True)
+            query = search_query,
+            limit = limit,
+            certainty = certainty,
+            return_metadata = wvc.query.MetadataQuery(distance=True)
         ).objects
 
         print("Found " + str(len(response)) + " objects")

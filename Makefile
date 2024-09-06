@@ -20,6 +20,7 @@ docker-processor:
 	docker build -f ProcessorDockerfile -t context-processor:0.1.1 .
 	docker build -f EventProcessorDockerfile -t event-processor:0.1.1 .
 	docker build -f DocumentProcessorDockerfile -t document-processor:0.1.1 .
+	docker build -f TranscriptProcessorDockerfile -t transcript-processor:0.1.1 .
 
 docker-api:
 	docker build -f ApiDockerfile -t context-api:0.1.1 .
