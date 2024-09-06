@@ -58,7 +58,7 @@ RUN poetry lock --no-update
 RUN poetry install
 
 COPY globals.py ./
-COPY processor/main.py processor/context.py ./processor/
+COPY processor/transcripts.py processor/context.py ./processor/
 COPY library/data/local/vdb.py library/data/local/weaviate.py library/data/local/neo4j.py ./library/data/local/
 COPY library/data/external/slack.py ./library/data/external/
 COPY library/managers/handlers.py library/managers/processor_support.py  library/managers/briefing_summarizer.py ./library/managers/

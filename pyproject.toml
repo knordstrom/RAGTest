@@ -12,7 +12,7 @@ event_processor = "processor.main:start_kafka_calendar"
 document_processor = "processor.main:start_kafka_documents"
 employee_processor = "processor.employees.main:start"
 slack_processor = "processor.slack:start"
-transcripts_processor = "processor.transcripts.main:start"
+transcripts_processor = "processor.transcripts:start"
 
 [tool.poetry.dependencies]
 python = "^3.11"
