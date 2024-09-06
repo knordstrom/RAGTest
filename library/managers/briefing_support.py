@@ -29,7 +29,7 @@ class BriefingSupport:
         })
         return out
 
-    def create_briefings_for(self, email: str, start_time: datetime, end_time: datetime, certainty: float = None) -> BriefResponse:
+    def create_briefings_for(self, email: str, start_time: datetime, end_time: datetime, certainty: float = None, threshold: float = None) -> BriefResponse:
         """    # retrieve person node from neo4j
         #    retrieve associated people
         #    retrieve associated events
@@ -46,7 +46,7 @@ class BriefingSupport:
         importanceService = ImportanceService()
         meetings = []
         for event in schedule:
-            support = self.contextualize(event, certainty)
+            support = self.contextualize(event, certainty, threshold)
             attendees = event.attendees
             organizer = MeetingAttendee(name = event.organizer.name, email = event.organizer.email) if event.organizer else None
             meeting = MeetingContext(attendees=attendees, start=event.start, end=event.end, description=event.description, 
@@ -57,11 +57,11 @@ class BriefingSupport:
      
         return BriefResponse(email=email, start_time=start_time, end_time=end_time, summary=summary, context=BriefContext(schedule = meetings))
      
-    def contextualize(self, event: Event, certainty: float = None) -> MeetingSupport:
-        sum_docs: list[DocumentEntry] = self.doc_context_for(event, certainty)
-        sum_email: list[EmailConversationEntry] = self.email_context_for(event, certainty)
-        sum_slack: list[SlackConversationEntry] = self.slack_context_for(event, certainty)
-        sum_transcripts: list[TranscriptEntry] = self.transcript_context_for(event, certainty)
+    def contextualize(self, event: Event, certainty: float = None, threshold: float = None) -> MeetingSupport:
+        sum_docs: list[DocumentEntry] = self.doc_context_for(event, certainty, threshold)
+        sum_email: list[EmailConversationEntry] = self.email_context_for(event, certainty, threshold)
+        sum_slack: list[SlackConversationEntry] = self.slack_context_for(event, certainty, threshold)
+        sum_transcripts: list[TranscriptEntry] = self.transcript_context_for(event, certainty, threshold)
 
         return MeetingSupport(
             docs=sum_docs,
@@ -70,8 +70,8 @@ class BriefingSupport:
             calls=sum_transcripts
         )
     
-    def doc_context_for(self, event: Event, certainty: float = None) -> list[DocumentEntry]:
-        sum_docs = self.context_for(event, WeaviateSchemas.DOCUMENT_SUMMARY, WeaviateSchemas.DOCUMENT, 'document_id', certainty)
+    def doc_context_for(self, event: Event, certainty: float = None, threshold: float = None) -> list[DocumentEntry]:
+        sum_docs = self.context_for(event, WeaviateSchemas.DOCUMENT_SUMMARY, WeaviateSchemas.DOCUMENT, 'document_id', certainty, threshold)
         response = []
         for doc in sum_docs:
             response.append(DocumentEntry(
@@ -165,8 +165,8 @@ class BriefingSupport:
                 thread_text[thread_id] = thread_list
         return thread_text
     
-    def email_context_for(self, event: Event, certainty: float = None) -> list[EmailConversationEntry]:
-        sum_email: list[dict[str, any]] = self.context_for(event, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'email_id', certainty) 
+    def email_context_for(self, event: Event, certainty: float = None, threshold: float = None) -> list[EmailConversationEntry]:
+        sum_email: list[dict[str, any]] = self.context_for(event, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'email_id', certainty, threshold) 
         email_thread: dict[str, list[EmailTextWithFrom]] = self.get_thread_emails(sum_email) 
         return self.process_email_context(email_thread)
   
@@ -183,8 +183,8 @@ class BriefingSupport:
 
         return result
     
-    def slack_context_for(self, event: Event, certainty: float = None) -> list[SlackConversationEntry]:
-        sum_slack = self.context_for(event, WeaviateSchemas.SLACK_MESSAGE_TEXT, WeaviateSchemas.SLACK_THREAD, 'thread_id', certainty)
+    def slack_context_for(self, event: Event, certainty: float = None, threshold: float = None) -> list[SlackConversationEntry]:
+        sum_slack = self.context_for(event, WeaviateSchemas.SLACK_MESSAGE_TEXT, WeaviateSchemas.SLACK_THREAD, 'thread_id', certainty, threshold)
         prompt = PromptManager().get_latest_prompt_template("BriefingSupport.slack_context_for")
         w: weaviate.Weaviate = weaviate.Weaviate()
         result: list[SlackConversationEntry] = []
@@ -204,8 +204,8 @@ class BriefingSupport:
             ))
         return result
     
-    def transcript_context_for(self, event: Event, certainty: float) -> list[TranscriptEntry]:
-        sum_transcript = self.context_for(event, WeaviateSchemas.TRANSCRIPT_ENTRY, WeaviateSchemas.TRANSCRIPT, 'meeting_code', certainty)
+    def transcript_context_for(self, event: Event, certainty: float, threshold: float) -> list[TranscriptEntry]:
+        sum_transcript = self.context_for(event, WeaviateSchemas.TRANSCRIPT_ENTRY, WeaviateSchemas.TRANSCRIPT, 'meeting_code', certainty, threshold)
         prompt = PromptManager().get_latest_prompt_template("BriefingSupport.transcript_context_for")
         w: weaviate.Weaviate = weaviate.Weaviate()
         result: list[TranscriptEntry] = []
@@ -226,12 +226,13 @@ class BriefingSupport:
             ))
         return result
     
-    def context_for(self, event: Event, source: WeaviateSchemas, meta_source: WeaviateSchemas, id_prop: str, certainty: float = None) -> list[dict[str, any]]:
+    def context_for(self, event: Event, source: WeaviateSchemas, meta_source: WeaviateSchemas, id_prop: str, certainty: float = None, threshold: float = None) -> list[dict[str, any]]:
         w: weaviate.Weaviate = weaviate.Weaviate()
         cv = .3 if not certainty else certainty
+        th = .3 if not threshold else threshold
         print(event)
-        res: list[Object[any,any]] = w.search(event.summary, source, certainty = cv)
-        dsc_res: list[Object[any,any]] = w.search(event.description, source) if event.description!= None and event.description!= '' else []
+        res: list[Object[any,any]] = w.search_reranking(event.summary, source, certainty = cv, threshold=th)
+        dsc_res: list[Object[any,any]] = w.search_reranking(event.description, source, certainty = cv, threshold=th) if event.description!= None and event.description!= '' else []
         result: dict[str, any] = {}
         for o in res:
             props = o.properties
