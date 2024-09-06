@@ -91,9 +91,10 @@ class APISupport:
         print("Wrote ", count, " items to Kafka on channel ", channel)    
     
     @staticmethod
-    def perform_ask(question: str, key: str, context_limit: int = 5, max_tokens: int = 2000, use_hyde: bool = False) -> AskResponse:
+    def perform_ask(question: str, key: str, context_limit: int = 5, max_tokens: int = 2000, 
+                    certainty: float = None, threshold: float = None, use_hyde: bool = False) -> AskResponse:
         vdb: weaviate.Weaviate = weaviate.Weaviate(os.getenv('VECTOR_DB_HOST',"127.0.0.1"), os.getenv('VECTOR_DB_PORT',"8080"))
-        context: list[Object] = vdb.search(question, key, context_limit, use_hyde = use_hyde)
+        context: list[Object] = vdb.search(question, key, context_limit, certainty = certainty,threshold = threshold, use_hyde = use_hyde)
         
         emails = []
         for o in context:

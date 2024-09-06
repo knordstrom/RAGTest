@@ -80,7 +80,7 @@ async def armaggedon(collection: str) -> str:
 
 @route.get('/references/conferences/transcripts')
 async def conference_transcripts() -> ApiResponse[List[TranscriptConversation]]:
-    """Retrieve transcripts for a conference by meeting code for the current user."""
+    """Retrieve a list of transcripts for meetings involving the current user."""
     w: Weaviate = Weaviate()
     results = w.get_transcript_conversations()
     return ApiResponse.create(results)

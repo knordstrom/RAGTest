@@ -33,7 +33,7 @@ class BriefingSupport:
         })
         return out
 
-    def create_briefings_for(self, email: str, start_time: datetime, end_time: datetime, certainty: float = None, use_hyde: bool = False) -> BriefResponse:
+    def create_briefings_for(self, email: str, start_time: datetime, end_time: datetime, certainty: float = None, threshold: float = None, use_hyde: bool = False) -> BriefResponse:
         """    # retrieve person node from neo4j
         #    retrieve associated people
         #    retrieve associated events
@@ -50,7 +50,7 @@ class BriefingSupport:
         importanceService = ImportanceService()
         meetings = []
         for event in schedule:
-            support = self.contextualize(event, certainty, use_hyde = use_hyde)
+            support = self.contextualize(event, certainty, threshold = threshold, use_hyde = use_hyde)
             attendees = event.attendees
             organizer = MeetingAttendee(name = event.organizer.name, email = event.organizer.email) if event.organizer else None
             meeting = MeetingContext(attendees=attendees, start=event.start, end=event.end, description=event.description, 
@@ -61,11 +61,11 @@ class BriefingSupport:
      
         return BriefResponse(email=email, start_time=start_time, end_time=end_time, summary=summary, context=BriefContext(schedule = meetings))
      
-    def contextualize(self, event: Event, certainty: float = None, use_hyde: bool = False) -> MeetingSupport:
-        sum_docs: list[DocumentEntry] = self.doc_context_for(event, certainty, use_hyde = use_hyde)
-        sum_email: list[EmailConversationEntry] = self.email_context_for(event, certainty, use_hyde = use_hyde)
-        sum_slack: list[SlackConversationEntry] = self.slack_context_for(event, certainty, use_hyde = use_hyde)
-        sum_transcripts: list[TranscriptEntry] = self.transcript_context_for(event, certainty, use_hyde = use_hyde)
+    def contextualize(self, event: Event, certainty: float = None, threshold: float = None, use_hyde: bool = False) -> MeetingSupport:
+        sum_docs: list[DocumentEntry] = self.doc_context_for(event, certainty, threshold=threshold, use_hyde = use_hyde)
+        sum_email: list[EmailConversationEntry] = self.email_context_for(event, certainty, threshold=threshold, use_hyde = use_hyde)
+        sum_slack: list[SlackConversationEntry] = self.slack_context_for(event, certainty, threshold=threshold, use_hyde = use_hyde)
+        sum_transcripts: list[TranscriptEntry] = self.transcript_context_for(event, certainty, threshold=threshold, use_hyde = use_hyde)
 
         return MeetingSupport(
             docs=sum_docs,
@@ -74,8 +74,8 @@ class BriefingSupport:
             calls=sum_transcripts
         )
     
-    def doc_context_for(self, event: Event, certainty: float = None, use_hyde: bool = False) -> list[DocumentEntry]:
-        sum_docs = self.context_for(event, WeaviateSchemas.DOCUMENT_SUMMARY, WeaviateSchemas.DOCUMENT, 'document_id', certainty, use_hyde)
+    def doc_context_for(self, event: Event, certainty: float = None, threshold: float = None, use_hyde: bool = False) -> list[DocumentEntry]:
+        sum_docs = self.context_for(event, WeaviateSchemas.DOCUMENT_SUMMARY, WeaviateSchemas.DOCUMENT, 'document_id', certainty, threshold, use_hyde)
         response = []
         for doc in sum_docs:
             response.append(DocumentEntry(
@@ -169,9 +169,9 @@ class BriefingSupport:
                 thread_text[thread_id] = thread_list
         return thread_text
     
-    def email_context_for(self, event: Event, certainty: float = None, use_hyde: bool = False) -> list[EmailConversationEntry]:
+    def email_context_for(self, event: Event, certainty: float = None, threshold: float = None, use_hyde: bool = False) -> list[EmailConversationEntry]:
         sum_email: list[dict[str, any]] = self.context_for(event, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'email_id', 
-                                                           certainty, use_hyde = use_hyde) 
+                                                           certainty, threshold=threshold, use_hyde = use_hyde) 
         email_thread: dict[str, list[EmailTextWithFrom]] = self.get_thread_emails(sum_email) 
         return self.process_email_context(email_thread)
   
@@ -188,9 +188,9 @@ class BriefingSupport:
 
         return result
     
-    def slack_context_for(self, event: Event, certainty: float = None, use_hyde: bool = False) -> list[SlackConversationEntry]:
+    def slack_context_for(self, event: Event, certainty: float = None, threshold: float = None, use_hyde: bool = False) -> list[SlackConversationEntry]:
         sum_slack = self.context_for(event, WeaviateSchemas.SLACK_MESSAGE_TEXT, WeaviateSchemas.SLACK_THREAD, 'thread_id', 
-                                     certainty, use_hyde = use_hyde)
+                                     certainty, threshold= threshold, use_hyde = use_hyde)
         prompt = self.prompt_manager.get_latest_prompt_template("BriefingSupport.slack_context_for")
         w = self.weave
         result: list[SlackConversationEntry] = []
@@ -210,8 +210,8 @@ class BriefingSupport:
             ))
         return result
     
-    def transcript_context_for(self, event: Event, certainty: float, use_hyde: bool = False) -> list[TranscriptEntry]:
-        sum_transcript = self.context_for(event, WeaviateSchemas.TRANSCRIPT_ENTRY, WeaviateSchemas.TRANSCRIPT, 'meeting_code', certainty, use_hyde)
+    def transcript_context_for(self, event: Event, certainty: float, threshold: float, use_hyde: bool = False) -> list[TranscriptEntry]:
+        sum_transcript = self.context_for(event, WeaviateSchemas.TRANSCRIPT_ENTRY, WeaviateSchemas.TRANSCRIPT, 'meeting_code', certainty, threshold,  use_hyde)
         prompt = self.prompt_manager.get_latest_prompt_template("BriefingSupport.transcript_context_for")
         w = self.weave
         result: list[TranscriptEntry] = []
@@ -233,19 +233,18 @@ class BriefingSupport:
         return result
     
     def context_for(self, event: Event, source: WeaviateSchemas, meta_source: WeaviateSchemas, id_prop: str, 
-                    certainty: float = None, use_hyde: bool = False) -> list[dict[str, any]]:
+                    certainty: float = None, threshold: float = None, use_hyde: bool = False) -> list[dict[str, any]]:
         w = self.weave
         cv = .3 if not certainty else certainty
+        th = .3 if not threshold else threshold
         print(event)
-        res: list[Object[any,any]] = w.search(event.summary, source, certainty = cv, use_hyde = use_hyde)
-        dsc_res: list[Object[any,any]] = w.search(event.description, source, certainty = cv, use_hyde = use_hyde) if event.description!= None and event.description!= '' else []
+        res: list[Object[any,any]] = w.search(event.summary, source, certainty = cv, threshold = threshold, use_hyde = use_hyde)
+        dsc_res: list[Object[any,any]] = w.search(event.description, source, certainty = cv, threshold = threshold, use_hyde = use_hyde) if event.description!= None and event.description!= '' else []
+        res.extend(dsc_res)
         result: dict[str, any] = {}
         for o in res:
             props = o.properties
-            result[props[id_prop]] = props
-        for o in dsc_res:
-            props = o.properties
-            result[props[id_prop]] = props
+            result[props[id_prop]] = props        
 
         ids = list(result.keys())
         if len(ids) > 0:

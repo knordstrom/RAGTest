@@ -14,13 +14,14 @@ import weaviate.classes as wvc
 from weaviate.util import generate_uuid5 as weave_uuid5
 from weaviate.classes.config import Property, DataType
 from library.models.weaviate_schemas import Email, EmailText, EmailTextWithFrom, WeaviateSchemas, WeaviateSchema
-from weaviate.classes.query import Filter
+from weaviate.classes.query import Filter, Rerank
 from weaviate.collections.classes.grpc import Sort
 from weaviate.collections.collection import Collection
 from weaviate.collections.classes.internal import Object
 from weaviate.collections.classes.types import Properties, References
 from langchain_core.documents import Document
 from weaviate.collections.classes.aggregate import AggregateReturn
+import math
 
 class Weaviate(VDB):
 
@@ -178,26 +179,45 @@ class Weaviate(VDB):
         collection = self.collection(key)
         return collection.aggregate.over_all()
     
-    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, use_hyde: bool = False) -> list[dict[str, any]]:
-
-        collection: Collection[Properties, References] = self.collection(key)
-
+    def _hyde_query(self, query: str, key: WeaviateSchemas, use_hyde: bool = False) -> str:
         if use_hyde:
             search_query: str = GroqBriefingSummarizer().generate_hyde_content(query, key.name)
             print("Using hyde content ", "from query", query, "to be", search_query)
         else:
             search_query = query
+        return search_query
+    
+    def _filter_rerank_responses(self, response: list[dict[str, any]], threshold: float) -> list[dict[str, any]]:
+        if threshold is None:
+            return response
+        filtered_response = []
+        for o in response:
+            props = o.properties
+            rerank_score = o.metadata.rerank_score
+            normalized_rerank_score = 1/(1 + math.exp (-rerank_score))
+            props['normalized_rerank_score'] = normalized_rerank_score
+
+            if normalized_rerank_score >= threshold:
+                filtered_response.append(o)
+        return filtered_response
+
+    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = None, use_hyde: bool = False) -> list[dict[str, any]]:
+        collection: Collection[Properties, References] = self.collection(key)
+        search_query: str = self._hyde_query(query, key, use_hyde)
+
+        rerank = Rerank(prop="text", query=query) if threshold is not None else None
 
         response: list[dict[str, any]] = collection.query.near_text(
             query = search_query,
             limit = limit,
             certainty = certainty,
+            rerank = rerank,
             return_metadata = wvc.query.MetadataQuery(distance=True)
         ).objects
 
         print("Found " + str(len(response)) + " objects")
 
-        return response
+        return self._filter_rerank_responses(response, threshold)
     
     def get_by_ids(self, key: WeaviateSchemas, id_prop: str, ids: list[str]) -> list[dict[str, any]]:
         return self.collection(key).query.fetch_objects(
