@@ -3,8 +3,10 @@ import enum
 import os
 import dotenv
 import weaviate as w
+import weaviate.util as wutil
 #import langchain_experimental.text_splitter as lang_splitter
 from langchain_community.embeddings import GPT4AllEmbeddings
+from library.managers.briefing_summarizer import GroqBriefingSummarizer
 from library.models.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, TranscriptConversation, TranscriptLine
 from library.data.local.vdb import VDB 
 from library import utils
@@ -92,7 +94,7 @@ class Weaviate(VDB):
 
     def upsert(self, obj: dict[str, str], collection_key: WeaviateSchemas, id_property: str = None, attempts: int=0) -> bool:
         collection = self.collection(collection_key)   
-        identifier = w.util.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
+        identifier = wutil.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
         
         try: 
             with collection.batch.rate_limit(requests_per_minute=5) as batch:
@@ -177,36 +179,17 @@ class Weaviate(VDB):
         collection = self.collection(key)
         return collection.aggregate.over_all()
     
-    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7) -> list[dict[str, any]]:
-
-        collection: Collection[Properties, References] = self.collection(key)
-
-        response: list[dict[str, any]] = collection.query.near_text(
-            query=query,
-            limit=limit,
-            certainty=certainty,
-            return_metadata=wvc.query.MetadataQuery(distance=True)
-        ).objects
-
-        print("Found " + str(len(response)) + " objects")
-
-        return response
+    def _hyde_query(self, query: str, key: WeaviateSchemas, use_hyde: bool = False) -> str:
+        if use_hyde:
+            search_query: str = GroqBriefingSummarizer().generate_hyde_content(query, key.name)
+            print("Using hyde content ", "from query", query, "to be", search_query)
+        else:
+            search_query = query
+        return search_query
     
-    def search_reranking(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = .5) -> list[dict[str, any]]:
-        print("doing a reranking")
-        collection: Collection[Properties, References] = self.collection(key)
-
-        response: list[dict[str, any]] = collection.query.near_text(
-            query=query,
-            limit=limit,
-            certainty=certainty,
-            rerank=Rerank(
-                prop="text",
-                query=query
-            ),
-            return_metadata=wvc.query.MetadataQuery(distance=True)
-        ).objects
-
+    def _filter_rerank_responses(self, response: list[dict[str, any]], threshold: float) -> list[dict[str, any]]:
+        if threshold is None:
+            return response
         filtered_response = []
         for o in response:
             props = o.properties
@@ -216,10 +199,25 @@ class Weaviate(VDB):
 
             if normalized_rerank_score >= threshold:
                 filtered_response.append(o)
-        
-        print("Found " + str(len(filtered_response)) + " objects")
-
         return filtered_response
+
+    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = None, use_hyde: bool = False) -> list[dict[str, any]]:
+        collection: Collection[Properties, References] = self.collection(key)
+        search_query: str = self._hyde_query(query, key, use_hyde)
+
+        rerank = Rerank(prop="text", query=query) if threshold is not None else None
+
+        response: list[dict[str, any]] = collection.query.near_text(
+            query = search_query,
+            limit = limit,
+            certainty = certainty,
+            rerank = rerank,
+            return_metadata = wvc.query.MetadataQuery(distance=True)
+        ).objects
+
+        print("Found " + str(len(response)) + " objects")
+
+        return self._filter_rerank_responses(response, threshold)
     
     def get_by_ids(self, key: WeaviateSchemas, id_prop: str, ids: list[str]) -> list[dict[str, any]]:
         return self.collection(key).query.fetch_objects(

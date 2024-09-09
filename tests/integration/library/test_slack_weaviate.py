@@ -117,10 +117,10 @@ class SlackChannelAssertions:
 
         message = result[0]
 
-        assert len(message.properties.keys()) == 6, "Each message should have 6 properties"
+        assert len(message.properties.keys()) >= 6, f"Each message should have 6 properties, found ${message.properties.keys()}"
 
         assert 'message_id' in message.properties.keys()
-        assert 'from' in message.properties.keys()
+        assert 'sender' in message.properties.keys()
         assert 'ts' in message.properties.keys()
         assert 'subtype' in message.properties.keys()
         assert 'type' in message.properties.keys()

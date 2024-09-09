@@ -28,32 +28,36 @@ app.include_router(employees)
 
 tags = ["Main Interface"]
 
+def _check_float(value: Union[float,None], field_name: str) -> Union[float,None]:
+    if value is not None:
+        if value < 0 or value > 100:
+            APISupport.error_response(400, f"Value for {field_name} must be a percentage value between 0 and 100.")
+        else:
+            value = value / 100
+    return value
+
 @app.get('/ask', tags=tags)
-async def ask(query:str, n: Union[int,None] = None) -> ApiResponse[AskResponse]:
+async def ask(query:str, n: Union[int,None] = None, 
+                 certainty: Union[float,None] = None, threshold: Union[float,None] = None, use_hyde: bool = False) -> ApiResponse[AskResponse]:
     """Ask Weaviate a question. Will leverage [email] for context."""
-    response = APISupport.perform_ask(query, weaviate.WeaviateSchemas.EMAIL_TEXT, context_limit = n)
+    response = APISupport.perform_ask(query, weaviate.WeaviateSchemas.EMAIL_TEXT, context_limit = n, certainty = certainty, threshold = threshold, use_hyde = use_hyde)
     return ApiResponse.create(response)
 
 @app.get('/briefs', tags=tags)
-async def briefs(email:str, start:datetime.datetime, end: Union[datetime.datetime, None] = None, certainty: Union[float,None] = None, threshold: Union[float,None] = None) -> ApiResponse[BriefResponse]:
-    """Create briefings for a user."""
-    if certainty is not None:
-        if certainty < 0 or certainty > 100:
-            APISupport.error_response(400, "Confidence must be a percentage value between 0 and 100.")
-        else:
-            certainty = certainty / 100
-    if threshold is not None:
-        if threshold < 0 or threshold > 100:
-            APISupport.error_response(400, "Threshold must be a percentage value between 0 and 100.")
-        else:
-            threshold = threshold / 100
+async def briefs(email:str, start:datetime.datetime, end: Union[datetime.datetime, None] = None, 
+                 certainty: Union[float,None] = None, threshold: Union[float,None] = None, use_hyde: bool = False) -> ApiResponse[BriefResponse]:
+    """Create briefings for a user. Toggle [use_hyde] to use the GroqBriefingSummarizer to perform a HYpothetical Document Embeddings search."""
+    certainty  = _check_float(certainty, "certainty")
+    threshold = _check_float(threshold, "threshold")
+
     plus12 = start + datetime.timedelta(hours=12)
     if end is None:
         end = plus12
     elif end < start:
         APISupport.error_response(400, "End time must be after the start time.")
     support = BriefingSupport(GroqBriefingSummarizer())
-    response =  support.create_briefings_for(email = email, start_time=start, end_time= end, certainty = certainty, threshold = threshold)
+
+    response =  support.create_briefings_for(email = email, start_time=start, end_time= end, certainty = certainty, threshold = threshold, use_hyde = use_hyde)
     return ApiResponse.create(response)
 
 @app.get('/schedule', tags=tags)

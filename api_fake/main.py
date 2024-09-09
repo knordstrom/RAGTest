@@ -2,7 +2,8 @@ import datetime
 import json
 from typing import Union
 
-from library.models.api_models import ApiResponse, AskResponse, BriefResponse, ScheduleResponse
+from library.managers.auth_manager import AuthManager
+from library.models.api_models import ApiResponse, AskResponse, BriefResponse, LoginRequest, ScheduleResponse, TokenResponse
 from library.managers.api_support import APISupport
 from library.managers.briefing_support import BriefingSupport
 from library.managers.briefing_summarizer import GroqBriefingSummarizer
@@ -36,3 +37,10 @@ async def briefs(email:str, start:datetime.datetime, end: Union[datetime.datetim
     except FileNotFoundError:
         APISupport.error_response(404, f"File {file} not found")
     return ApiResponse.create(BriefResponse(**response["response"]))
+
+@app.post('/auth/login')
+async def authenticate(form: LoginRequest) -> ApiResponse[TokenResponse]:  
+    """Perform login for a user"""
+    result: TokenResponse = AuthManager().authenticate(form.email, form.password)
+    return ApiResponse.create(result)
+    
