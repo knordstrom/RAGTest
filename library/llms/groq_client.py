@@ -1,5 +1,7 @@
 from enum import Enum
+import os
 from cachetools import TTLCache, cached
+import dotenv
 from groq import Groq
 
 from library.decorators import Decorators as d
@@ -88,7 +90,14 @@ class Models(Enum):
     # File Size: 25 MB
     WHISPER_LARGE_V3 = "whisper-large-v3"
 
-    
+    @staticmethod
+    def default() -> 'Models':
+        dotenv.load_dotenv()
+        default: str = os.getenv("GROQ_DEFAULT_MODEL")
+        default = default.strip().upper().replace("-", "_") if default else None
+        if default is not None and default in Models.__members__:
+            return Models.__members__[default]
+        return Models.LLAMA3_70B_8192
 
 class GroqClient:
 
@@ -99,7 +108,7 @@ class GroqClient:
 
     def __init__(self, key: str, model: Models = None, temperature: float=0.01, max_tokens: int=2000):
         self.key = key
-        self.model = model if model else Models.LLAMA3_70B_8192
+        self.model = model if model else Models.default()
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.client = Groq(
@@ -109,7 +118,10 @@ class GroqClient:
     @d.deep_freeze_args
     @cached(cache=TTLCache(maxsize=1024, ttl=3600))
     def query(self, prompt: str, context: dict[str, str]) -> str:
-        print("Querying GROQ with model: ", self.model.value, "and", len(prompt.format(**context)),"characters of input")
+        prompt_len: int = len(prompt.format(**context))
+        model = self.model.value if prompt_len < 8192 else Models.LLAMA_31_8B_INSTANT.value
+        print("Querying GROQ with model: ", model, "and", len(prompt.format(**context)),"characters of input")
+
         chat_completion = self.client.chat.completions.create(
             messages=[
                 {
@@ -117,7 +129,7 @@ class GroqClient:
                     "content": prompt.format(**context),
                 }
             ],
-            model=self.model.value,
+            model=model,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
         )

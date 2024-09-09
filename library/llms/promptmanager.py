@@ -56,11 +56,13 @@ class PromptManager:
     def get_prompt(self, name: str) -> dict[str, str]:
         prompt_id: str = self.name_to_id(name)
         result: dict[str, str] = self.get_response("get-prompt", prompt_id)
-        if not result.get('versions'):
-            with open(Globals().prompt(name), 'r') as f:
-                text = f.read()
-
-                result['versions'] = [{"template": text}]
+        if not result or not result.get('versions'):
+            try:
+                with open(Globals().prompt(name), 'r') as f:
+                    text = f.read()
+                    result['versions'] = [{"template": text}]
+            except FileNotFoundError:
+                raise PromptMissingException(f"No prompt found for name `{name}`")
         return result
 
     def cache_prompt_keys(self) -> None:
