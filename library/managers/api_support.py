@@ -107,7 +107,7 @@ class APISupport:
 
         # LANGCHAIN IMPLEMENTATION
         pm: PromptManager = PromptManager()
-        prompt= pm.get_prompt('ApiSupport.perform_ask')
+        prompt= pm.get_prompt('APISupport.perform_ask')
 
         texts = []
         for o in context:
