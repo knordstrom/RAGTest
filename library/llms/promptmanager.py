@@ -62,7 +62,7 @@ class PromptManager:
                     text = f.read()
                     result['versions'] = [{"template": text}]
             except FileNotFoundError:
-                raise PromptMissingException(f"No prompt found for name `{name}`")
+                raise PromptMissingException(f"No prompt found for name `{name}` (File not found at {Globals().prompt(name)})")
         return result
 
     def cache_prompt_keys(self) -> None:

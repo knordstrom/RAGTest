@@ -53,6 +53,7 @@ RUN mkdir -p /app/library/llms
 RUN mkdir -p /app/library/managers
 RUN mkdir -p /app/library/models
 RUN mkdir -p /app/resources
+RUN mkdir -p /app/prompts
 COPY pyproject.toml ./
 RUN poetry lock --no-update
 RUN poetry install
@@ -65,6 +66,7 @@ COPY library/managers/handlers.py library/managers/processor_support.py library/
 COPY library/llms/promptmanager.py library/llms/groq_client.py ./library/llms/
 COPY library/utils.py library/token_generator.py library/document_parser.py library/decorators.py  ./library/
 COPY resources/slack_users.json ./resources/
+COPY prompts/* ./prompts
 
 COPY library/enums/*.py ./library/enums/
 COPY library/models/*.py ./library/models/

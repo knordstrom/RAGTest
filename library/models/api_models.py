@@ -152,14 +152,14 @@ class DocumentPermission(BaseModel):
     displayName: Union[str, None] = None
     role: str
     photoLink: str = None
-    emailAddress: Union[EmailStr, None] = None
+    emailAddress: Union[str, None] = None
     permission_id: str
     deleted: bool = False
 
 class DocumentOwner(BaseModel):
     photoLink: str = None
     displayName: Union[str, None] = None
-    emailAddress: Union[EmailStr, None] = None
+    emailAddress: Union[str, None] = None
     kind: str
     permissionId: Union[str, None] = None
 
@@ -228,7 +228,7 @@ class ConferenceTranscript(BaseModel):
     document: str
     export_uri: str
     start_time: datetime
-    end_time: datetime
+    end_time: Optional[datetime] = None
     space: ConferenceSpace
 
     @staticmethod
@@ -240,7 +240,7 @@ class ConferenceTranscript(BaseModel):
 
 class ConferenceRecording(BaseModel):
     start_time: datetime
-    end_time: datetime
+    end_time: Optional[datetime] = None
     file: str
     export_uri: str
 
@@ -253,7 +253,7 @@ class ConferenceRecording(BaseModel):
 class ConferenceCall(BaseModel):
     name: str
     start_time: datetime
-    end_time: datetime
+    end_time: Optional[datetime] = None
     expire_time: datetime
     recordings: List[ConferenceRecording]
     space: ConferenceSpace
