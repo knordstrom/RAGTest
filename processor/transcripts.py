@@ -13,10 +13,11 @@ import library.models.event as event
 import library.managers.handlers as h
 import warnings
 from library.data.local import neo4j
+from kafka.consumer.fetcher import ConsumerRecord
 
 warnings.simplefilter("ignore", ResourceWarning)   
 
-def write_transcripts_to_vdb(docs: list[dict[str, any]]):
+def write_transcripts_to_vdb(docs: list[ConsumerRecord]):
     db = os.getenv("VECTOR_DB_HOST", "127.0.0.1")
     db_port = os.getenv("VECTOR_DB_PORT", "8080")
     print("Writing to VDB at " + db + ":" + db_port + " ... " + str(len(docs)))
@@ -27,11 +28,12 @@ def write_transcripts_to_vdb(docs: list[dict[str, any]]):
         w = weaviate.Weaviate(db, db_port)
         handler: h.Handlers = h.Handlers(w, g)
         # print("number of received documents: ", len(docs))
-        for doc in docs:
-            meeting_code: str = doc.value.get("meeting_code")
-            document_id: str = doc.value.get("document_id")
-            transcript_text: str = doc.value.get("text")
-            provider: str = doc.value.get("provider")
+        for doc_record in docs:
+            doc: dict[str, any] = doc_record.value
+            meeting_code: str = doc.get("meeting_code")
+            document_id: str = doc.get("document_id")
+            transcript_text: str = doc.get("text")
+            provider: str = doc.get("provider")
             conversation: TranscriptConversation = ProcessorSupport.process_google_transcript(transcript_text, document_id, meeting_code)
             handler.handle_transcript(conversation)
             print(f"document added ",  provider, )

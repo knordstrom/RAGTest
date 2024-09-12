@@ -96,6 +96,7 @@ class Handlers:
 
 
     def handle_slack_channel(self, slack: dict[str, any]) -> None:
+        print("Slack was called", slack)
         print("Handling slack channel", slack.get('name', '???'), slack.keys())
 
         # upsert channel itself on channel id

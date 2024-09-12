@@ -80,7 +80,7 @@ services:
       - zoo1
 
   processor:
-    image: knordstrom/email-processor:0.1.9
+    image: knordstrom/email-processor:0.1.10
     restart: always
     environment:
       KAFKA_BROKER: "kafka1:19092"
@@ -95,7 +95,7 @@ services:
       PROMPTTEAMS_API_KEY: "${PROMPTTEAMS_API_KEY}"
 
   event_processor:
-    image: knordstrom/event-processor:0.1.9
+    image: knordstrom/event-processor:0.1.10
     restart: always
     environment:
       KAFKA_BROKER: "kafka1:19092"
@@ -108,7 +108,7 @@ services:
       PROMPTTEAMS_API_KEY: "${PROMPTTEAMS_API_KEY}"
 
   document_processor:
-    image: knordstrom/document-processor:0.1.9
+    image: knordstrom/document-processor:0.1.10
     restart: always
     environment:
       KAFKA_BROKER: "kafka1:19092"
@@ -120,7 +120,7 @@ services:
       PROMPTTEAMS_API_KEY: "${PROMPTTEAMS_API_KEY}"
   
   transcript_processor:
-    image: knordstrom/transcript-processor:0.1.9
+    image: knordstrom/transcript-processor:0.1.10
     restart: always
     environment:
       KAFKA_BROKER: "kafka1:19092"
@@ -130,10 +130,22 @@ services:
       VECTOR_DB_HOST: "docker-weaviate-1"
       VECTOR_DB_PORT: 8080
       PROMPTTEAMS_API_KEY: "${PROMPTTEAMS_API_KEY}"
+
+  slack_processor:
+    image: knordstrom/slack-processor:0.1.11
+    restart: always
+    environment:
+      KAFKA_BROKER: "kafka1:19092"
+      KAFKA_TOPIC: "slack"
+      PYTHONUNBUFFERED: 1
+      GROQ_API_KEY: "${GROQ_API_KEY}"
+      VECTOR_DB_HOST: "docker-weaviate-1"
+      VECTOR_DB_PORT: 8080
+      PROMPTTEAMS_API_KEY: "${PROMPTTEAMS_API_KEY}"
       
   api:
     restart: always
-    image: knordstrom/sofia-api:0.1.9
+    image: knordstrom/sofia-api:0.1.10
     ports:
       - "5010:5010"
       - "3127:3127"

@@ -19,6 +19,8 @@ RUN apk update && \
     apk add linux-headers build-base python3-dev ethtool && \
     apk add musl-dev gcc gfortran openblas-dev libffi-dev g++
 
+# RUN apk update apk add libffi-dev
+
 WORKDIR /app
 
 # Install Poetry
@@ -27,7 +29,7 @@ RUN pip install poetry==1.8.0
 # Install the app
 COPY pyproject.toml ./
 RUN poetry update
-# RUN pip install gpt4all
+RUN pip install gpt4all
 RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR;
 
 
@@ -36,21 +38,20 @@ FROM base AS runtime
 WORKDIR /app
 
 RUN apk update && \
-    apk add gcc musl-dev gfortran openblas-dev antiword
+    apk add gcc musl-dev gfortran openblas-dev libffi-dev g++
 RUN pip install poetry==1.8.0
-RUN pip install --upgrade google-apps-meet google-auth-httplib2 google-auth-oauthlib
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
-RUN mkdir -p /app/api
+RUN mkdir -p /app/processor
 RUN mkdir -p /app/library
 RUN mkdir -p /app/library/data
 RUN mkdir -p /app/library/data/local
 RUN mkdir -p /app/library/data/external
-RUN mkdir -p /app/library/models
+RUN mkdir -p /app/library/enums
 RUN mkdir -p /app/library/llms
 RUN mkdir -p /app/library/managers
-RUN mkdir -p /app/library/enums
+RUN mkdir -p /app/library/models
 RUN mkdir -p /app/resources
 RUN mkdir -p /app/prompts
 COPY pyproject.toml ./
@@ -58,16 +59,19 @@ RUN poetry lock --no-update
 RUN poetry install
 
 COPY globals.py ./
-COPY api/* ./api/
-COPY library/* ./library/
-COPY library/data/local/* ./library/data/local
-COPY library/data/external/* ./library/data/external
-COPY library/llms/* ./library/llms
-COPY library/enums/* ./library/enums
-COPY library/models/* ./library/models  
-COPY library/managers/* ./library/managers
-COPY resources/gsuite_creds.json resources/slack_users.json ./resources/
+COPY processor/slack.py processor/context.py ./processor/
+COPY library/data/local/vdb.py library/data/local/weaviate.py library/data/local/neo4j.py ./library/data/local/
+COPY library/data/external/slack.py ./library/data/external/
+COPY library/managers/handlers.py library/managers/processor_support.py  library/managers/briefing_summarizer.py ./library/managers/
+COPY library/llms/promptmanager.py library/llms/groq_client.py ./library/llms/
+COPY library/utils.py library/token_generator.py library/document_parser.py library/decorators.py  ./library/
+COPY resources/slack_users.json ./resources/
 COPY prompts/* ./prompts
 
-CMD ["uvicorn", "api.main:app", "--port=5010", "--host=0.0.0.0"] 
-EXPOSE 5010
+COPY library/enums/*.py ./library/enums/
+COPY library/models/*.py ./library/models/
+
+
+RUN ls -la
+
+CMD ["poetry", "run", "slack_processor"]

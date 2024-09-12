@@ -14,6 +14,8 @@ from library.utils import Utils
 from library.models.employee import Employee
 from library.models.weaviate_schemas import Event as WeaviateEvent
 from library.models.event import Event
+from kafka.consumer.fetcher import ConsumerRecord
+
 
 class EventPersonRelationships:
     attendance_map: dict[str, dict[str, any]] = {}
@@ -266,14 +268,14 @@ class Neo4j:
             return TokenResponse(email=email, token=token, expiry=token_expiry)
 
     #### Events ####
-    def process_events(self, events: list[Event]):
+    def process_events(self, events: list[ConsumerRecord]) -> None:
         """Processes a list of Google API calendar events and adds them, plus their atttendees, to the Neo4j database."""
 
         events_list = []
         relationships = EventPersonRelationships()
 
         for record in events:
-            event = record.value
+            event: dict[str, any] = record.value
             event_dict = self.extract_event_info(event)
             events_list.append(event_dict)
             self.extract_attendees_info(event, event_dict, relationships)
