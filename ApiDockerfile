@@ -52,6 +52,7 @@ RUN mkdir -p /app/library/llms
 RUN mkdir -p /app/library/managers
 RUN mkdir -p /app/library/enums
 RUN mkdir -p /app/resources
+RUN mkdir -p /app/prompts
 COPY pyproject.toml ./
 RUN poetry lock --no-update
 RUN poetry install
@@ -65,7 +66,8 @@ COPY library/llms/* ./library/llms
 COPY library/enums/* ./library/enums
 COPY library/models/* ./library/models  
 COPY library/managers/* ./library/managers
-COPY resources/gsuite_creds.json /app/resources
+COPY resources/gsuite_creds.json resources/slack_users.json ./resources/
+COPY prompts/* ./prompts
 
 CMD ["uvicorn", "api.main:app", "--port=5010", "--host=0.0.0.0"] 
 EXPOSE 5010

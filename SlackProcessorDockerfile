@@ -59,10 +59,10 @@ RUN poetry lock --no-update
 RUN poetry install
 
 COPY globals.py ./
-COPY processor/main.py processor/context.py ./processor/
+COPY processor/slack.py processor/context.py ./processor/
 COPY library/data/local/vdb.py library/data/local/weaviate.py library/data/local/neo4j.py ./library/data/local/
 COPY library/data/external/slack.py ./library/data/external/
-COPY library/managers/handlers.py library/managers/processor_support.py  library/managers/briefing_summarizer.py  ./library/managers/
+COPY library/managers/handlers.py library/managers/processor_support.py  library/managers/briefing_summarizer.py ./library/managers/
 COPY library/llms/promptmanager.py library/llms/groq_client.py ./library/llms/
 COPY library/utils.py library/token_generator.py library/document_parser.py library/decorators.py  ./library/
 COPY resources/slack_users.json ./resources/
@@ -71,6 +71,7 @@ COPY prompts/* ./prompts
 COPY library/enums/*.py ./library/enums/
 COPY library/models/*.py ./library/models/
 
+
 RUN ls -la
 
-CMD ["poetry", "run", "event_processor"]
+CMD ["poetry", "run", "slack_processor"]

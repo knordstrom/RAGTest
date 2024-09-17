@@ -40,7 +40,7 @@ spec:
               value: docker-weaviate-1
             - name: VECTOR_DB_PORT
               value: "8080"
-          image: context-api:0.1.1
+          image: knordstrom/sofia-api:0.1.1
           name: api
           ports:
             - containerPort: 5010

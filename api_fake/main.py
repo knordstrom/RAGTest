@@ -22,6 +22,7 @@ from globals import Globals
 warnings.simplefilter("ignore", ResourceWarning)
 
 app = FastAPI(title="Sofia Faked API", description="Faked API for developing UI for Sofia", version="0.1")
+app.include_router(auth)
 
 @app.get('/briefs', tags=["Main Interface"])
 async def briefs(email:str, start:datetime.datetime, end: Union[datetime.datetime, None] = None, certainty: Union[float,None] = None) -> ApiResponse[BriefResponse]:
