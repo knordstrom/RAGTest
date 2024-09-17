@@ -10,49 +10,35 @@ import datetime
 
 from slack_sdk.web import SlackResponse
 from globals import Globals
-from library.models.api_models import SlackUser
+from library.enums.data_sources import DataSources
+from library.managers.auth_manager import AuthManager
+from library.managers.slack_user_manager import SlackUserManager
+from library.models.api_models import OAuthCreds, SlackUser
+from library.models.employee import User
 from library.utils import Utils
 import json
 
 class Slack:
-    users: dict[str, SlackUser] = None
-    user_names_to_emails: dict[str, str] = None
-    user_ids_to_emails: dict[str, str] = None
 
     oauth_bot_scope: list[str]
     oauth_user_scope: list[str]
     client: WebClient
     bot_client: WebClient
+    user: User
+    auth_manager: AuthManager = AuthManager()
+    user_manager: SlackUserManager = None
 
-    def load_users(self):
-        self.users = {}
-        self.user_names_to_emails = {}
-        self.user_ids_to_emails = {}
-        file_path = Globals().resource("slack_users.json")
-
-        with open(file_path, "r") as file:
-            for line in file:
-                s: dict[str, str] = json.loads(line)
-                u = SlackUser(**s)
-                self.users[u.id] = u
-                self.user_names_to_emails[u.name] = u.email
-                self.user_ids_to_emails[u.id] = u.email
-
-    @property
-    def emails_to_user_ids(self) -> dict[str, str]:
-        return {v: k for k, v in self.user_ids_to_emails.items()}
-    
-    @property
-    def emails_to_user_names(self) -> dict[str, str]:
-        return {v: k for k, v in self.user_names_to_emails.items()}
+    is_local: bool = False
 
     token_file: str = Globals().root_resource("slack_token.json")
     bot_token_file: str = Globals().root_resource("slack_bot_token.json")
-    def __init__(self):
+    def __init__(self, user: User):
+        self.user = user
         dotenv.load_dotenv()
+        self.is_local = os.getenv("IS_LOCAL") in ["True", "true", "1"]
         self.client_id = os.getenv("SLACK_CLIENT_ID")
         self.client_secret = os.getenv("SLACK_CLIENT_SECRET")
-        self.load_users()
+        self.user_manager = SlackUserManager()
         self.oauth_bot_scope = [
             # "users:read",
             #"users:read.history",
@@ -101,11 +87,22 @@ class Slack:
         print("URL: ", url)
         return url
          
-    
     def check_auth(self) -> Credentials:
+        return self.check_auth_local() if self.is_local else self.check_auth_deployed()
+
+    def check_auth_local(self) -> Credentials:
         creds = None
         if os.path.exists(self.token_file):
             creds: Credentials = Credentials.from_authorized_user_file(self.token_file, self.oauth_user_scope)
+            if not creds.expired:
+                self.client = WebClient(token=creds.token)
+        return creds
+    
+    def check_auth_deployed(self) -> Credentials:
+        stored_creds: OAuthCreds = self.auth_manager.read_remote_credentials(self.user, DataSources.SLACK)
+
+        if stored_creds:
+            creds: Credentials = stored_creds.to_credentials()
             if not creds.expired:
                 self.client = WebClient(token=creds.token)
         return creds
@@ -136,8 +133,16 @@ class Slack:
         print("Response: ", response.data)
         print("Initial Token: ", token)
 
-
         print("Expires in: ", response.data.get("authed_user",{}).get("expires_in"))
+        if self.is_local:
+            self.save_auth_local(response)
+        else:
+            self.save_auth_deployed(response)
+
+        print("Saved to file, responding")
+        return response.data
+    
+    def save_auth_local(self, response: SlackResponse) -> None:
         formatted: dict[str, str] = {
             "token": response.data.get("authed_user",{}).get("access_token"),
             "refresh_token": response.data.get("authed_user",{}).get("refresh_token"),
@@ -152,16 +157,27 @@ class Slack:
         with open(self.token_file, "w") as save_file:
              print("Writing to file", self.token_file," ", formatted)
              json.dump(formatted, save_file)
-        print("Saved to file, responding")
-        return response.data
-    
+
+    def save_auth_deployed(self, response: SlackResponse) -> None:
+        self.auth_manager \
+            .write_remote_credentials(self.user, 
+                target = DataSources.SLACK.name, 
+                token = response.data.get("authed_user",{}).get("access_token"), 
+                refresh_token = response.data.get("authed_user",{}).get("refresh_token"), 
+                expiry = (datetime.datetime.now() + datetime.timedelta(seconds=response.data.get("authed_user",{}).get("expires_in"))).isoformat(), 
+                client_id = self.client_id, 
+                client_secret = self.client_secret, 
+                scopes = response.data.get("authed_user",{}).get("scope").split(","))
+
     def read_conversations(self) -> list[dict[str, any]]:
         response: SlackResponse = self.client.conversations_list()
         conversations: dict[str, any] = response.data
 
         result: list[dict[str, any]] = []
+        convo: dict[str, any]
         for convo in conversations.get('channels', []):
             channel: dict[str, any] = self.process_channel(convo)
+            contributor_ids: set[str] = set()
 
             messages: list[dict[str, any]] = self.read_messages(convo.get('id'))
 
@@ -171,13 +187,16 @@ class Slack:
                 try:
                     replies: SlackResponse = self.client.conversations_replies(channel=convo.get('id'), ts=message.get('ts'))
                     print(len(replies.data.get('messages', [])), " replies found for ", convo.get('id'), message.get('ts'))
-                    thread: dict[str, any] = {
-                        "id": thread_id,
-                        "messages": []
-                    }
+                    
+                    thread_messages: list[dict[str, any]] = []
                     for reply in replies.data.get('messages', []):
-                        thread["messages"].append(self.process_message(reply))
-                    threads.append(thread)
+                        m: dict[str, any] = self.process_message(reply)
+                        contributor_ids.add(m.get('user'))
+                        thread_messages.append(m)
+                    threads.append({
+                        "id": thread_id,
+                        "messages": thread_messages
+                    })
                 except Exception as e:
                     print("Replies not found with", convo.get('id'), message.get('ts'))
                     threads.append({
@@ -187,27 +206,25 @@ class Slack:
             print("     Adding ", len(threads), " threads to ", channel.get('name'))
                 
             channel['threads'] = threads
+            channel['contributors'] = list(contributor_ids)
             result.append(channel)
 
         return result
     
-    user_keep_keys: list[str] = ["id", "name", "real_name", "email", "deleted", "is_bot"]
-    message_keep_keys: list[str] = ["user", "text", "ts", "reactions", "reply_users"]
+    # user_keep_keys: list[str] = ["id", "name", "real_name", "email", "deleted", "is_bot"]
+    # message_keep_keys: list[str] = ["user", "text", "ts", "reactions", "reply_users"]
     
-    # def get_user(self, user_id: str) -> SlackUser:
-        # if not self.bot_client:
-        #     self.check_bot_auth()
-        # if user_id in self.users:
-        #     user = self.users[user_id]
-        # else:
-        #     response = self.bot_client.users_info(user=user_id)
-        #     user = response.data.get("user", {})
-        #     user['email'] = self.user_ids_to_emails.get(user_id, "")
-        #     self.users[user_id] = user
+    # # def get_user(self, user_id: str) -> SlackUser:
+    #     # if not self.bot_client:
+    #     #     self.check_bot_auth()
+    #     # if user_id in self.users:
+    #     #     user = self.users[user_id]
+    #     # else:
+    #     #     response = self.bot_client.users_info(user=user_id)
+    #     #     user = response.data.get("user", {})
+    #     #     user['email'] = self.user_ids_to_emails.get(user_id, "")
+    #     #     self.users[user_id] = user
 
-    def get_user(self, user_id: str) -> SlackUser:
-        return self.users.get(user_id)
-    
     def read_messages(self, channel_id: str) -> list[dict[str, any]]:
         response: SlackResponse = self.client.conversations_history(channel=channel_id)
         messages: list[dict[str, any]] = response.data.get("messages", [])
@@ -221,7 +238,7 @@ class Slack:
     
     def process_message(self, message: dict[str, any]) -> dict[str, any] :
         response: dict[str, any] = Utils.dict_keep_keys(message, ["user", "text", "ts", "attachments", "type", "subtype"])
-        user: SlackUser = self.get_user(message.get('user'))
+        user: SlackUser = self.user_manager.get_user_by_id(message.get('user'))
         response['email'] = user.email if user else ""
         attachments: list[dict[str, any]] = message.get("attachments", [])
         if len(attachments) > 0:

@@ -99,6 +99,7 @@ class Email(BaseModel):
     sender: EmailParticipant
     date: datetime
     provider: str
+    person_id: str
 
 class EmailText(BaseModel):
     text: str

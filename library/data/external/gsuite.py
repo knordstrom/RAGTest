@@ -21,8 +21,11 @@ from google.apps import meet_v2
 from google.apps.meet_v2.types import ConferenceRecord
 from google.apps.meet_v2.types import resource
 
-from library.models.api_models import ConferenceCall, ConferenceRecording, ConferenceSpace, ConferenceTranscript
+from library.enums.data_sources import DataSources
+from library.managers.auth_manager import AuthManager
+from library.models.api_models import ConferenceCall, ConferenceRecording, ConferenceSpace, ConferenceTranscript, OAuthCreds
 from library.models import message
+from library.models.employee import User
 
 # interface for the Gmail API wrapper
 class GSuiteServiceProvider:
@@ -115,6 +118,9 @@ class GSuite(GSuiteServiceProvider):
     MIME_TYPE: dict[str, str] = {"pdf": "mimeType='application/pdf'",
                 "docx": "mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'",
                 "google_doc": "mimeType='application/vnd.google-apps.document'"}
+    
+    user: User = None
+    is_local: bool = False
 
     def service(self, google_schema: GoogleSchemas) -> Resource:
         credentials = self.__authenticate()
@@ -139,41 +145,56 @@ class GSuite(GSuiteServiceProvider):
             self._spaces_client = meet_v2.SpacesServiceAsyncClient(credentials=credentials)
         return self._spaces_client
 
-    def __init__(self, email, creds):
-        self.email = email
+    def __init__(self, user: User, creds: str):
+        self.user = user
+        self.email = user.email
         self.creds = creds
+        self.is_local = os.getenv("IS_LOCAL") in ["True", "true", "1"]
+
+    def get_existing_redentials(self) -> Credentials:
+        creds: Credentials = None
+        if self.is_local:
+            if os.path.exists(self.TOKEN_FILE):
+                creds = Credentials.from_authorized_user_file(self.TOKEN_FILE, self.SCOPES)
+        else:
+            stored_creds: OAuthCreds = AuthManager().read_remote_credentials(self.user, DataSources.GOOGLE)
+            creds: Credentials = stored_creds.to_credentials() if stored_creds else None
+
+        return creds
+
 
     def __authenticate(self):
-        creds = None
-        # the file token.json stores the user's access and refresh tokens, and is
-        # created automatically when the authorization flow completes for the first time
-        if os.path.exists(self.TOKEN_FILE):
-            creds = Credentials.from_authorized_user_file(self.TOKEN_FILE, self.SCOPES)
+        creds: Credentials = self.get_existing_redentials()
 
         # if there are no (valid) credentials availablle, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
-            else:
+            elif self.is_local:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     self.creds, self.SCOPES
                 )
                 creds = flow.run_local_server(
-                    # open_browser=False, 
-                    # bind_addr="0.0.0.0", port=3000
+                    bind_addr="0.0.0.0",
                     port=3000
-                    )
-            # save the credentials for the next run
-            with open(self.TOKEN_FILE, "w") as token:
-                token.write(creds.to_json())
+                )
+            self.save_credentials(creds)
         return creds
         
+    def save_credentials(self, creds: Credentials):
+        if self.is_local:
+            with open(self.TOKEN_FILE, "w") as token:
+                token.write(creds.to_json())
+        else:
+            AuthManager().write_remote_credentials_object(self.user, OAuthCreds.from_google_credentials(creds, DataSources.GOOGLE))  
 
     def list_emails(self, userId: str='me', pageToken: str = None, maxResults: int = None) -> list[dict[str,str]]:
+        service: Resource
         with self.service(GoogleSchemas.GMAIL) as service:
             return service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults).execute()
     
     def get_email(self, id: str, userId: str='me', format: str='full') -> dict[str, str]:
+        service: Resource
         with self.service(GoogleSchemas.GMAIL) as service:
              result = service.users().messages().get(userId=userId, id=id, format = format).execute()  
              self.__get_attachments(result, userId) 
@@ -218,8 +239,10 @@ class GSuite(GSuiteServiceProvider):
             if len(attachments) > 0:
                 message['attachments'] = attachments
 
-    async def list_meetings(self, count: int = 10) -> list[ConferenceCall]:
-        request = meet_v2.ListConferenceRecordsRequest()
+    async def list_meetings(self, start: datetime.datetime, count: int = 10) -> list[ConferenceCall]:
+        filter = f"start_time >= \"{start.astimezone().isoformat()}\"" if start else None
+        print("Listing meetings with '",filter,"'")
+        request = meet_v2.ListConferenceRecordsRequest(page_size = count, filter = filter)
         page_result: pagers.ListConferenceRecordsAsyncPager = await self.meet_client.list_conference_records(request=request)
         
         result: list[dict[str, any]] = []
@@ -261,14 +284,15 @@ class GSuite(GSuiteServiceProvider):
             result.append(ConferenceTranscript.from_protobuf(response, space))
         return result
 
-    def get_document_ids(self, type: str) -> dict[str, str]:
+    def get_document_ids(self, type: str, maxResults: int) -> dict[str, str]:
         with self.service(GoogleSchemas.DRIVE) as service:
             results = (
                 service.files()
                 .list(q = self.MIME_TYPE[type],
                     corpora='user',
                     includeItemsFromAllDrives=True,
-                    supportsAllDrives=True)
+                    supportsAllDrives=True,
+                    pageSize=maxResults)
                 .execute()
             )
             items = results.get("files", [])
@@ -284,6 +308,7 @@ class GSuite(GSuiteServiceProvider):
     def get_file_metadata(self, doc_id_name: dict[str, any]) -> dict[str, dict[str, any]]:
         metadata: dict[str, dict[str, any]] = {}
         doc_ids: list[str] = list(doc_id_name.keys())
+        service: Resource
         with self.service(GoogleSchemas.DRIVE) as service:
             for doc in doc_ids:
                 file_id = doc
@@ -356,9 +381,9 @@ class GSuite(GSuiteServiceProvider):
     def get_docx_content(self, docx_dict: dict[str, any]) -> dict[str, any]:
         return self.get_3p_content(docx_dict, document_parser.DocxParser())             
 
-    def compile_info(self, document_type: str, content_callback: callable) -> dict[str, any]:
+    def compile_info(self, document_type: str, maxResults: int, content_callback: callable) -> dict[str, any]:
         print("Compiling info for", document_type)
-        gdoc_ids_name = self.get_document_ids(type=document_type)
+        gdoc_ids_name = self.get_document_ids(type=document_type, maxResults=maxResults)
         if not gdoc_ids_name:
             print("Missing gdocs name for ", document_type)
             return {}
@@ -376,11 +401,11 @@ class GSuite(GSuiteServiceProvider):
             doc_info[gdoc]["doc_type"] = document_type
         return doc_info
 
-    def get_doc_info(self) -> dict[str, any]:
+    def get_doc_info(self, maxResults: int = 25) -> dict[str, any]:
         doc_info: dict[str, any] = {}
-        doc_info.update(self.compile_info("google_doc", self.get_gdocs_content))
-        doc_info.update(self.compile_info("docx", self.get_docx_content))
-        doc_info.update(self.compile_info("pdf", self.get_pdf_content))
+        doc_info.update(self.compile_info("google_doc", maxResults, self.get_gdocs_content))
+        doc_info.update(self.compile_info("docx", maxResults, self.get_docx_content))
+        doc_info.update(self.compile_info("pdf", maxResults, self.get_pdf_content))
         return doc_info
 
 

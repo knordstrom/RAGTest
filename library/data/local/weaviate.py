@@ -7,12 +7,14 @@ import weaviate.util as wutil
 #import langchain_experimental.text_splitter as lang_splitter
 from langchain_community.embeddings import GPT4AllEmbeddings
 from library.managers.briefing_summarizer import GroqBriefingSummarizer
-from library.models.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, TranscriptConversation, TranscriptLine
+from library.managers.slack_user_manager import SlackUserManager
+from library.models.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, SlackUser, TranscriptConversation, TranscriptLine
 from library.data.local.vdb import VDB 
 from library import utils
 import weaviate.classes as wvc
 from weaviate.util import generate_uuid5 as weave_uuid5
 from weaviate.classes.config import Property, DataType
+from library.models.employee import User
 from library.models.weaviate_schemas import Email, EmailText, EmailTextWithFrom, WeaviateSchemas, WeaviateSchema
 from weaviate.classes.query import Filter, Rerank
 from weaviate.collections.classes.grpc import Sort
@@ -201,7 +203,7 @@ class Weaviate(VDB):
                 filtered_response.append(o)
         return filtered_response
 
-    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = None, use_hyde: bool = False) -> list[dict[str, any]]:
+    def search(self, user:User, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = None, use_hyde: bool = False) -> list[dict[str, any]]:
         collection: Collection[Properties, References] = self.collection(key)
         search_query: str = self._hyde_query(query, key, use_hyde)
 
@@ -250,17 +252,22 @@ class Weaviate(VDB):
         utils.Utils.rename_key(props, 'from', 'sender')
         utils.Utils.rename_key(props, 'from_', 'sender')
             
-    def get_emails(self) -> list[EmailMessage]:
+    def get_emails(self, user: User) -> list[EmailMessage]:
         result = []
-        for x in self.collection(WeaviateSchemas.EMAIL).iterator():
-            x = x.properties
+        print("Getting emails sent to ", user.email, user.id)
+        emails = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
+            filters=Filter.by_property("person_id").equal(user.id)
+        ).objects
+        for email in emails:
+            x = email.properties
             self.email_update(x)
+            print("Email retrieved with properies", x)
             result.append(EmailMessage.model_validate(x))
         return result
     
     def get_thread_by_id(self, thread_id: str) -> EmailThreadResponse:
         results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
-            filters=Filter.by_property("thread_id").equal(thread_id),
+            filters=Filter.by_property("thread_id").con(thread_id),
         )
         if len(results.objects)>0:
             props = results.objects[0].properties
@@ -341,6 +348,8 @@ class Weaviate(VDB):
         return output
     
     ### slack ###
+
+    slack_user_manager = SlackUserManager()
     
     def get_slack_message_by_id(self, message_id: str) -> SlackMessage:
         results = self.collection(WeaviateSchemas.SLACK_MESSAGE).query.fetch_objects(
@@ -358,8 +367,13 @@ class Weaviate(VDB):
             return SlackMessage.model_validate(response)
         return None
     
-    def get_slack_messages(self) -> SlackResponse:
-        result = [x.properties for x in self.collection(WeaviateSchemas.SLACK_MESSAGE).iterator()]
+    def get_slack_messages(self, user: User) -> SlackResponse:
+        slack_user: SlackUser = self.slack_user_manager.get_user_by_email(user.email)
+
+        result = list(self.collection(WeaviateSchemas.SLACK_MESSAGE).query.fetch_objects(
+            # filters=Filter.any_of([Filter.by_property("sender").equal(slack_user.id)])
+        ).objects)
+
         for x in result:
             utils.Utils.rename_key(x, 'from', 'sender')
         return SlackResponse.model_validate({
