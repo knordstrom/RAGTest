@@ -151,7 +151,7 @@ class GSuite(GSuiteServiceProvider):
         self.creds = creds
         self.is_local = os.getenv("IS_LOCAL") in ["True", "true", "1"]
 
-    def get_existing_redentials(self) -> Credentials:
+    def get_existing_credentials(self) -> Credentials:
         creds: Credentials = None
         if self.is_local:
             if os.path.exists(self.TOKEN_FILE):
