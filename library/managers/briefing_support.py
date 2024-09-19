@@ -7,6 +7,7 @@ from library.models.api_models import BriefContext, BriefResponse, DocumentEntry
 from library.managers.importance import ImportanceService
 
 from library.managers.briefing_summarizer import BriefingSummarizer
+from library.models.employee import User
 from library.models.event import Event
 import library.data.local.neo4j as neo
 from dotenv import load_dotenv
@@ -20,9 +21,11 @@ class BriefingSupport:
     prompt_manager: PromptManager = PromptManager()
     weave: weaviate.Weaviate = weaviate.Weaviate()
     summarizer: BriefingSummarizer
+    user: User
 
-    def __init__(self, summarizer: BriefingSummarizer) -> None:
+    def __init__(self, summarizer: BriefingSummarizer, user: User) -> None:
         self.summarizer: BriefingSummarizer = summarizer
+        self.user: User = user
 
     def create_briefings_for_summary(self, email: str, start_time: datetime, end_time: datetime, schedule: list[dict]) -> str:
         out = self.summarizer.summarize('BriefingSupport.create_briefings_for', {
@@ -33,13 +36,14 @@ class BriefingSupport:
         })
         return out
 
-    def create_briefings_for(self, email: str, start_time: datetime, end_time: datetime, certainty: float = None, threshold: float = None, use_hyde: bool = False) -> BriefResponse:
+    def create_briefings_for(self, start_time: datetime, end_time: datetime, certainty: float = None, threshold: float = None, use_hyde: bool = False) -> BriefResponse:
         """    # retrieve person node from neo4j
         #    retrieve associated people
         #    retrieve associated events
         # rerieve email chains that are
         #    1. associated with the person
         #    2. pertinent to the events"""
+        email: str = self.user.email
         load_dotenv()
         print("Getting schedule for " + email + " from " + start_time.isoformat() + " to " + end_time.isoformat())   
         n = neo.Neo4j()
@@ -238,8 +242,8 @@ class BriefingSupport:
         cv = .3 if not certainty else certainty
         th = .3 if not threshold else threshold
         print(event)
-        res: list[Object[any,any]] = w.search(event.summary, source, certainty = cv, threshold = threshold, use_hyde = use_hyde)
-        dsc_res: list[Object[any,any]] = w.search(event.description, source, certainty = cv, threshold = threshold, use_hyde = use_hyde) if event.description!= None and event.description!= '' else []
+        res: list[Object[any,any]] = w.search(self.user, event.summary, source, certainty = cv, threshold = threshold, use_hyde = use_hyde)
+        dsc_res: list[Object[any,any]] = w.search(self.user, event.description, source, certainty = cv, threshold = threshold, use_hyde = use_hyde) if event.description!= None and event.description!= '' else []
         res.extend(dsc_res)
         result: dict[str, any] = {}
         for o in res:

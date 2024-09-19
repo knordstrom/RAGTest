@@ -1,3 +1,4 @@
+from library.models.employee import User
 from library.models.weaviate_schemas import WeaviateSchemas
 
 
@@ -18,7 +19,7 @@ class VDB:
     def split(self, text:str) -> list:
         pass
 
-    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = None, use_hyde: bool = False) -> list[object]:
+    def search(self, user: User, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = None, use_hyde: bool = False) -> list[object]:
         pass
     
     def close(self):

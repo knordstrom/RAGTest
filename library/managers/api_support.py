@@ -8,6 +8,7 @@ from library.models.api_models import AskRequestContext, AskResponse, Meeting, S
 from library.enums.data_sources import DataSources
 from library.enums.kafka_topics import KafkaTopics
 from library.enums.kafka_topics import KafkaTopics
+from library.models.employee import User
 from library.models.event import Event
 from library.models.message import Message
 from library.llms.promptmanager import PromptManager
@@ -24,9 +25,9 @@ from dotenv import load_dotenv
 class APISupport:
 
     @staticmethod
-    def read_last_emails(email: str, creds: str, count = None) -> list[Message]:
+    def read_last_emails(user: User, creds: str, count = None) -> list[Message]:
         try:
-            g: GSuite = GSuite(email, creds)
+            g: GSuite = GSuite(user, creds)
             gm: GmailLogic = GmailLogic(g)
             ids: list[dict[str, str]] = gm.get_emails(count)
             mapped: list[Message] = []
@@ -38,8 +39,13 @@ class APISupport:
             g.close()
 
     @staticmethod
-    def write_emails_to_kafka(emails: list[Message], provider: DataSources) -> None:
-        written = [email.model_dump() for email in emails]
+    def write_emails_to_kafka(emails: list[Message], provider: DataSources, person: User) -> None:
+        written = []
+        for email in emails:
+            to_add = email.model_dump()
+            to_add['provider'] = provider.value
+            to_add['person_id'] = person.id
+            written.append(to_add)
         APISupport.write_to_kafka(written, KafkaTopics.EMAILS, provider,  lambda item: str(item['to'][0]))
 
     @staticmethod
@@ -91,10 +97,10 @@ class APISupport:
         print("Wrote ", count, " items to Kafka on channel ", channel)    
     
     @staticmethod
-    def perform_ask(question: str, key: str, context_limit: int = 5, max_tokens: int = 2000, 
+    def perform_ask(user: User, question: str, key: str, context_limit: int = 5, max_tokens: int = 2000, 
                     certainty: float = None, threshold: float = None, use_hyde: bool = False) -> AskResponse:
         vdb: weaviate.Weaviate = weaviate.Weaviate(os.getenv('VECTOR_DB_HOST',"127.0.0.1"), os.getenv('VECTOR_DB_PORT',"8080"))
-        context: list[Object] = vdb.search(question, key, context_limit, certainty = certainty,threshold = threshold, use_hyde = use_hyde)
+        context: list[Object] = vdb.search(user, question, key, context_limit, certainty = certainty,threshold = threshold, use_hyde = use_hyde)
         
         emails = []
         for o in context:
@@ -142,5 +148,10 @@ class APISupport:
         )
 
     @staticmethod
-    def error_response(code: int, message: str) -> dict:
+    def error_response(code: int, message: str) -> None:
         raise HTTPException(status_code=code, detail=message)
+    
+    @staticmethod
+    def assert_not_none(value: any, message: str) -> None:
+        if value is None:
+            APISupport.error_response(404, message)

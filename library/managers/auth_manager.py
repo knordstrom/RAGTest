@@ -1,15 +1,37 @@
 from datetime import datetime, timedelta
 from hashlib import md5
-from typing import Any
+from typing import Annotated, Any
 from uuid import uuid4
-from library.models.api_models import TokenResponse
+
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from library.enums.data_sources import DataSources
+from library.models.api_models import OAuthCreds, TokenResponse
 from library.data.local.neo4j import Neo4j
+from library.models.employee import Employee, User
 
 
 class AuthManager:
 
     def __init__(self):
         self.datastore = Neo4j()
+
+    @staticmethod
+    def assert_authorization_email(me: User, emails: str | list[str]) -> None:
+        if isinstance(emails, str):
+            emails = [emails]
+        if me.email not in emails:
+            raise HTTPException(status_code=403, detail="You are not authorized to access this email account.")
+
+    @staticmethod
+    def get_user_dependency(oauth2: OAuth2PasswordBearer) -> callable:
+        async def get_current_user(token: Annotated[str, Depends(oauth2)]) -> User:
+            return AuthManager().get_user_by_token(token)
+        return get_current_user
+
+    def get_user_by_token(self, token: str) -> User:
+        record: User = self.datastore.get_user_by_token(token)
+        return record
 
     def authenticate(self, email: str, password: str) -> TokenResponse:
         records: list[dict[str, any]] = self.datastore.authenticate(email, password)
@@ -48,3 +70,25 @@ class AuthManager:
 
     def fail_login(self, email: str) -> TokenResponse:
         return TokenResponse(email = email, token = None, expiry = None)
+    
+    def write_remote_credentials(self, user: User, target: str, token: str, refresh_token: str, expiry: datetime, client_id: str, 
+                                 client_secret: str, scopes: list[str]) -> None:
+        provider: DataSources = DataSources.__members__.get(target)
+        if not provider:
+            raise HTTPException(status_code=400, detail="Invalid target")
+
+        creds = OAuthCreds(
+            remote_target=provider, 
+            token=token, 
+            refresh_token=refresh_token, 
+            expiry=expiry, 
+            client_id=client_id, 
+            client_secret=client_secret, 
+            scopes=scopes)
+        self.datastore.write_remote_credentials(user, creds)
+    
+    def write_remote_credentials_object(self, user: User, provider: OAuthCreds) -> OAuthCreds:
+        return self.datastore.write_remote_credentials(user, provider) if provider else None
+
+    def read_remote_credentials(self, user: User, provider: DataSources) -> OAuthCreds:
+        return self.datastore.read_remote_credentials(user, provider)
