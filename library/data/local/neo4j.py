@@ -329,7 +329,7 @@ class Neo4j:
             self.create_relationship(self.EVENT, "id", event_id, "ORGANIZED_BY", self.PERSON, "email", organizer['email'], {"id": 'organize' + event_id + organizer['email']})
 
     def _credential_id_for_user(self, user: User, provider: DataSources) -> str:
-        return f"credentials-{user.id}-{provider.value}"
+        return f"credentials-{user.id}-{provider.value}-{user.email}"
        
     def write_remote_credentials(self, user: User, creds: OAuthCreds) -> None:
         print("Writing remote credentials", creds)
@@ -344,11 +344,8 @@ class Neo4j:
         RETURN creds
         """
         with self.driver.session() as session:
-            result: Result = session.run(query, id=self._credential_id_for_user(user, provider))
-            try:
-                return OAuthCreds(**result['creds'])
-            except Exception as e:
-                return None
+            result = list(session.run(query, id=self._credential_id_for_user(user, provider)))
+            return OAuthCreds.from_neo4j(result[0]['creds']) if len(result) > 0 else None             
 
     @staticmethod
     def collate_schedule_response(records: list[dict[str, Any]]) -> list[Event]:

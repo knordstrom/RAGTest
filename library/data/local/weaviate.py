@@ -374,10 +374,13 @@ class Weaviate(VDB):
             # filters=Filter.any_of([Filter.by_property("sender").equal(slack_user.id)])
         ).objects)
 
+        output = []
         for x in result:
-            utils.Utils.rename_key(x, 'from', 'sender')
+            props = x.properties
+            utils.Utils.rename_key(props, 'from', 'sender')
+            output.append(props)
         return SlackResponse.model_validate({
-            "messages": result
+            "messages": output
         })
     
     def get_slack_thread_by_id(self, thread_id: str) -> SlackThreadResponse:

@@ -11,6 +11,8 @@ from google.oauth2.credentials import Credentials
 from library.enums.data_sources import DataSources
 from library.models.employee import User
 
+from neo4j import time as neo4j_time
+
 
 T = TypeVar('T')
 
@@ -134,7 +136,7 @@ class EmailMessage(BaseModel):
     cc: List[MeetingAttendee]
     bcc: List[MeetingAttendee]
     subject: str
-    sender: MeetingAttendee
+    sender: MeetingAttendee 
     date: datetime
     provider: str
     text: List[str] = []
@@ -346,7 +348,8 @@ class OAuthCreds(BaseModel):
             refresh_token=self.refresh_token,
             expiry=self.expiry,
             client_id=self.client_id,
-            client_secret=self.client_secret
+            client_secret=self.client_secret,
+            scopes=self.scopes
         ) 
     
     @staticmethod
@@ -359,3 +362,16 @@ class OAuthCreds(BaseModel):
             client_id=creds.client_id,
             client_secret=creds.client_secret
         ) if creds else None
+    
+    @staticmethod
+    def from_neo4j(creds: dict[str, any]) -> 'OAuthCreds':
+        expiry: neo4j_time.DateTime = creds['expiry']
+        scopes: list[str] = creds['scopes']
+        return OAuthCreds(remote_target=DataSources.__members__.get(creds['remote_target']), 
+                            token=creds['token'], 
+                            refresh_token=creds['refresh_token'], 
+                            expiry=expiry.to_native(), 
+                            client_id=creds['client_id'], 
+                            client_secret=creds['client_secret'], 
+                            scopes=scopes
+                        ) if creds else None
