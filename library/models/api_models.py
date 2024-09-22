@@ -136,7 +136,7 @@ class EmailMessage(BaseModel):
     cc: List[MeetingAttendee]
     bcc: List[MeetingAttendee]
     subject: str
-    sender: MeetingAttendee 
+    sender: MeetingAttendee
     date: datetime
     provider: str
     text: List[str] = []
