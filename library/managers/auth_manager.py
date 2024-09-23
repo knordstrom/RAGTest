@@ -72,7 +72,7 @@ class AuthManager:
         return TokenResponse(email = email, token = None, expiry = None)
     
     def write_remote_credentials(self, user: User, target: str, token: str, refresh_token: str, expiry: datetime, client_id: str, 
-                                 client_secret: str, scopes: list[str]) -> None:
+                                 client_secret: str, token_uri: str, scopes: list[str]) -> None:
         provider: DataSources = DataSources.__members__.get(target)
         if not provider:
             raise HTTPException(status_code=400, detail="Invalid target")
@@ -84,6 +84,7 @@ class AuthManager:
             expiry=expiry, 
             client_id=client_id, 
             client_secret=client_secret, 
+            token_uri=token_uri,
             scopes=scopes)
         self.datastore.write_remote_credentials(user, creds)
     

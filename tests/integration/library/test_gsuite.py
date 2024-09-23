@@ -65,6 +65,7 @@ class TestGsuite(IntegrationTestBase):
                                                expiry=datetime(2021, 1, 1, 1, 1, 1, 1, tzinfo=dateutil.tz.tzoffset(None, -7*3600)), 
                                                client_id = "nope", 
                                                client_secret = "uhuh", 
+                                               token_uri="https://www.googleapis.com/oauth2/v4/token",
                                                scopes=["email", "profile"])
         proof:OAuthCreds = AuthManager().read_remote_credentials(user, DataSources.GOOGLE)
         assert proof is not None, "Proof is None"
@@ -79,6 +80,7 @@ class TestGsuite(IntegrationTestBase):
         assert returned.client_id == "nope"
         assert returned.client_secret == "uhuh"
         assert returned.expiry == datetime(2021, 1, 1, 8, 1, 1, 1)
+        assert returned.token_uri == "https://www.googleapis.com/oauth2/v4/token"
         assert returned.scopes == ["email", "profile"]
 
         assert returned.expired == True

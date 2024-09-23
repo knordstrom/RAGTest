@@ -30,9 +30,9 @@ async def authenticate(form: LoginRequest) -> ApiResponse[TokenResponse]:
     
 @route.post('/auth/creds')
 async def credentials(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_scheme))],
-                      target: str, token: str, refresh_token: str, expiry: datetime, client_id: Optional[str] = None, 
-                      client_secret: Optional[str] = None, scopes: Optional[str]= None) -> ApiResponse[str]:
+                      target: str, token: str, expiry: datetime, refresh_token:  Optional[str] = None, client_id: Optional[str] = None, 
+                      client_secret: Optional[str] = None, token_uri:  Optional[str] = None, scopes: Optional[str]= None) -> ApiResponse[str]:
     """Store credentials for a user"""
-
-    AuthManager().write_remote_credentials(me, target, token, refresh_token, expiry, client_id, client_secret, scopes.split(","))
+    scopes = scopes or ""
+    AuthManager().write_remote_credentials(me, target, token, refresh_token, expiry, client_id, client_secret, token_uri, scopes.split(","))
     return ApiResponse.create("True")

@@ -336,10 +336,11 @@ class SlackUser(BaseModel):
 class OAuthCreds(BaseModel):
     remote_target: DataSources 
     token: str
-    refresh_token: str
+    refresh_token: Optional[str] = None
     expiry: datetime
     client_id: Optional[str] = None
     client_secret: Optional[str] = None
+    token_uri: Optional[str] = None
     scopes: list[str] = []
 
     def to_credentials(self) -> Credentials:
@@ -351,6 +352,7 @@ class OAuthCreds(BaseModel):
             expiry=expiry,
             client_id=self.client_id,
             client_secret=self.client_secret,
+            token_uri=self.token_uri,
             scopes=self.scopes
         ) 
     
@@ -362,7 +364,9 @@ class OAuthCreds(BaseModel):
             refresh_token=creds.refresh_token,
             expiry=creds.expiry,
             client_id=creds.client_id,
-            client_secret=creds.client_secret
+            client_secret=creds.client_secret,
+            token_uri=creds.token_uri,
+            scopes=creds.scopes
         ) if creds else None
     
     @staticmethod
@@ -371,9 +375,10 @@ class OAuthCreds(BaseModel):
         scopes: list[str] = creds['scopes']
         return OAuthCreds(remote_target=DataSources.__members__.get(creds['remote_target']), 
                             token=creds['token'], 
-                            refresh_token=creds['refresh_token'], 
+                            refresh_token=creds.get('refresh_token'), 
                             expiry=expiry.to_native(), 
-                            client_id=creds['client_id'], 
-                            client_secret=creds['client_secret'], 
+                            client_id=creds.get('client_id'), 
+                            client_secret=creds.get('client_secret'), 
+                            token_uri=creds.get('token_uri'),
                             scopes=scopes
                         ) if creds else None
