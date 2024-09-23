@@ -164,7 +164,7 @@ class GSuite(GSuiteServiceProvider):
 
 
     def __authenticate(self):
-        creds: Credentials = self.get_existing_redentials()
+        creds: Credentials = self.get_existing_credentials()
 
         # if there are no (valid) credentials availablle, let the user log in.
         if not creds or not creds.valid:

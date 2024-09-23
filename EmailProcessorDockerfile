@@ -60,7 +60,7 @@ COPY globals.py ./
 COPY processor/main.py processor/context.py ./processor/
 COPY library/data/local/vdb.py library/data/local/weaviate.py library/data/local/neo4j.py ./library/data/local/
 COPY library/data/external/slack.py ./library/data/external/
-COPY library/managers/handlers.py library/managers/processor_support.py  library/managers/briefing_summarizer.py ./library/managers/
+COPY library/managers/* ./library/managers
 COPY library/llms/promptmanager.py library/llms/groq_client.py ./library/llms/
 COPY library/utils.py library/token_generator.py library/document_parser.py library/decorators.py ./library/
 COPY resources/slack_users.json ./resources/
