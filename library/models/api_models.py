@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 from pydantic import AliasChoices, BaseModel, EmailStr, Field, ConfigDict
 
@@ -343,10 +343,12 @@ class OAuthCreds(BaseModel):
     scopes: list[str] = []
 
     def to_credentials(self) -> Credentials:
+        offset: timedelta = self.expiry.utcoffset()
+        expiry = (self.expiry - offset if offset else self.expiry).replace(tzinfo=None)
         return Credentials(
             token=self.token,
             refresh_token=self.refresh_token,
-            expiry=self.expiry,
+            expiry=expiry,
             client_id=self.client_id,
             client_secret=self.client_secret,
             scopes=self.scopes

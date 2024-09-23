@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import datetime, tzinfo
+import dateutil
+import dateutil.tz
 import pytest
 import requests
 from library.data.external.gsuite import GSuite
@@ -60,7 +62,7 @@ class TestGsuite(IntegrationTestBase):
                                                target = "GOOGLE", 
                                                token = "notarealtoken", 
                                                refresh_token = "alsonotarealtoken", 
-                                               expiry=datetime(2021, 1, 1, 1, 1, 1, 1), 
+                                               expiry=datetime(2021, 1, 1, 1, 1, 1, 1, tzinfo=dateutil.tz.tzoffset(None, -7*3600)), 
                                                client_id = "nope", 
                                                client_secret = "uhuh", 
                                                scopes=["email", "profile"])
@@ -76,6 +78,8 @@ class TestGsuite(IntegrationTestBase):
         assert returned.refresh_token == "alsonotarealtoken"
         assert returned.client_id == "nope"
         assert returned.client_secret == "uhuh"
-        assert returned.expiry == datetime(2021, 1, 1, 1, 1, 1, 1)
+        assert returned.expiry == datetime(2021, 1, 1, 8, 1, 1, 1)
         assert returned.scopes == ["email", "profile"]
+
+        assert returned.expired == True
         
