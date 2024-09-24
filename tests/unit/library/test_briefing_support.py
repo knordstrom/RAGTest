@@ -7,6 +7,7 @@ import sys
 from globals import Globals
 from library.models.api_models import EmailConversationEntry
 from library.managers.briefing_summarizer import BriefingSummarizer
+from library.models.employee import User
 from library.models.weaviate_schemas import EmailTextWithFrom
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..')))
 import library.managers.briefing_support as bs
@@ -33,7 +34,7 @@ class BriefingSupportTest(unittest.TestCase):
         sum_email: dict[str, list[EmailTextWithFrom]] = {}
 
         sum = BriefingSummarizerStub()
-        grouped_messages: list[EmailConversationEntry] = bs.BriefingSupport(sum).process_email_context(thread_data)
+        grouped_messages: list[EmailConversationEntry] = bs.BriefingSupport(sum, user=User(id="1234", email="keith@cognimate.ai")).process_email_context(thread_data)
         print()
         [print("Grouped", m) for m in grouped_messages]
 

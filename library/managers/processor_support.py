@@ -61,7 +61,6 @@ class ProcessorSupport:
     def kafka_listen(default_topic: KafkaTopics, group: str, endpoint: Callable[[list[dict[str, any]]], any]) -> None:
         kafka = os.getenv("KAFKA_BROKER", "127.0.0.1:9092")
         topic = os.getenv("KAFKA_TOPIC", default_topic.value)
-        topic = os.getenv("KAFKA_TOPIC", default_topic.value)
         print("Starting processor at " + kafka + " on topic " + topic + " ...")
         try:
             consumer = KafkaConsumer(bootstrap_servers=kafka, 
@@ -73,10 +72,10 @@ class ProcessorSupport:
             count = 0
 
             key: TopicPartition = TopicPartition(topic=topic, partition=0)
-            partitions = None
+            partitions: set[int] = None
             message = None
             while partitions == None or len(partitions) == 0:
-                partitions = consumer.partitions_for_topic(topic)
+                partitions: set[int] = consumer.partitions_for_topic(topic)
                 print("Waiting for partitions... have " + str(partitions))
             
             while True:
@@ -95,9 +94,11 @@ class ProcessorSupport:
                     print()
 
                     endpoint(message[key])
-                    print(" ... written to VDB")
+                    print(" ... handled")
                 
-                consumer.commit()
+                    consumer.commit()
+        except Exception as e:
+            print("Uncaught failure in kafka consumer: " + str(e))
 
         finally:
             print("Closing consumer")

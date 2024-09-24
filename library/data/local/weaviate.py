@@ -3,14 +3,18 @@ import enum
 import os
 import dotenv
 import weaviate as w
+import weaviate.util as wutil
 #import langchain_experimental.text_splitter as lang_splitter
 from langchain_community.embeddings import GPT4AllEmbeddings
-from library.models.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, TranscriptConversation, TranscriptLine
+from library.managers.briefing_summarizer import GroqBriefingSummarizer
+from library.managers.slack_user_manager import SlackUserManager
+from library.models.api_models import DocumentResponse, EmailMessage, EmailThreadResponse, SlackMessage, SlackResponse, SlackThreadResponse, SlackUser, TranscriptConversation, TranscriptLine
 from library.data.local.vdb import VDB 
 from library import utils
 import weaviate.classes as wvc
 from weaviate.util import generate_uuid5 as weave_uuid5
 from weaviate.classes.config import Property, DataType
+from library.models.employee import User
 from library.models.weaviate_schemas import Email, EmailText, EmailTextWithFrom, WeaviateSchemas, WeaviateSchema
 from weaviate.classes.query import Filter, Rerank
 from weaviate.collections.classes.grpc import Sort
@@ -47,7 +51,7 @@ class Weaviate(VDB):
         schema = self.schemas[key]
         return self.client.collections.get(schema['class'])
     
-    def __new__(cls, host = '127.0.0.1', port = '8080', schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> 'Weaviate':
+    def __new__(cls, host: str = None, port: str = None, schemas: list[(WeaviateSchemas,dict)] = WeaviateSchema.class_objs) -> 'Weaviate':
         if not hasattr(cls, 'instance'):
             cls.instance = super(Weaviate, cls).__new__(cls)
             self = cls.instance
@@ -92,7 +96,7 @@ class Weaviate(VDB):
 
     def upsert(self, obj: dict[str, str], collection_key: WeaviateSchemas, id_property: str = None, attempts: int=0) -> bool:
         collection = self.collection(collection_key)   
-        identifier = w.util.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
+        identifier = wutil.generate_uuid5(obj if id_property == None else obj.get(id_property, obj))
         
         try: 
             with collection.batch.rate_limit(requests_per_minute=5) as batch:
@@ -177,20 +181,45 @@ class Weaviate(VDB):
         collection = self.collection(key)
         return collection.aggregate.over_all()
     
-    def search(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7) -> list[dict[str, any]]:
+    def _hyde_query(self, query: str, key: WeaviateSchemas, use_hyde: bool = False) -> str:
+        if use_hyde:
+            search_query: str = GroqBriefingSummarizer().generate_hyde_content(query, key.name)
+            print("Using hyde content ", "from query", query, "to be", search_query)
+        else:
+            search_query = query
+        return search_query
+    
+    def _filter_rerank_responses(self, response: list[dict[str, any]], threshold: float) -> list[dict[str, any]]:
+        if threshold is None:
+            return response
+        filtered_response = []
+        for o in response:
+            props = o.properties
+            rerank_score = o.metadata.rerank_score
+            normalized_rerank_score = 1/(1 + math.exp (-rerank_score))
+            props['normalized_rerank_score'] = normalized_rerank_score
 
+            if normalized_rerank_score >= threshold:
+                filtered_response.append(o)
+        return filtered_response
+
+    def search(self, user:User, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = None, use_hyde: bool = False) -> list[dict[str, any]]:
         collection: Collection[Properties, References] = self.collection(key)
+        search_query: str = self._hyde_query(query, key, use_hyde)
+
+        rerank = Rerank(prop="text", query=query) if threshold is not None else None
 
         response: list[dict[str, any]] = collection.query.near_text(
-            query=query,
-            limit=limit,
-            certainty=certainty,
-            return_metadata=wvc.query.MetadataQuery(distance=True)
+            query = search_query,
+            limit = limit,
+            certainty = certainty,
+            rerank = rerank,
+            return_metadata = wvc.query.MetadataQuery(distance=True)
         ).objects
 
         print("Found " + str(len(response)) + " objects")
 
-        return response
+        return self._filter_rerank_responses(response, threshold)
     
     def search_reranking(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = .5) -> list[dict[str, any]]:
         print("doing a reranking")
@@ -252,17 +281,22 @@ class Weaviate(VDB):
         utils.Utils.rename_key(props, 'from', 'sender')
         utils.Utils.rename_key(props, 'from_', 'sender')
             
-    def get_emails(self) -> list[EmailMessage]:
+    def get_emails(self, user: User) -> list[EmailMessage]:
         result = []
-        for x in self.collection(WeaviateSchemas.EMAIL).iterator():
-            x = x.properties
+        print("Getting emails sent to ", user.email, user.id)
+        emails = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
+            filters=Filter.by_property("person_id").equal(user.id)
+        ).objects
+        for email in emails:
+            x = email.properties
             self.email_update(x)
+            print("Email retrieved with properies", x)
             result.append(EmailMessage.model_validate(x))
         return result
     
     def get_thread_by_id(self, thread_id: str) -> EmailThreadResponse:
         results = self.collection(WeaviateSchemas.EMAIL).query.fetch_objects(
-            filters=Filter.by_property("thread_id").equal(thread_id),
+            filters=Filter.by_property("thread_id").con(thread_id),
         )
         if len(results.objects)>0:
             props = results.objects[0].properties
@@ -343,6 +377,8 @@ class Weaviate(VDB):
         return output
     
     ### slack ###
+
+    slack_user_manager = SlackUserManager()
     
     def get_slack_message_by_id(self, message_id: str) -> SlackMessage:
         results = self.collection(WeaviateSchemas.SLACK_MESSAGE).query.fetch_objects(
@@ -360,12 +396,20 @@ class Weaviate(VDB):
             return SlackMessage.model_validate(response)
         return None
     
-    def get_slack_messages(self) -> SlackResponse:
-        result = [x.properties for x in self.collection(WeaviateSchemas.SLACK_MESSAGE).iterator()]
+    def get_slack_messages(self, user: User) -> SlackResponse:
+        slack_user: SlackUser = self.slack_user_manager.get_user_by_email(user.email)
+
+        result = list(self.collection(WeaviateSchemas.SLACK_MESSAGE).query.fetch_objects(
+            # filters=Filter.any_of([Filter.by_property("sender").equal(slack_user.id)])
+        ).objects)
+
+        output = []
         for x in result:
-            utils.Utils.rename_key(x, 'from', 'sender')
+            props = x.properties
+            utils.Utils.rename_key(props, 'from', 'sender')
+            output.append(props)
         return SlackResponse.model_validate({
-            "messages": result
+            "messages": output
         })
     
     def get_slack_thread_by_id(self, thread_id: str) -> SlackThreadResponse:

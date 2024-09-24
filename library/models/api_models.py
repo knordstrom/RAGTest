@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 from pydantic import AliasChoices, BaseModel, EmailStr, Field, ConfigDict
 
@@ -6,6 +6,12 @@ from typing import List, Optional, Union, TypeVar, Generic
 from dataclasses import dataclass, Field, fields as dataclassFields
 from google.apps.meet_v2.types import ConferenceRecord, Recording
 from google.apps.meet_v2.types import resource
+from google.oauth2.credentials import Credentials
+
+from library.enums.data_sources import DataSources
+from library.models.employee import User
+
+from neo4j import time as neo4j_time
 
 
 T = TypeVar('T')
@@ -130,10 +136,17 @@ class EmailMessage(BaseModel):
     cc: List[MeetingAttendee]
     bcc: List[MeetingAttendee]
     subject: str
-    sender: MeetingAttendee 
+    sender: MeetingAttendee
     date: datetime
     provider: str
     text: List[str] = []
+
+    _all: list[str] = None
+    @property
+    def all_emails(self) -> List[str]:
+        if self._all is None:
+            self._all = [self.sender.email] + [attendee.email for attendee in self.to + self.cc + self.bcc]
+        return self._all
 
 class EmailThreadResponse(BaseModel):
     cc: List[MeetingAttendee]
@@ -143,8 +156,14 @@ class EmailThreadResponse(BaseModel):
     to: List[MeetingAttendee]
     sender: MeetingAttendee 
     thread_id: str
-
     
+    _all: list[str] = None
+    @property
+    def all_emails(self) -> List[str]:
+        if self._all is None:
+            self._all = [self.sender.email] + [attendee.email for attendee in self.to + self.cc]
+        return self._all
+
 class DocumentPermission(BaseModel):
     type: str
     kind: str
@@ -152,14 +171,14 @@ class DocumentPermission(BaseModel):
     displayName: Union[str, None] = None
     role: str
     photoLink: str = None
-    emailAddress: Union[EmailStr, None] = None
+    emailAddress: Union[str, None] = None
     permission_id: str
     deleted: bool = False
 
 class DocumentOwner(BaseModel):
     photoLink: str = None
     displayName: Union[str, None] = None
-    emailAddress: Union[EmailStr, None] = None
+    emailAddress: Union[str, None] = None
     kind: str
     permissionId: Union[str, None] = None
 
@@ -173,6 +192,12 @@ class DocumentResponseMetadata(BaseModel):
     mimeType: str
     permissions: List[DocumentPermission] = []
     name: str
+
+    def is_authorized(self, user: User) -> bool:
+        for permission in self.permissions:
+            if permission.emailAddress == user.email:
+                return True
+        return False
 
 class DocumentResponse(BaseModel):
     provider: Union[str, None] = "google"
@@ -201,6 +226,9 @@ class SlackThreadResponse(BaseModel):
     thread_id: str
     messages: List[SlackMessage] = []
 
+    def is_authorized(self, user: User) -> bool:
+        return True
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -209,6 +237,10 @@ class TokenResponse(BaseModel):
     token: Optional[str] = None
     email: EmailStr
     expiry: Optional[datetime] = None
+    access_token: Optional[str] = None
+
+    def __init__(self, token: Optional[str] = None, email: EmailStr = None, expiry: Optional[datetime] = None):
+        super().__init__(token=token, email=email, expiry=expiry, access_token=token)
 
 class ConferenceSpace(BaseModel):
     name: str
@@ -228,7 +260,7 @@ class ConferenceTranscript(BaseModel):
     document: str
     export_uri: str
     start_time: datetime
-    end_time: datetime
+    end_time: Optional[datetime] = None
     space: ConferenceSpace
 
     @staticmethod
@@ -240,7 +272,7 @@ class ConferenceTranscript(BaseModel):
 
 class ConferenceRecording(BaseModel):
     start_time: datetime
-    end_time: datetime
+    end_time: Optional[datetime] = None
     file: str
     export_uri: str
 
@@ -253,7 +285,7 @@ class ConferenceRecording(BaseModel):
 class ConferenceCall(BaseModel):
     name: str
     start_time: datetime
-    end_time: datetime
+    end_time: Optional[datetime] = None
     expire_time: datetime
     recordings: List[ConferenceRecording]
     space: ConferenceSpace
@@ -279,6 +311,9 @@ class TranscriptConversation(BaseModel):
     attendee_names: List[str]
     conversation: list[TranscriptLine]
 
+    def is_authorized(self, user: User) -> bool:
+        return user.name in self.attendee_names
+
     @staticmethod
     def from_weaviate_properties(props: dict[str, str], conversation: list[TranscriptEntry] = []) -> 'TranscriptConversation':
         return TranscriptConversation(
@@ -297,3 +332,53 @@ class SlackUser(BaseModel):
     email: EmailStr
     is_bot: bool
     deleted: bool
+
+class OAuthCreds(BaseModel):
+    remote_target: DataSources 
+    token: str
+    refresh_token: Optional[str] = None
+    expiry: datetime
+    client_id: Optional[str] = None
+    client_secret: Optional[str] = None
+    token_uri: Optional[str] = None
+    scopes: list[str] = []
+
+    def to_credentials(self) -> Credentials:
+        offset: timedelta = self.expiry.utcoffset()
+        expiry = (self.expiry - offset if offset else self.expiry).replace(tzinfo=None)
+        return Credentials(
+            token=self.token,
+            refresh_token=self.refresh_token,
+            expiry=expiry,
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            token_uri=self.token_uri,
+            scopes=self.scopes
+        ) 
+    
+    @staticmethod
+    def from_google_credentials(creds: Credentials, remote_target: DataSources) -> 'OAuthCreds':
+        return OAuthCreds(
+            remote_target=remote_target,
+            token=creds.token,
+            refresh_token=creds.refresh_token,
+            expiry=creds.expiry,
+            client_id=creds.client_id,
+            client_secret=creds.client_secret,
+            token_uri=creds.token_uri,
+            scopes=creds.scopes
+        ) if creds else None
+    
+    @staticmethod
+    def from_neo4j(creds: dict[str, any]) -> 'OAuthCreds':
+        expiry: neo4j_time.DateTime = creds['expiry']
+        scopes: list[str] = creds['scopes']
+        return OAuthCreds(remote_target=DataSources.__members__.get(creds['remote_target']), 
+                            token=creds['token'], 
+                            refresh_token=creds.get('refresh_token'), 
+                            expiry=expiry.to_native(), 
+                            client_id=creds.get('client_id'), 
+                            client_secret=creds.get('client_secret'), 
+                            token_uri=creds.get('token_uri'),
+                            scopes=scopes
+                        ) if creds else None

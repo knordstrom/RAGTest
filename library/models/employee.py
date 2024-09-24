@@ -1,9 +1,22 @@
 import csv
 from typing import Optional, Union
 
+from neo4j import Record
 from pydantic import BaseModel, Field
 
 from library.models.person import Person
+class User(BaseModel):
+    id: str
+    employee_id: Optional[str] = None
+    name: Optional[str] = None
+    email: str
+
+    @staticmethod
+    def from_neo4j(record: Record):
+        print("Element id", record['result'].element_id, type(record['result']['element_id']))
+        return User(id=record['result'].element_id, employee_id=record['result']['employee_id'], 
+                    name=record['result']['name'], email=record['result']['email'])
+
 class Employee(BaseModel):
 
     employee_id:str
@@ -124,6 +137,7 @@ class Employee(BaseModel):
     
     @staticmethod
     def from_workday_row(d: dict):
+        print("         from_workday_row", d)        
         return Employee(employee_id = d['EmployeeID'], 
                         name = d['Name'], 
                         manager_id = d['ManagerID'], 
@@ -136,10 +150,14 @@ class Employee(BaseModel):
                         cost_center_hierarchy = d['CostCenterHierarchy'])
     
     @staticmethod
-    def from_csv(file_name: str):
-        employees = []
+    def from_csv(file_name: str) -> list['Employee']:
         with open(file_name, newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                employees.append(Employee.from_workday_row(row))
+            return Employee.from_csv_text(csvfile.read())
+    
+    @staticmethod
+    def from_csv_text(text: str) -> list['Employee']:
+        employees: list['Employee'] = []
+        reader = csv.DictReader(text.splitlines())
+        for row in reader:
+            employees.append(Employee.from_workday_row(row))
         return employees

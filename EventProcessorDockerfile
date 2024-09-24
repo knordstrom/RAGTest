@@ -1,4 +1,4 @@
-FROM python:3.11-alpine as base
+FROM python:3.11-alpine AS base
 
 ARG DEV=false
 ENV VIRTUAL_ENV=/app/.venv \
@@ -8,7 +8,7 @@ RUN apk update && \
     apk add libpq
 
 
-FROM base as builder
+FROM base AS builder
 
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
@@ -33,7 +33,7 @@ RUN pip install gpt4all
 RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR;
 
 
-FROM base as runtime
+FROM base AS runtime
 
 WORKDIR /app
 
@@ -52,7 +52,8 @@ RUN mkdir -p /app/library/enums
 RUN mkdir -p /app/library/llms
 RUN mkdir -p /app/library/managers
 RUN mkdir -p /app/library/models
-RUN mkdir -p /app/api
+RUN mkdir -p /app/resources
+RUN mkdir -p /app/prompts
 COPY pyproject.toml ./
 RUN poetry lock --no-update
 RUN poetry install
@@ -61,9 +62,11 @@ COPY globals.py ./
 COPY processor/main.py processor/context.py ./processor/
 COPY library/data/local/vdb.py library/data/local/weaviate.py library/data/local/neo4j.py ./library/data/local/
 COPY library/data/external/slack.py ./library/data/external/
-COPY library/managers/handlers.py library/managers/processor_support.py  ./library/managers/
-COPY library/llms/promptmanager.py ./library/llms/
+COPY library/managers/* ./library/managers
+COPY library/llms/promptmanager.py library/llms/groq_client.py ./library/llms/
 COPY library/utils.py library/token_generator.py library/document_parser.py library/decorators.py  ./library/
+COPY resources/slack_users.json ./resources/
+COPY prompts/* ./prompts
 
 COPY library/enums/*.py ./library/enums/
 COPY library/models/*.py ./library/models/

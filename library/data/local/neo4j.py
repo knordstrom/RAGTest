@@ -7,13 +7,16 @@ from neo4j import GraphDatabase, Record, Result
 import os
 
 from globals import Globals
-from library.models.api_models import TokenResponse
+from library.enums.data_sources import DataSources
+from library.models.api_models import OAuthCreds, TokenResponse
 from library.token_generator import TokenGenerator
 from library.models.person import Person
 from library.utils import Utils
-from library.models.employee import Employee
+from library.models.employee import Employee, User
 from library.models.weaviate_schemas import Event as WeaviateEvent
 from library.models.event import Event
+from kafka.consumer.fetcher import ConsumerRecord
+
 
 class EventPersonRelationships:
     attendance_map: dict[str, dict[str, any]] = {}
@@ -149,6 +152,18 @@ class Neo4j:
         if len(managers) > 1:
             result.manager = managers[1]
         return result
+    
+    def get_user_by_token(self, token: str) -> User:
+        query = """
+        MATCH (person:Person {token: $token})
+        RETURN DISTINCT person as result
+        """
+        print("Querying Neo4j with: " + query)
+        with self.driver.session() as session:
+            results: list[Record] = list(session.run(query, token=token))
+            for record in results:
+                return User.from_neo4j(record)
+            return None
         
     def get_org_chart_above(self, email: str) -> list[Employee]:
         ceo_emails: list[str] = [x.work_email for x in self.get_chief_executives()]
@@ -266,14 +281,14 @@ class Neo4j:
             return TokenResponse(email=email, token=token, expiry=token_expiry)
 
     #### Events ####
-    def process_events(self, events: list[Event]):
+    def process_events(self, events: list[ConsumerRecord]) -> None:
         """Processes a list of Google API calendar events and adds them, plus their atttendees, to the Neo4j database."""
 
         events_list = []
         relationships = EventPersonRelationships()
 
         for record in events:
-            event = record.value
+            event: dict[str, any] = record.value
             event_dict = self.extract_event_info(event)
             events_list.append(event_dict)
             self.extract_attendees_info(event, event_dict, relationships)
@@ -312,8 +327,26 @@ class Neo4j:
         for event_id, organizer in relationships.organizer_map.items():
             self.create_relationship(self.PERSON, "email", organizer['email'], "ORGANIZES", self.EVENT, "id", event_id, {"id": 'organize' + event_id + organizer['email']})
             self.create_relationship(self.EVENT, "id", event_id, "ORGANIZED_BY", self.PERSON, "email", organizer['email'], {"id": 'organize' + event_id + organizer['email']})
-            
-            
+
+    def _credential_id_for_user(self, user: User, provider: DataSources) -> str:
+        return f"credentials-{user.id}-{provider.value}-{user.email}"
+       
+    def write_remote_credentials(self, user: User, creds: OAuthCreds) -> None:
+        print("Writing remote credentials", creds)
+        model: dict[str, str] = creds.model_dump()
+        model['remote_target'] = creds.remote_target.name
+        model['id'] = self._credential_id_for_user(user, creds.remote_target)
+        self.merge_node("Credentials", 'id', model)
+    
+    def read_remote_credentials(self, user: User, provider: DataSources) -> OAuthCreds:
+        query = """
+        MATCH (creds:Credentials {id: $id})
+        RETURN creds
+        """
+        with self.driver.session() as session:
+            result = list(session.run(query, id=self._credential_id_for_user(user, provider)))
+            return OAuthCreds.from_neo4j(result[0]['creds']) if len(result) > 0 else None             
+
     @staticmethod
     def collate_schedule_response(records: list[dict[str, Any]]) -> list[Event]:
         def key(record):

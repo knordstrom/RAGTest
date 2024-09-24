@@ -1,4 +1,5 @@
 import groq
+from library.managers.slack_user_manager import SlackUserManager
 from library.models.api_models import TranscriptConversation
 from library.models.event import Event
 from library.llms.promptmanager import PromptManager
@@ -12,13 +13,12 @@ import os
 import requests
 import tempfile
 
-
 class Handlers:
 
     def __init__(self, w: weaviate.Weaviate, g: Groq = None) -> None:
         self.w = w
         self.summarizer = Summarizer(g)
-        self.slack = Slack()
+        self.slack = SlackUserManager()
 
     def handle_email(self, email: dict[str, any]) -> bool:
         if email.get('body', '') == '':
@@ -96,6 +96,7 @@ class Handlers:
 
 
     def handle_slack_channel(self, slack: dict[str, any]) -> None:
+        print("Slack was called", slack)
         print("Handling slack channel", slack.get('name', '???'), slack.keys())
 
         # upsert channel itself on channel id

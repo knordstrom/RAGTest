@@ -12,7 +12,7 @@ class TestWeaviateSchemas(unittest.TestCase):
 
     def test_email(self):
         props: list[Property] = WeaviateSchemaTransformer.to_props(Email)
-        assert len(props) == 11
+        assert len(props) == 12
         assert props[0] == Property(name = 'email_id', data_type=DataType.TEXT)
         assert props[1] == Property(name = 'history_id', data_type=DataType.TEXT)
         assert props[2] == Property(name = 'thread_id', data_type=DataType.TEXT)

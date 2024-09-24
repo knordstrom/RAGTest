@@ -12,10 +12,11 @@ import library.models.event as event
 import library.managers.handlers as h
 import warnings
 from library.data.local import neo4j
+from kafka.consumer.fetcher import ConsumerRecord
 
 warnings.simplefilter("ignore", ResourceWarning)
 
-def write_emails_to_vdb(mapped: list[dict[str, any]]) -> None:
+def write_emails_to_vdb(mapped: list[ConsumerRecord]) -> None:
     db = os.getenv("VECTOR_DB_HOST", "127.0.0.1")
     db_port = os.getenv("VECTOR_DB_PORT", "8080")
     print("Writing to VDB at " + db + ":" + db_port + " ... " + str(len(mapped)))
@@ -65,11 +66,11 @@ def write_emails_to_vdb(mapped: list[dict[str, any]]) -> None:
         if w is not None:
             w.close()
 
-def write_events_to_neo4j(events: list[event.Event]) -> None:
+def write_events_to_neo4j(events: list[ConsumerRecord]) -> None:
     graph = neo4j.Neo4j()
     graph.process_events(events)
 
-def write_doc_to_vdb(docs: list[dict[str, any]]):
+def write_doc_to_vdb(docs: list[ConsumerRecord]):
     db = os.getenv("VECTOR_DB_HOST", "127.0.0.1")
     db_port = os.getenv("VECTOR_DB_PORT", "8080")
     print("Writing to VDB at " + db + ":" + db_port + " ... " + str(len(docs)))
