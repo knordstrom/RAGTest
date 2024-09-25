@@ -55,8 +55,8 @@ class Weaviate(VDB):
         if not hasattr(cls, 'instance'):
             cls.instance = super(Weaviate, cls).__new__(cls)
             self = cls.instance
-            self.host = host if host is not None else os.getenv('VECTOR_DB_HOST', '127.0.0.1')
-            self.port = port if port is not None else os.getenv('VECTOR_DB_PORT', '8080')
+            self.host = os.getenv('VECTOR_DB_HOST', host if host else '127.0.0.1')
+            self.port = os.getenv('VECTOR_DB_PORT', port if port else '8080')
             self.url = self.host + ":" + self.port
             
             self.create_schemas(schemas)
@@ -204,7 +204,11 @@ class Weaviate(VDB):
         return filtered_response
 
     def search(self, user:User, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = None, use_hyde: bool = False) -> list[dict[str, any]]:
-        collection: Collection[Properties, References] = self.collection(key)
+        try:
+            collection: Collection[Properties, References] = self.collection(key)
+        except KeyError:
+            print(f"Key '{key}' not found in the collection. Returning an empty list.")
+            return []
         search_query: str = self._hyde_query(query, key, use_hyde)
 
         rerank = Rerank(prop="text", query=query) if threshold is not None else None
@@ -220,6 +224,39 @@ class Weaviate(VDB):
         print("Found " + str(len(response)) + " objects")
 
         return self._filter_rerank_responses(response, threshold)
+    
+    def search_reranking(self, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = .5) -> list[dict[str, any]]:
+        print("doing a reranking")
+        try:
+            collection: Collection[Properties, References] = self.collection(key)
+        except KeyError:
+            print(f"Key '{key}' not found in the collection. Returning an empty list.")
+            return []
+
+        response: list[dict[str, any]] = collection.query.near_text(
+            query=query,
+            limit=limit,
+            certainty=certainty,
+            rerank=Rerank(
+                prop="text",
+                query=query
+            ),
+            return_metadata=wvc.query.MetadataQuery(distance=True)
+        ).objects
+
+        filtered_response = []
+        for o in response:
+            props = o.properties
+            rerank_score = o.metadata.rerank_score
+            normalized_rerank_score = 1/(1 + math.exp (-rerank_score))
+            props['normalized_rerank_score'] = normalized_rerank_score
+
+            if normalized_rerank_score >= threshold:
+                filtered_response.append(o)
+        
+        print("Found " + str(len(filtered_response)) + " objects")
+
+        return filtered_response
     
     def get_by_ids(self, key: WeaviateSchemas, id_prop: str, ids: list[str]) -> list[dict[str, any]]:
         return self.collection(key).query.fetch_objects(
