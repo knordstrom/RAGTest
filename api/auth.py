@@ -4,7 +4,7 @@ from typing import Annotated, Optional
 
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from globals import Globals
-from library.models.api_models import ApiResponse, LoginRequest, TokenResponse
+from library.models.api_models import ApiResponse, LoginRequest, OAuthCreds, TokenResponse
 from fastapi import APIRouter, Depends, HTTPException
 
 from library.managers.auth_manager import AuthManager
@@ -38,7 +38,7 @@ async def credentials(me: Annotated[User, Depends(AuthManager.get_user_dependenc
     return ApiResponse.create("True")
 
 @route.get('/auth/creds')
-async def get_credentials(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_scheme))]) -> ApiResponse[str]:
+async def get_credentials(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_scheme))]) -> ApiResponse[list[OAuthCreds]]:
     """Retrieve credentials for a user"""
     all_creds = AuthManager().read_all_remote_credentials(me)
     return ApiResponse.create(all_creds)

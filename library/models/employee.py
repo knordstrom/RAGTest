@@ -24,12 +24,12 @@ class Employee(BaseModel):
     name:str
     manager_id: Optional[str] = None
     manager_name: Optional[str] = None
-    location:str
-    title:str
+    location:Optional[str] = None
+    title:Optional[str] = None
     work_email:str = Field(alias='email', alias_priority = 0, validation_alias = 'email', serialization_alias = 'email')
-    type_: str = Field(alias='type', alias_priority = 0, validation_alias = 'type', serialization_alias = 'type')
-    cost_center:str
-    cost_center_hierarchy:str
+    type_: str = Field(alias='type', alias_priority = 0, validation_alias = 'type', serialization_alias = 'type', default='Employee')
+    cost_center:Optional[str] = None
+    cost_center_hierarchy:Optional[str] = None
     reports: set['Employee'] = set()
     manager: Optional['Employee'] = None
 
