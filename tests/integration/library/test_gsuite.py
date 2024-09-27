@@ -10,8 +10,8 @@ from library.managers.auth_manager import AuthManager
 import library.managers.handlers as h
 from requests.exceptions import ConnectionError
 
-from library.models.api_models import OAuthCreds
-from library.models.employee import User
+from library.models.api_models import OAuthCreds, TokenResponse
+from library.models.employee import Employee, User
 from library.utils import Utils
 from library.models.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 from tests.integration.library.integration_test_base import IntegrationTestBase, MultiReadyResponse, ReadyResponse
@@ -50,7 +50,12 @@ class TestGsuite(IntegrationTestBase):
         return ReadyResponse(url = url,host = docker_ip,port = str(port))
 
     def test_credential_read_and_write(self, service: MultiReadyResponse):
-        user = User(id = "id1", email = "someone@cognimate.ai")
+        response: TokenResponse = AuthManager().datastore.create_new_user("someone@cognimate.ai", "password")
+        assert response is not None
+        assert response.name is None
+        user = AuthManager().datastore.get_user_by_token(response.token)
+        assert user is not None
+
         gss = GSuite(user, "creds_filename")
 
         gss.is_local = False
@@ -84,4 +89,26 @@ class TestGsuite(IntegrationTestBase):
         assert returned.scopes == ["email", "profile"]
 
         assert returned.expired == True
+
+        creds: list[OAuthCreds] = AuthManager().read_all_remote_credentials(user)
+        assert len(creds) >= 1
+
+        # now make them an employee
+        employees: list[Employee] = []
+        employees.append(Employee(
+            employee_id="id1",
+            name="Some One",
+            location="Somewhere",
+            title="Something",
+            type="Sometype",
+            cost_center="Somecenter",
+            cost_center_hierarchy="Somehierarchy",
+            email="someone@cognimate.ai"
+        ))
+        print("User employee bfore process: ", employees)
+        AuthManager().datastore.process_org_chart(employees)
+
+        response: TokenResponse = AuthManager().get_user_by_token(response.token)
+        assert response is not None
+        assert response.name == "Some One"
         
