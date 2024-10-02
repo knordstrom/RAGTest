@@ -1,5 +1,5 @@
 from library.models.employee import User
-from library.models.weaviate_schemas import WeaviateSchemas
+from library.models.weaviate_schemas import EmailText, EmailTextWithFrom, WeaviateSchemas
 
 
 class VDB:
@@ -23,4 +23,10 @@ class VDB:
         pass
     
     def close(self):
+        pass
+
+    def get_thread_email_messages_by_id(self, thread: str) -> list[EmailText]:
+        pass
+
+    def get_thread_email_messages_by_id(self, thread_id: str) -> list[EmailTextWithFrom]:
         pass
