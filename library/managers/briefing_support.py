@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 from collections import defaultdict
 from library.data.local import weaviate
+from library.data.local.vdb import VDB
 from library.models.api_models import BriefContext, BriefResponse, DocumentEntry, DocumentMetadata, EmailConversationEntry, MeetingAttendee, MeetingContext, MeetingSupport, SlackConversationEntry, SlackThreadResponse, TranscriptConversation, TranscriptEntry
 from library.managers.importance import ImportanceService
 
@@ -19,17 +20,18 @@ from weaviate.collections.classes.internal import Object
 class BriefingSupport:
 
     prompt_manager: PromptManager = PromptManager()
-    weave: weaviate.Weaviate = weaviate.Weaviate()
+    weave: VDB
     summarizer: BriefingSummarizer
     user: User
 
-    def __init__(self, summarizer: BriefingSummarizer, user: User) -> None:
+    def __init__(self, summarizer: BriefingSummarizer, user: User, weave: VDB = weaviate.Weaviate()) -> None:
         self.summarizer: BriefingSummarizer = summarizer
         self.user: User = user
+        self.wweave: VDB = weave
 
-    def create_briefings_for_summary(self, email: str, start_time: datetime, end_time: datetime, schedule: list[dict]) -> str:
+    def create_briefings_for_summary(self, start_time: datetime, end_time: datetime, schedule: list[dict]) -> str:
         out = self.summarizer.summarize('BriefingSupport.create_briefings_for', {
-            'email': email,
+            'email': self.user.email,
             'start_time': start_time.isoformat(),
             'end_time': end_time.isoformat(),
             'Context': str(schedule)
@@ -50,7 +52,7 @@ class BriefingSupport:
         schedule: list[Event] = n.get_schedule(email, start_time, end_time)
         print("Schedule was ", schedule)
 
-        summary: str = self.create_briefings_for_summary(email, start_time, end_time, schedule)
+        summary: str = self.create_briefings_for_summary(start_time, end_time, schedule)
         importanceService = ImportanceService()
         meetings = []
         for event in schedule:

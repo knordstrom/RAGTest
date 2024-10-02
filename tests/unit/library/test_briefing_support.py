@@ -5,6 +5,7 @@ import unittest
 import sys
 
 from globals import Globals
+from library.data.local.vdb import VDB
 from library.models.api_models import EmailConversationEntry
 from library.managers.briefing_summarizer import BriefingSummarizer
 from library.models.employee import User
@@ -34,7 +35,9 @@ class BriefingSupportTest(unittest.TestCase):
         sum_email: dict[str, list[EmailTextWithFrom]] = {}
 
         sum = BriefingSummarizerStub()
-        grouped_messages: list[EmailConversationEntry] = bs.BriefingSupport(sum, user=User(id="1234", email="keith@cognimate.ai")).process_email_context(thread_data)
+        grouped_messages: list[EmailConversationEntry] = bs.BriefingSupport(sum, 
+                                                                            user=User(id="1234", email="keith@cognimate.ai"),
+                                                                            weave=VDB()).process_email_context(thread_data)
         print()
         [print("Grouped", m) for m in grouped_messages]
 
