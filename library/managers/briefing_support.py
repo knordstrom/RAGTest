@@ -24,10 +24,10 @@ class BriefingSupport:
     summarizer: BriefingSummarizer
     user: User
 
-    def __init__(self, summarizer: BriefingSummarizer, user: User, weave: VDB = weaviate.Weaviate()) -> None:
+    def __init__(self, summarizer: BriefingSummarizer, user: User, weave: VDB = None) -> None:
         self.summarizer: BriefingSummarizer = summarizer
         self.user: User = user
-        self.wweave: VDB = weave
+        self.weave: VDB = weave if weave else weaviate.Weaviate()
 
     def create_briefings_for_summary(self, start_time: datetime, end_time: datetime, schedule: list[dict]) -> str:
         out = self.summarizer.summarize('BriefingSupport.create_briefings_for', {
