@@ -31,9 +31,12 @@ jobs:
     - name: Set up Poetry
       run: |
         pip install poetry==1.8.2
-    - name: Repair lock file
+    - name: Ensure lock file consistency
       run: |
         poetry lock --no-update
+    - name: Include antiword
+      run: |
+        sudo apt-get install antiword
     - name: Install dependencies
       run: |
         poetry install
