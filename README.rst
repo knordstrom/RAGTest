@@ -3,7 +3,7 @@
 RAG Test
 ========================
 
-.. image:: https://github.com/knordstrom/RAGTest/actions/workflows/python-app.yml/badge.svg
+.. image:: https://github.com/knordstrom/RAGTest/actions/workflows/unit-tests.yml/badge.svg
    :alt: Unit tests
 
 This is a very basic test repo using GPT4All, Weaviate, and a gmail account in order to answer questions 
