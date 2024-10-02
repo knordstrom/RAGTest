@@ -1,5 +1,5 @@
 from hashlib import md5
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 
 from fastapi.security import OAuth2PasswordBearer
 
@@ -40,8 +40,10 @@ async def add_employees_from_workday_export(me: Annotated[User, Depends(AuthMana
 
 @route.get('/employees/reports/above')
 async def employees_above(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_scheme))],
-                          email: str) -> ApiResponse[List[Employee]]:  
+                          email: Optional[str] = None) -> ApiResponse[List[Employee]]:  
     """Retrieve the reporting chain above the specified user."""
+    if not email:
+        email = me.email
     emp_manager = EmployeeManager()
     chain = emp_manager.get_reporting_chain(email)
 
@@ -52,14 +54,21 @@ async def employees_above(me: Annotated[User, Depends(AuthManager.get_user_depen
 
 @route.get('/employees/reports/below')
 async def employees_below(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_scheme))],
-                          email: str) -> ApiResponse[Employee]:  
+                          email:  Optional[str] = None) -> ApiResponse[Employee]:  
     """Retrieve user and the organization below them"""
+    if not email:
+        email = me.email
     emp_manager = EmployeeManager()
     report: Employee = emp_manager.get_reports(email)
     if report is None:
         APISupport.error_response(404, f"Employee with email {email} not found")
     remove_manager(report)
     return ApiResponse.create(report)
+
+@route.get('/employees/me')
+async def me(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_scheme))]) -> ApiResponse[Employee]:  
+    """Retrieve current user"""
+    return ApiResponse.create(me)
 
 def remove_manager(emp: Employee) -> Employee:
     emp.manager = None

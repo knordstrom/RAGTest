@@ -238,9 +238,10 @@ class TokenResponse(BaseModel):
     email: EmailStr
     expiry: Optional[datetime] = None
     access_token: Optional[str] = None
+    name: Optional[str] = None
 
-    def __init__(self, token: Optional[str] = None, email: EmailStr = None, expiry: Optional[datetime] = None):
-        super().__init__(token=token, email=email, expiry=expiry, access_token=token)
+    def __init__(self, email: EmailStr, name: Optional[str] = None, token: Optional[str] = None, expiry: Optional[datetime] = None):
+        super().__init__(token=token, name=name, email=email, expiry=expiry, access_token=token)
 
 class ConferenceSpace(BaseModel):
     name: str

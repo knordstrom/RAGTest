@@ -118,7 +118,7 @@ class TestEmailWeaviate(IntegrationTestBase):
         metadata: list[Object[Properties, None]] = [e for e in emails.iterator()]
         text: list[Object[Properties, None]] = [t for t in texts.iterator()]
 
-        assert len(text) > 1, "The email text should be chunked into multiple segments"
+        assert len(text) > 1, "The email text should be chunked into multiple segments, we have " + str(len(text))
         assert len(metadata) == 1, "There should be a single email metadata model saved"
         
         assert len(metadata) == 1, "There should be a single email metadata model saved"

@@ -13,9 +13,10 @@ class User(BaseModel):
 
     @staticmethod
     def from_neo4j(record: Record):
-        print("Element id", record['result'].element_id, type(record['result']['element_id']))
-        return User(id=record['result'].element_id, employee_id=record['result']['employee_id'], 
-                    name=record['result']['name'], email=record['result']['email'])
+        print("Element id", record['result'].element_id, type(record['result'].element_id))
+        print("Employe from", record)
+        return User(id=record['result'].element_id, employee_id=record['result'].get('employee_id'), 
+                    name=record['result'].get('name'), email=record['result']['email'])
 
 class Employee(BaseModel):
 
@@ -23,12 +24,12 @@ class Employee(BaseModel):
     name:str
     manager_id: Optional[str] = None
     manager_name: Optional[str] = None
-    location:str
-    title:str
+    location:Optional[str] = None
+    title:Optional[str] = None
     work_email:str = Field(alias='email', alias_priority = 0, validation_alias = 'email', serialization_alias = 'email')
-    type_: str = Field(alias='type', alias_priority = 0, validation_alias = 'type', serialization_alias = 'type')
-    cost_center:str
-    cost_center_hierarchy:str
+    type_: str = Field(alias='type', alias_priority = 0, validation_alias = 'type', serialization_alias = 'type', default='Employee')
+    cost_center:Optional[str] = None
+    cost_center_hierarchy:Optional[str] = None
     reports: set['Employee'] = set()
     manager: Optional['Employee'] = None
 
