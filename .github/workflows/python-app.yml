@@ -26,6 +26,9 @@ jobs:
     - name: Set up Poetry
       run: |
         pip install poetry==1.8.2
+    - name: Repair lock file
+      run: |
+        poetry lock --no-update
     - name: Install dependencies
       run: |
         poetry install
