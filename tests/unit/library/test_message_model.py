@@ -1,4 +1,5 @@
 import ast
+from datetime import timezone
 from library.models import message    
 from library.models.api_models import MeetingAttendee
 from library.data.external.gsuite import GmailLogic, GSuiteServiceProvider
@@ -16,7 +17,7 @@ class TestMessage(unittest.TestCase):
             with open(self.resource, "r") as email_json:
                 #four messages in the file
                 email_obj = self.next_email_obj(email_json)
-                self.validate_first_mssage(email_obj)
+                self.validate_first_message(email_obj)
                 
                 email_obj = self.next_email_obj(email_json)
                 self.validate_second_message(email_obj)
@@ -35,7 +36,7 @@ class TestMessage(unittest.TestCase):
         return message.Message.from_gsuite_payload(ast.literal_eval(email_json.readline()))
 
 
-    def validate_first_mssage(self, email_obj: message.Message):
+    def validate_first_message(self, email_obj: message.Message):
         assert email_obj.email_id == '18ea11b72cb9b7e5'
         assert email_obj.history_id == '8009515'
         assert email_obj.thread_id == '18ea11b72cb9b7e5'
@@ -45,7 +46,8 @@ class TestMessage(unittest.TestCase):
         assert email_obj.bcc == []
         assert email_obj.subject == 'Latest News from My Portfolios'
         assert email_obj.sender == EmailParticipant(email='fool@motley.fool.com', name='The Motley Fool')
-        assert email_obj.date.isoformat().startswith('2024-04-02T17:18:34')
+        assert email_obj.date.astimezone(timezone.utc).isoformat().startswith('2024-04-02T23:18:34')
+        
         assert str(email_obj.body)[0:35:1] == 'Daily Update        The Motley Fool'
     
     def validate_second_message(self, email_obj: message.Message):
@@ -58,7 +60,7 @@ class TestMessage(unittest.TestCase):
         assert email_obj.bcc == []
         assert email_obj.subject == 'The French Whisperer just shared: "Ghost Ships, WITH Wave Sounds"'
         assert email_obj.sender == EmailParticipant(email='bingo@patreon.com', name='Patreon')
-        assert email_obj.date.isoformat().startswith('2024-04-07T12:45:19')
+        assert email_obj.date.astimezone(timezone.utc).isoformat().startswith('2024-04-07T18:45:19')
         assert str(email_obj.body)[0:33:1] == 'The French Whisperer just shared:'
 
     def validate_third_message(self, email_obj: message.Message):
@@ -71,7 +73,7 @@ class TestMessage(unittest.TestCase):
         assert email_obj.bcc == []
         assert email_obj.subject == 'Appointment reminder for Tuesday, April 9th'
         assert email_obj.sender == EmailParticipant(email='yourprovider@simplepractice.com', name='Doctor Appointment')
-        assert email_obj.date.isoformat().startswith('2024-04-07T13:40:26')
+        assert email_obj.date.astimezone(timezone.utc).isoformat().startswith('2024-04-07T19:40:26')
         assert str(email_obj.body) == ''
 
     def validate_fourth_message(self, email_obj: message.Message):
@@ -84,7 +86,7 @@ class TestMessage(unittest.TestCase):
         assert email_obj.bcc == []
         assert email_obj.subject == 'Some Person <<>> Keith - Introduction to Company Data'
         assert email_obj.sender == EmailParticipant(email='someguy@dataco.com', name='Some Person')
-        assert email_obj.date.isoformat().startswith('2024-04-22T11:39:08')
+        assert email_obj.date.astimezone(timezone.utc).isoformat().startswith('2024-04-22T17:39:08')
         assert str(email_obj.body)[0:32:1] == 'Looking forward to talking today'
         assert(len(email_obj.events)) != 0
         assert(email_obj.events[0].content[0:15:1]) == "BEGIN:VCALENDAR"
