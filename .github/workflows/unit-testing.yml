@@ -54,6 +54,11 @@ jobs:
     - name: Report space init
       run: |
         df -h
+    - name: What is in opt
+      run: |
+        ls /opt
+        echo "---------"
+        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache
     - name: Clear space
       run: |
         cd /opt
