@@ -59,11 +59,13 @@ jobs:
         cd /opt
         ls
         echo "---------"
-        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache
+
+        echo "Will be eliminating everything from these dirs:"
+        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache '!' -path ./pipx_bin '!' -path ./pipx
     - name: Clear space
       run: |
         cd /opt
-        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache -exec rm -rf '{}' ';'
+        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner-cache '!' -path ./pipx_bin '!' -path ./pipx -exec rm -rf '{}' ';'
         docker system prune --all --force
     - name: Report space post prune
       run: |
