@@ -62,14 +62,23 @@ jobs:
         echo "---------"
 
         echo "Will be eliminating everything from these dirs:"
-        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache '!' -path ./pipx_bin '!' -path ./pipx
-  
+        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache '!' -path ./pipx_bin '!' -path ./pipx '!' -path ./hostedtoolcache 
+
+        echo "What's in hostedtoolcache"
+        cd hostedtoolcache
+        ls
+
+        echo "---------"
+        find . -maxdepth 1 -mindepth 1 '!' -path ./Python
+        
     - name: Clear space
       run: |
         echo "Poetry is (before cleanse)"
         which poetry
         cd /opt
-        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner-cache '!' -path ./pipx_bin '!' -path ./pipx -exec rm -rf '{}' ';'
+        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner-cache '!' -path ./pipx_bin '!' -path ./pipx '!' -path ./hostedtoolcache -exec rm -rf '{}' ';'        
+        cd hostedtoolcache
+        find . -maxdepth 1 -mindepth 1 '!' -path ./Python -exec rm -rf '{}' ';'
         docker system prune --all --force
         echo "=============================================================================="
         echo "Freeing up disk space on CI system per script"
