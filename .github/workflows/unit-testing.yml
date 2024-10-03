@@ -37,9 +37,12 @@ jobs:
     - name: Include antiword
       run: |
         sudo apt-get install antiword
-    - name: Include docker
+    - name: Output some variables for clarity
       run: |
-        sudo apt-get install docker
+        docker --version
+        pwd
+        ls
+        env
     - name: Install dependencies
       run: |
         poetry install
