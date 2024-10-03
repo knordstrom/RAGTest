@@ -63,7 +63,10 @@ jobs:
         echo $QA_ENV_FILE > .env
     - name: Clear space
       run: |
-        rm -rf /opt/hostedtoolcache
+        df -h
+        cd /opt
+        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache -exec rm -rf '{}' ';'
+        df -h
     - name: Run containers
       run: |
         cd docker
