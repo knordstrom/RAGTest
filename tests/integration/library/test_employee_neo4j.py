@@ -28,6 +28,8 @@ class TestEmployeeNeo4j(IntegrationTestBase):
     @pytest.fixture(scope="session")
     def service(self, docker_ip, docker_services):
         # """Ensure that service is up and responsive."""
+        import subprocess
+        subprocess.run(["docker", "ps"])
 
         port = docker_services.port_for("neo4j", 7574)
         url = "http://{}:{}".format(docker_ip, port)
