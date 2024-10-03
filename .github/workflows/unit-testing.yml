@@ -61,6 +61,9 @@ jobs:
         QA_ENV_FILE: ${{ secrets.QA_ENV_FILE }}
       run: |
         echo $QA_ENV_FILE > .env
+    - name: Clear space
+      run: |
+        rm -rf /opt/hostedtoolcache
     - name: Run containers
       run: |
         cd docker
@@ -70,5 +73,5 @@ jobs:
         docker ps -a
     - name: Unit test
       run: |
-        make test
+        make test-all
 #        make test-it
