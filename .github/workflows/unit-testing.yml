@@ -56,7 +56,8 @@ jobs:
         df -h
     - name: What is in opt
       run: |
-        ls /opt
+        cd /opt
+        ls
         echo "---------"
         find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache
     - name: Clear space
