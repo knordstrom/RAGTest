@@ -45,7 +45,7 @@ class TestGsuite(IntegrationTestBase):
         url = "http://{}:{}".format(docker_ip, port)
         print("port for service ", service_name, " is ", port)
         docker_services.wait_until_responsive(
-            timeout=30.0, pause=0.1, check=lambda: self.is_responsive(url)
+            timeout=60.0, pause=0.1, check=lambda: self.is_responsive(url)
         )
         return ReadyResponse(url = url,host = docker_ip,port = str(port))
 

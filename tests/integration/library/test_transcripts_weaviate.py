@@ -31,7 +31,7 @@ class TestTransccriptsWeaviate(IntegrationTestBase):
         port = docker_services.port_for("weaviate", 8081)
         url = "http://{}:{}".format(docker_ip, port)
         docker_services.wait_until_responsive(
-            timeout=30.0, pause=0.1, check=lambda: self.is_responsive(url)
+            timeout=60.0, pause=0.1, check=lambda: self.is_responsive(url)
         )
         return {
             'url': url,
