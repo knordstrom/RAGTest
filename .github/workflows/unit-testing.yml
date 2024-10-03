@@ -43,6 +43,12 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install
+    - name: Start docker
+      run: |
+        ./docker/docker compose up -d
+    - name: Show running containers
+      run: |
+        docker ps -a
     - name: Unit test
       run: |
         make test-all
