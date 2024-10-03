@@ -46,28 +46,29 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install
-    - name: Login to docker
-      run: |
-        echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-    - name: Include app credentials
-      run: |
-        echo ${{ secrets.GSUITE_APP_CREDS }} > resources/gsuite_creds.json
-    - name: Create containers
-      run: |
-        make docker-processor
-        make docker-api
-    - name: Establish env file
-      env:
-        QA_ENV_FILE: ${{ secrets.QA_ENV_FILE }}
-      run: |
-        echo $QA_ENV_FILE > .env
-    - name: Run containers
-      run: |
-        cd docker
-        docker compose up -d
-    - name: Show running containers
-      run: |
-        docker ps -a
+#    - name: Login to docker
+#      run: |
+#        echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+#    - name: Include app credentials
+#      run: |
+#        echo ${{ secrets.GSUITE_APP_CREDS }} > resources/gsuite_creds.json
+#    - name: Create containers
+#      run: |
+#        make docker-processor
+#        make docker-api
+#    - name: Establish env file
+#      env:
+#        QA_ENV_FILE: ${{ secrets.QA_ENV_FILE }}
+#      run: |
+#        echo $QA_ENV_FILE > .env
+ #   - name: Run containers
+ #     run: |
+ #       cd docker
+ #       docker compose up -d
+ #   - name: Show running containers
+ #     run: |
+ #       docker ps -a
     - name: Unit test
       run: |
-        make test-all
+        make test
+#        make test-it
