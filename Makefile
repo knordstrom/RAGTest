@@ -2,13 +2,13 @@ init:
 	poetry install
 
 test:
-	poetry run coverage run -m pytest tests/unit/ && poetry run coverage report -m
+	poetry run coverage run -m pytest tests/unit/ && poetry run coverage lcov
 
 test-it:
-	poetry run coverage run -m pytest tests/integration/ && poetry run coverage report -m
+	poetry run coverage run -m pytest tests/integration/ && poetry run coverage lcov
 
 test-all:
-	poetry run coverage run -m pytest tests/ && poetry run coverage report -m
+	poetry run coverage run -m pytest tests/ && poetry run coverage lcov
 
 run:
 	uvicorn api.main:app --reload --reload-exclude processor --host 0.0.0.0 --port 5010

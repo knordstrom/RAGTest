@@ -29,7 +29,7 @@ class TestEmployeeNeo4j(IntegrationTestBase):
     def service(self, docker_ip, docker_services):
         # """Ensure that service is up and responsive."""
 
-        port = docker_services.port_for("neo4j", 7575)
+        port = docker_services.port_for("neo4j", 7574)
         url = "http://{}:{}".format(docker_ip, port)
         docker_services.wait_until_responsive(
             timeout=30.0, pause=0.1, check=lambda: self.is_responsive(url)
