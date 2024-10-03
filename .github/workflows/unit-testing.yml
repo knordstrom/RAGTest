@@ -49,6 +49,9 @@ jobs:
     - name: Login to docker
       run: |
         echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+    - name: Include app credentials
+      run: |
+        echo ${{ secrets.GSUITE_APP_CREDS }} > resources/gsuite_creds.json
     - name: Create containers
       run: |
         make docker-processor
