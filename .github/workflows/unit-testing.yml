@@ -37,9 +37,12 @@ jobs:
     - name: Include antiword
       run: |
         sudo apt-get install antiword
+    - name: Include docker
+      run: |
+        sudo apt-get install docker
     - name: Install dependencies
       run: |
         poetry install
     - name: Unit test
       run: |
-        make test
+        make test-all
