@@ -31,6 +31,7 @@ jobs:
     - name: Set up Poetry
       run: |
         pip install poetry==1.8.2
+        which poetry
     - name: Ensure lock file consistency
       run: |
         poetry lock --no-update
@@ -65,13 +66,16 @@ jobs:
   
     - name: Clear space
       run: |
+        echo "Poetry is (before cleanse)"
+        which poetry
         cd /opt
         find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner-cache '!' -path ./pipx_bin '!' -path ./pipx -exec rm -rf '{}' ';'
         docker system prune --all --force
         echo "=============================================================================="
         echo "Freeing up disk space on CI system per script"
         echo "=============================================================================="
-        
+        echo "Poetry is"
+        which poetry
         echo "Listing 100 largest packages"
         dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
         echo "Removing large packages"
@@ -90,6 +94,8 @@ jobs:
         echo "Removing large directories"
         # deleting 15GB
         rm -rf /usr/share/dotnet/
+        echo "Poetry should still be here ..."
+        which poetry
 
     - name: Report space post prune
       run: |
@@ -116,5 +122,6 @@ jobs:
         docker ps -a
     - name: Unit test
       run: |
+        which poetry
         make test-all
 #        make test-it
