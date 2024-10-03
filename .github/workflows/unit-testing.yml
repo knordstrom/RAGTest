@@ -46,7 +46,15 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install
-    - name: Start docker
+    - name: Create containers
+      run: |
+        make docker-processor
+    - name: Establish env file
+      env:
+        QA_ENV_FILE: ${{ secrets.QA_ENV_FILE }}
+      run: |
+        echo $QA_ENV_FILE > .env
+    - name: Run containers
       run: |
         cd docker
         docker compose up -d
