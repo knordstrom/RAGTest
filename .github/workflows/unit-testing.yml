@@ -46,6 +46,22 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install
+    - name: Establish env file
+      env:
+        QA_ENV_FILE: ${{ secrets.QA_ENV_FILE }}
+      run: |
+        echo $QA_ENV_FILE > .env
+    - name: Report space init
+      run: |
+        df -h
+    - name: Clear space
+      run: |
+        cd /opt
+        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache -exec rm -rf '{}' ';'
+        docker system prune --all --force
+    - name: Report space post prune
+      run: |
+        df -h
     - name: Login to docker
       run: |
         echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
@@ -56,17 +72,8 @@ jobs:
       run: |
         make docker-processor
         make docker-api
-    - name: Establish env file
-      env:
-        QA_ENV_FILE: ${{ secrets.QA_ENV_FILE }}
+    - name: Report space post creation
       run: |
-        echo $QA_ENV_FILE > .env
-    - name: Clear space
-      run: |
-        df -h
-        cd /opt
-        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache -exec rm -rf '{}' ';'
-        docker system prune --all --force
         df -h
     - name: Run containers
       run: |
