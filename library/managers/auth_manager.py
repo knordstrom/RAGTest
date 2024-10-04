@@ -13,8 +13,8 @@ from library.models.employee import Employee, User
 
 class AuthManager:
 
-    def __init__(self, datastoree: Neo4j = None) -> None:
-        self.datastore = datastoree if datastoree else Neo4j()
+    def __init__(self, datastore: Neo4j = None) -> None:
+        self.datastore = datastore if datastore else Neo4j()
 
     @staticmethod
     def assert_authorization_email(me: User, emails: str | list[str]) -> None:
