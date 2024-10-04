@@ -38,6 +38,7 @@ class TestEmployeeNeo4j(IntegrationTestBase):
         )
 
         print(docker_services)
+        subprocess.run(["docker", "logs", docker_services._compose_project_name + "-neo4j-1"])
         service = {
             'url': url,
             'host': docker_ip,
