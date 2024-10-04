@@ -3,13 +3,18 @@
 RAG Test
 ========================
 
-.. image:: https://github.com/knordstrom/RAGTest/actions/workflows/unit-testing.yml/badge.svg
+.. |testing| image:: https://github.com/knordstrom/RAGTest/actions/workflows/unit-testing.yml/badge.svg
    :alt: Unit tests
+.. |coverage| image:: https://coveralls.io/repos/github/knordstrom/RAGTest/badge.svg?branch=main
+   :target: https://coveralls.io/github/knordstrom/RAGTest?branch=main
 
-This is a very basic test repo using GPT4All, Weaviate, and a gmail account in order to answer questions 
+|testing| |coverage|
+
+This is a basic test repo using Groq, Neo4j, Weaviate, and some data accounts (GSuite, Slack) in order to answer questions 
 through a FastAPI API. Emails are read from the gmail account according to parameters sent to the API then 
 sent through a Kafka topic to a processor that vectorizes and stores them. A separate API then allows a question 
-to be asked with a certain number of emails to be retrieved and used to answer the question.
+to be asked with a certain number of emails to be retrieved and used to answer the question, or for proactive briefs to be preesented 
+based on a GSuite schedule and a given time range.
 
 Note the performance of this second endpoint is weak because too much context is required to answer the question 
 relative to the size of the text in the emails. The step towards solving this is the next phase, in which we will
