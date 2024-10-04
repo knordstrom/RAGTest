@@ -62,7 +62,8 @@ class Neo4j:
         self.db_port = os.getenv("NEO4J_DB_PORT", "7687") if port is None else port
         self.url = f"{protocol}://{self.db_host}:{self.db_port}"
         self.username = os.getenv("NEO4J_USERNAME", "neo4j") if user is None else user
-        self.password = os.getenv("NEO4J_PASSWORD", "neo4j") if password is None else password
+        self.password = os.getenv("NEO4J_PASSWORD", "password") if password is None else password
+        print("Connecting to Neo4j at ", self.url, " with user ", self.username, "and password ", self.password, "   ", os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
         self.driver = GraphDatabase.driver(self.url, auth=(self.username, self.password))
         self.connect()
 
@@ -163,6 +164,21 @@ class Neo4j:
         print("Querying Neo4j with: " + query)
         with self.driver.session() as session:
             results: list[Record] = list(session.run(query, token=token))
+            for record in results:
+                return User.from_neo4j(record)
+            return None
+        
+    def get_user_by_email(self, email: str) -> User:
+        query = """
+        MATCH (person:Person {email: $email}) 
+        RETURN DISTINCT person as result, person.email as email
+        UNION ALL
+        MATCH (person:Person)-[:HAS_CREDENTIALS]-(credentials:Credentials {email: $email})
+        RETURN DISTINCT person as result, credentials.email as email
+        """
+        print("Querying Neo4j with: " + query)
+        with self.driver.session() as session:
+            results: list[Record] = list(session.run(query, email=email.lower()))
             for record in results:
                 return User.from_neo4j(record)
             return None
