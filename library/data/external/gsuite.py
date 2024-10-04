@@ -121,6 +121,7 @@ class GSuite(GSuiteServiceProvider):
     
     user: User = None
     is_local: bool = False
+    auth_manager: AuthManager = None
 
     def service(self, google_schema: GoogleSchemas) -> Resource:
         credentials = self.__authenticate()
@@ -145,11 +146,12 @@ class GSuite(GSuiteServiceProvider):
             self._spaces_client = meet_v2.SpacesServiceAsyncClient(credentials=credentials)
         return self._spaces_client
 
-    def __init__(self, user: User, creds: str):
+    def __init__(self, user: User, creds: str, auth_manager: AuthManager = None):
         self.user = user
         self.email = user.email
         self.creds = creds
         self.is_local = os.getenv("IS_LOCAL") in ["True", "true", "1"]
+        self.auth_manager = auth_manager if auth_manager else AuthManager()
 
     def get_existing_credentials(self) -> Credentials:
         creds: Credentials = None
@@ -157,7 +159,7 @@ class GSuite(GSuiteServiceProvider):
             if os.path.exists(self.TOKEN_FILE):
                 creds = Credentials.from_authorized_user_file(self.TOKEN_FILE, self.SCOPES)
         else:
-            stored_creds: OAuthCreds = AuthManager().read_remote_credentials(self.user, DataSources.GOOGLE)
+            stored_creds: OAuthCreds = self.auth_manager.read_remote_credentials(self.user, DataSources.GOOGLE)
             creds: Credentials = stored_creds.to_credentials() if stored_creds else None
 
         return creds
@@ -186,7 +188,7 @@ class GSuite(GSuiteServiceProvider):
             with open(self.TOKEN_FILE, "w") as token:
                 token.write(creds.to_json())
         else:
-            AuthManager().write_remote_credentials_object(self.user, OAuthCreds.from_google_credentials(creds, DataSources.GOOGLE))  
+            self.auth_manager.write_remote_credentials_object(self.user, OAuthCreds.from_google_credentials(creds, DataSources.GOOGLE))  
 
     def list_emails(self, userId: str='me', pageToken: str = None, maxResults: int = None) -> list[dict[str,str]]:
         service: Resource

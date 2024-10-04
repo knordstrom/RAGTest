@@ -60,7 +60,7 @@ class TestGsuite(IntegrationTestBase):
         user = mgr.datastore.get_user_by_token(response.token)
         assert user is not None
 
-        gss = GSuite(user, "creds_filename")
+        gss = GSuite(user, "creds_filename", auth_manager=mgr)
 
         gss.is_local = False
         assert gss.is_local == False
