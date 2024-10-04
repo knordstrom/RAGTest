@@ -5,6 +5,7 @@ import pytest
 import requests
 from library.data.external.gsuite import GSuite
 from library.data.local import weaviate as w
+from library.data.local.neo4j import Neo4j
 from library.enums.data_sources import DataSources
 from library.managers.auth_manager import AuthManager
 import library.managers.handlers as h
@@ -50,7 +51,8 @@ class TestGsuite(IntegrationTestBase):
         return ReadyResponse(url = url,host = docker_ip,port = str(port))
 
     def test_credential_read_and_write(self, service: MultiReadyResponse):
-        response: TokenResponse = AuthManager().datastore.create_new_user("someone@cognimate.ai", "password")
+        neo4j: Neo4j = Neo4j(service.neo4j.host, service.neo4j.port)
+        response: TokenResponse = AuthManager(neo4j).datastore.create_new_user("someone@cognimate.ai", "password")
         assert response is not None
         assert response.name is None
         user = AuthManager().datastore.get_user_by_token(response.token)
