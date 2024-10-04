@@ -1,4 +1,5 @@
 from datetime import datetime, tzinfo
+import os
 import dateutil
 import dateutil.tz
 import pytest
@@ -38,7 +39,7 @@ class TestGsuite(IntegrationTestBase):
         # """Ensure that service is up and responsive."""
 
         weaviate_config = self.get_config(docker_ip, docker_services, "weaviate", 8081)
-        neo4j_config = self.get_config(docker_ip, docker_services, "neo4j", 7575)
+        neo4j_config = self.get_config(docker_ip, docker_services, "neo4j", os.getenv("NEO4J_BOLT_PORT","7688"))
         return MultiReadyResponse(weaviate = weaviate_config, neo4j = neo4j_config)
     
     def get_config(self, docker_ip, docker_services, service_name: str,default_port: int) -> ReadyResponse:

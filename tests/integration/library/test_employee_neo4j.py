@@ -42,14 +42,14 @@ class TestEmployeeNeo4j(IntegrationTestBase):
         service = {
             'url': url,
             'host': docker_ip,
-            'port': "7688"
+            'port': os.getenv("NEO4J_BOLT_PORT","7688")
         }
 
         employees = Employee.from_csv(Globals().test_resource('employees.csv'))
         workday = Workday(employees)
         org_chart = workday.org_chart()
 
-        graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
+        graph = neo4j.Neo4j(service['host'], service['port'])
 
         graph.process_org_chart(org_chart)
 
@@ -57,7 +57,7 @@ class TestEmployeeNeo4j(IntegrationTestBase):
     
 
     def test_employee_model_create_contains_proper_structure(self, service):
-        graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
+        graph = neo4j.Neo4j(service['host'], service['port'])
         ceos: list[Employee] = graph.get_chief_executives()
         assert len(ceos) == 1
         assert ceos[0].work_email == 'jdoe@superbigmegacorp.com'
@@ -153,7 +153,7 @@ class TestEmployeeNeo4j(IntegrationTestBase):
         assert "Morgan Lydstrom MANAGES Danforth Hamptons" in sentences
 
     def test_get_org_chart_above(self, service):
-        graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
+        graph = neo4j.Neo4j(service['host'], service['port'])
 
         chain: list[Employee] = graph.get_org_chart_above('ahigginbotham@superbigmegacorp.com')
         assert len(chain) == 5 # 20, 16, 7, 2, 1
@@ -166,7 +166,7 @@ class TestEmployeeNeo4j(IntegrationTestBase):
         assert chain[3].manager == chain[4]
 
     def test_get_org_chart_below(self, service):
-        graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
+        graph = neo4j.Neo4j(service['host'], service['port'])
 
         employee: Employee = graph.get_org_chart_below('cgubbins@superbigmegacorp.com')
         assert employee.name == 'Cleo Gubbins'
@@ -191,7 +191,7 @@ class TestEmployeeNeo4j(IntegrationTestBase):
 
     
     def test_get_full_employee(self, service):
-        graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
+        graph = neo4j.Neo4j(service['host'], service['port'])
 
         employee: Employee = graph.get_employee_with_full_org_chart('cgubbins@superbigmegacorp.com')
         assert employee.name == 'Cleo Gubbins'
