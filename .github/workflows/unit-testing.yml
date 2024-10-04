@@ -133,4 +133,7 @@ jobs:
       run: |
         which poetry
         make test-all
-#        make test-it
+    - name: Coveralls
+      uses: coverallsapp/github-action@v2
+      with:
+        file: coverage.lcov
