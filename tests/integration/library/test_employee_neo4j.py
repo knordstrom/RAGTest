@@ -58,7 +58,6 @@ class TestEmployeeNeo4j(IntegrationTestBase):
 
     def test_employee_model_create_contains_proper_structure(self, service):
         graph = neo4j.Neo4j(service['host'], service['port'], "bolt", "neo4j", "password")
-        assert False
         ceos: list[Employee] = graph.get_chief_executives()
         assert len(ceos) == 1
         assert ceos[0].work_email == 'jdoe@superbigmegacorp.com'
