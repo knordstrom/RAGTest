@@ -53,10 +53,11 @@ class TestGsuite(IntegrationTestBase):
 
     def test_credential_read_and_write(self, service: MultiReadyResponse):
         neo4j: Neo4j = Neo4j(service.neo4j.host, service.neo4j.port)
-        response: TokenResponse = AuthManager(neo4j).datastore.create_new_user("someone@cognimate.ai", "password")
+        mgr: AuthManager = AuthManager(neo4j)
+        response: TokenResponse = mgr.datastore.create_new_user("someone@cognimate.ai", "password")
         assert response is not None
         assert response.name is None
-        user = AuthManager().datastore.get_user_by_token(response.token)
+        user = mgr.datastore.get_user_by_token(response.token)
         assert user is not None
 
         gss = GSuite(user, "creds_filename")
@@ -66,7 +67,7 @@ class TestGsuite(IntegrationTestBase):
         returned: Credentials = gss.get_existing_credentials()
         # assert returned is None
 
-        AuthManager().write_remote_credentials(user, 
+        mgr.write_remote_credentials(user, 
                                                target = "GOOGLE", 
                                                token = "notarealtoken", 
                                                refresh_token = "alsonotarealtoken", 
@@ -75,7 +76,7 @@ class TestGsuite(IntegrationTestBase):
                                                client_secret = "uhuh", 
                                                token_uri="https://www.googleapis.com/oauth2/v4/token",
                                                scopes=["email", "profile"])
-        proof:OAuthCreds = AuthManager().read_remote_credentials(user, DataSources.GOOGLE)
+        proof:OAuthCreds = mgr.read_remote_credentials(user, DataSources.GOOGLE)
         assert proof is not None, "Proof is None"
         
         returned: Credentials = gss.get_existing_credentials()
@@ -93,7 +94,7 @@ class TestGsuite(IntegrationTestBase):
 
         assert returned.expired == True
 
-        creds: list[OAuthCreds] = AuthManager().read_all_remote_credentials(user)
+        creds: list[OAuthCreds] = mgr.read_all_remote_credentials(user)
         assert len(creds) >= 1
 
         # now make them an employee
@@ -109,9 +110,9 @@ class TestGsuite(IntegrationTestBase):
             email="someone@cognimate.ai"
         ))
         print("User employee bfore process: ", employees)
-        AuthManager().datastore.process_org_chart(employees)
+        mgr.datastore.process_org_chart(employees)
 
-        response: TokenResponse = AuthManager().get_user_by_token(response.token)
+        response: TokenResponse = mgr.get_user_by_token(response.token)
         assert response is not None
         assert response.name == "Some One"
         
