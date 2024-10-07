@@ -18,10 +18,12 @@ class AuthManager:
 
     @staticmethod
     def assert_authorization_email(me: User, emails: str | list[str]) -> None:
-        if isinstance(emails, str):
-            emails = [emails]
         if not me:
             raise HTTPException(status_code=401, detail="You are not authenticated.")
+        if not emails: # authorized for me only, nothing to check
+            return
+        if isinstance(emails, str):
+            emails = [emails]    
         if me.email not in emails:
             raise HTTPException(status_code=403, detail="You are not authorized to access this email account.")
 
@@ -82,6 +84,7 @@ class AuthManager:
         creds = OAuthCreds(
             remote_target=provider, 
             token=token, 
+            email=user.email,
             refresh_token=refresh_token, 
             expiry=expiry, 
             client_id=client_id, 
