@@ -196,7 +196,7 @@ class GSuite(GSuiteServiceProvider):
         service: Resource
         with self.service(GoogleSchemas.GMAIL) as service:
             maxResults = 500 if maxResults > 500 else maxResults
-            return service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults, fields = 'messages,pageToken,next').execute()
+            return service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults).execute()
     
     def get_email(self, id: str, userId: str='me', format: str='full') -> dict[str, str]:
         service: Resource
