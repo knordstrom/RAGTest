@@ -52,10 +52,8 @@ jobs:
       env:
         QA_ENV_FILE: ${{ secrets.QA_ENV_FILE }}
       run: |
-        echo $QA_ENV_FILE > .env
-        echo $QA_ENV_FILE > tests/.env
-        source .env
-        env
+        echo $QA_ENV_FILE > /home/runner/work/RAGTest/RAGTest.env
+        echo $QA_ENV_FILE > /home/runner/work/RAGTest/RAGTest/tests/.env
     - name: Report space init
       run: |
         df -h
@@ -135,7 +133,7 @@ jobs:
         docker ps -a
     - name: Unit test
       run: |
-        source .env
+        source /home/runner/work/RAGTest/RAGTest/tests/.env
         env
         which poetry
         make test-all
