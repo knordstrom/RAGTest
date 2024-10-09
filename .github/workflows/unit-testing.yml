@@ -53,6 +53,9 @@ jobs:
         QA_ENV_FILE: ${{ secrets.QA_ENV_FILE }}
       run: |
         echo $QA_ENV_FILE > .env
+        echo $QA_ENV_FILE > tests/.env
+        source .env
+        env
     - name: Report space init
       run: |
         df -h
