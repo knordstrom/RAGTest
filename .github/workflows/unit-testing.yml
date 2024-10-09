@@ -133,7 +133,12 @@ jobs:
         docker ps -a
     - name: Unit test
       run: |
+        echo "Env file:"
+        cat /home/runner/work/RAGTest/RAGTest/tests/.env
+        echo "----------------------------------"
+        set -a 
         source /home/runner/work/RAGTest/RAGTest/tests/.env
+        set +a        
         env
         which poetry
         make test-all
