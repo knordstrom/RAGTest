@@ -336,6 +336,7 @@ class SlackUser(BaseModel):
 
 class OAuthCreds(BaseModel):
     remote_target: DataSources 
+    email: EmailStr
     token: str
     refresh_token: Optional[str] = None
     expiry: datetime
@@ -358,9 +359,10 @@ class OAuthCreds(BaseModel):
         ) 
     
     @staticmethod
-    def from_google_credentials(creds: Credentials, remote_target: DataSources) -> 'OAuthCreds':
+    def from_google_credentials(creds: Credentials, email: str) -> 'OAuthCreds':
         return OAuthCreds(
-            remote_target=remote_target,
+            remote_target=DataSources.GOOGLE,
+            email=email,
             token=creds.token,
             refresh_token=creds.refresh_token,
             expiry=creds.expiry,
@@ -375,6 +377,7 @@ class OAuthCreds(BaseModel):
         expiry: neo4j_time.DateTime = creds['expiry']
         scopes: list[str] = creds['scopes']
         return OAuthCreds(remote_target=DataSources.__members__.get(creds['remote_target']), 
+                            email=creds['email'],
                             token=creds['token'], 
                             refresh_token=creds.get('refresh_token'), 
                             expiry=expiry.to_native(), 

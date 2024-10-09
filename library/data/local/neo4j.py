@@ -64,6 +64,7 @@ class Neo4j:
         self.username = os.getenv("NEO4J_USERNAME", "neo4j") if user is None else user
         self.password = os.getenv("NEO4J_PASSWORD", "password") if password is None else password
         self.driver = GraphDatabase.driver(self.url, auth=(self.username, self.password))
+ #       print("Connecting to Neo4j at", self.url, "using ", self.username, " and ", self.password)
         self.connect()
 
     def connect(self) -> None:

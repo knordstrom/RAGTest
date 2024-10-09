@@ -31,9 +31,9 @@ docker-all:
 	make docker-api
 	docker image tag context-processor:0.1.1 knordstrom/email-processor:$(VERSION)
 	docker image tag event-processor:0.1.1 knordstrom/event-processor:$(VERSION)
-	docker image tag event-processor:0.1.1 knordstrom/document-processor:$(VERSION)
-	docker image tag event-processor:0.1.1 knordstrom/transcript-processor:$(VERSION) 
-	docker image tag event-processor:0.1.1 knordstrom/slack-processor:$(VERSION)
+	docker image tag document-processor:0.1.1 knordstrom/document-processor:$(VERSION)
+	docker image tag transcript-processor:0.1.1 knordstrom/transcript-processor:$(VERSION) 
+	docker image tag slack-processor:0.1.1 knordstrom/slack-processor:$(VERSION)
 	docker image tag context-api:0.1.1 knordstrom/sofia-api:$(VERSION)
 	docker push knordstrom/email-processor:$(VERSION)
 	docker push knordstrom/event-processor:$(VERSION)

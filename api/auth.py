@@ -15,7 +15,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login/openapi")
 
 def _perform_login(form: LoginRequest) -> TokenResponse:
     response: TokenResponse = AuthManager().authenticate(form.email, form.password)
-    if not response.token:
+    if not response or not response.token:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     return response
 

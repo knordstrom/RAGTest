@@ -1,5 +1,6 @@
 import datetime
 import enum
+import math
 import os
 from globals import Globals
 from library import document_parser
@@ -60,7 +61,8 @@ class GmailLogic:
             new_messages = results.get('messages', [])
             count -= len(new_messages)
             messages += new_messages
-            if not pageToken or (not count or count <= 0) or len(new_messages) == 0:               
+            if not pageToken or (not count or count <= 0) or len(new_messages) == 0:     
+                print("No page token in ", results)          
                 messages_left = False
         return messages
     
@@ -183,16 +185,17 @@ class GSuite(GSuiteServiceProvider):
             self.save_credentials(creds)
         return creds
         
-    def save_credentials(self, creds: Credentials):
+    def save_credentials(self, creds: Credentials) -> None:
         if self.is_local:
             with open(self.TOKEN_FILE, "w") as token:
                 token.write(creds.to_json())
         else:
-            self.auth_manager.write_remote_credentials_object(self.user, OAuthCreds.from_google_credentials(creds, DataSources.GOOGLE))  
+            self.auth_manager.write_remote_credentials_object(self.user, OAuthCreds.from_google_credentials(creds, self.email))  
 
-    def list_emails(self, userId: str='me', pageToken: str = None, maxResults: int = None) -> list[dict[str,str]]:
+    def list_emails(self, userId: str='me', pageToken: str = "start", maxResults: int = None) -> list[dict[str,str]]:
         service: Resource
         with self.service(GoogleSchemas.GMAIL) as service:
+            maxResults = 500 if maxResults > 500 else maxResults
             return service.users().messages().list(userId=userId, pageToken=pageToken, maxResults = maxResults).execute()
     
     def get_email(self, id: str, userId: str='me', format: str='full') -> dict[str, str]:
