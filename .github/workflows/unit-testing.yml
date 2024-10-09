@@ -135,6 +135,8 @@ jobs:
         docker ps -a
     - name: Unit test
       run: |
+        source .env
+        env
         which poetry
         make test-all
     - name: Coveralls
