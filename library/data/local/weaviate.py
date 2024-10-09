@@ -1,7 +1,9 @@
 import copy
+from datetime import datetime
 import enum
 import os
 import dotenv
+from pydantic import BaseModel
 import weaviate as w
 import weaviate.util as wutil
 #import langchain_experimental.text_splitter as lang_splitter
@@ -15,7 +17,7 @@ import weaviate.classes as wvc
 from weaviate.util import generate_uuid5 as weave_uuid5
 from weaviate.classes.config import Property, DataType
 from library.models.employee import User
-from library.models.weaviate_schemas import Email, EmailText, EmailTextWithFrom, WeaviateSchemas, WeaviateSchema
+from library.models.weaviate_schemas import CommunicationEntry, CommunicationSummary, Email, EmailText, EmailTextWithFrom, EmailThreadSummary, SlackThreadSummary, TranscriptSummary, WeaviateSchemas, WeaviateSchema
 from weaviate.classes.query import Filter, Rerank
 from weaviate.collections.classes.grpc import Sort
 from weaviate.collections.collection import Collection
@@ -221,6 +223,40 @@ class Weaviate(VDB):
 
         return self._filter_rerank_responses(response, threshold)
     
+    def get_summary_by_id(self, collection: WeaviateSchemas, id_prop: str, id: str) -> CommunicationSummary:
+        objects = self.collection(collection).query.fetch_objects(
+            filters= Filter.by_property(id_prop).equal(id),
+        ).objects
+        if len(objects) > 0:
+            if collection == WeaviateSchemas.EMAIL_THREAD_SUMMARY:
+                return EmailThreadSummary(**objects[0].properties)
+            if collection == WeaviateSchemas.SLACK_THREAD_SUMMARY:
+                return SlackThreadSummary(**objects[0].properties)
+            if collection == WeaviateSchemas.TRANSCRIPT_SUMMARY:
+                print("Transcript summary ", objects[0].properties)
+                return TranscriptSummary(text=objects[0].properties.get('text'), 
+                                         meeting_code=objects[0].properties.get('meeting_code'),
+                                         summary_date=objects[0].properties.get('summary_date'))
+            return CommunicationSummary.model_validate(objects[0].properties)
+        return None
+    
+    def get_conversation_for_summary(self, thread_collection: WeaviateSchemas, thread_id: str) -> list[CommunicationEntry]:
+        if thread_collection == WeaviateSchemas.EMAIL_THREAD_SUMMARY:
+            return [CommunicationEntry(sender=x.sender.name, text=x.text, entry_date=x.date) for x in self.get_thread_email_messages_by_id(thread_id)]
+        if thread_collection == WeaviateSchemas.SLACK_THREAD_SUMMARY:
+            return [CommunicationEntry(sender=x.sender, text="\n".join(x.text), entry_date=x.ts) for x in self.get_slack_thread_messages_by_id(thread_id).messages]
+        if thread_collection == WeaviateSchemas.TRANSCRIPT_SUMMARY:
+            # transcripts do no get updated so we use the current date
+            return [CommunicationEntry(sender=x.speaker, text=x.text, entry_date=datetime.now().astimezone()) for x in self.get_transcript_conversation_entries_for_id(thread_id)]
+        raise ValueError("Invalid thread collection " + thread_collection)
+    
+    def save_summary(self, collection: WeaviateSchemas, id_prop: str, id: str, summary: str, timestamp: datetime) -> bool:
+        return self.upsert({
+            id_prop: id,
+            "text": summary,
+            "summary_date": timestamp
+        }, collection, id_property = id_prop)
+
     def get_by_ids(self, key: WeaviateSchemas, id_prop: str, ids: list[str]) -> list[dict[str, any]]:
         return self.collection(key).query.fetch_objects(
             filters= Filter.by_property(id_prop).contains_any(ids),
