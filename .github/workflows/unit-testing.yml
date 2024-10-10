@@ -65,11 +65,9 @@ jobs:
 
         echo "Will be eliminating everything from these dirs:"
         find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache '!' -path ./pipx_bin '!' -path ./pipx '!' -path ./hostedtoolcache 
-
         echo "What's in hostedtoolcache"
         cd hostedtoolcache
         ls
-
         echo "---------"
         find . -maxdepth 1 -mindepth 1 '!' -path ./Python
         
