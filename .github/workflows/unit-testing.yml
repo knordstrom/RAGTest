@@ -10,6 +10,7 @@ on:
     types: 
       - opened 
       - reopened
+      - synchronize
     branches: [ "main" ]
     paths:
       - '**.py'
@@ -51,7 +52,8 @@ jobs:
       env:
         QA_ENV_FILE: ${{ secrets.QA_ENV_FILE }}
       run: |
-        echo $QA_ENV_FILE > .env
+        echo $QA_ENV_FILE > /home/runner/work/RAGTest/RAGTest.env
+        echo $QA_ENV_FILE > /home/runner/work/RAGTest/RAGTest/tests/.env
     - name: Report space init
       run: |
         df -h
@@ -63,11 +65,9 @@ jobs:
 
         echo "Will be eliminating everything from these dirs:"
         find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache '!' -path ./pipx_bin '!' -path ./pipx '!' -path ./hostedtoolcache 
-
         echo "What's in hostedtoolcache"
         cd hostedtoolcache
         ls
-
         echo "---------"
         find . -maxdepth 1 -mindepth 1 '!' -path ./Python
         
@@ -126,11 +126,19 @@ jobs:
     #   run: |
     #     cd docker
     #     docker compose up -d
+    
     - name: Show running containers
       run: |
         docker ps -a
     - name: Unit test
       run: |
+        echo "Env file:"
+        cat /home/runner/work/RAGTest/RAGTest/tests/.env
+        echo "----------------------------------"
+        set -a 
+        source /home/runner/work/RAGTest/RAGTest/tests/.env
+        set +a        
+        env
         which poetry
         make test-all
     - name: Coveralls

@@ -131,7 +131,7 @@ class EmailMessage(BaseModel):
     email_id: str
     history_id: str
     thread_id: str
-    labels: List[str]
+    labels: List[str] = []
     to: List[MeetingAttendee]
     cc: List[MeetingAttendee]
     bcc: List[MeetingAttendee]

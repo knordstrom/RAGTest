@@ -12,22 +12,23 @@ from library.models.employee import User
 from library.models.event import Event
 import library.data.local.neo4j as neo
 from dotenv import load_dotenv
-from library.llms.promptmanager import PromptManager
+from library.llms.promptmanager import PromptManager, PromptRetriever
 from library.utils import Utils
-from library.models.weaviate_schemas import Email, EmailConversationWithSummary, EmailParticipant, EmailText, EmailTextWithFrom, WeaviateSchemas
+from library.models.weaviate_schemas import CommunicationEntry, CommunicationSummary, CommunicationSummaryAndConversation, Email, EmailConversationWithSummary, EmailParticipant, EmailText, EmailTextWithFrom, WeaviateSchemas
 from weaviate.collections.classes.internal import Object
 
 class BriefingSupport:
 
-    prompt_manager: PromptManager = PromptManager()
+    prompt_manager: PromptRetriever
     weave: VDB
     summarizer: BriefingSummarizer
     user: User
 
-    def __init__(self, summarizer: BriefingSummarizer, user: User, weave: VDB = None) -> None:
+    def __init__(self, summarizer: BriefingSummarizer, user: User, weave: VDB = None, prompt_manager: PromptRetriever = None) -> None:
         self.summarizer: BriefingSummarizer = summarizer
         self.user: User = user
         self.weave: VDB = weave if weave else weaviate.Weaviate()
+        self.prompt_manager: PromptRetriever = prompt_manager if prompt_manager else PromptManager()
 
     def create_briefings_for_summary(self, start_time: datetime, end_time: datetime, schedule: list[dict]) -> str:
         out = self.summarizer.summarize('BriefingSupport.create_briefings_for', {
@@ -103,18 +104,12 @@ class BriefingSupport:
     def construct_conversation_and_summary(self, emails_dict: dict[str, list[EmailTextWithFrom]]) -> dict[str,EmailConversationWithSummary]:
         thread_id:str
         emails:list[EmailTextWithFrom]
-        details: EmailTextWithFrom
         response: dict[str, EmailConversationWithSummary] = {}
         for thread_id, emails in emails_dict.items():
-            conversation = ""
             if len(emails) == 0:
                 continue
-            for details in emails:
-                sender_name = details.sender.name
-                text = details.text
-                conversation += f"\n{sender_name}: {text}"
-            conversation_summary = self.summarizer.summarize('Summarizer.email_summarizer', {'Conversation': conversation})
-            response[thread_id] = EmailConversationWithSummary(thread_id= thread_id, conversation=conversation, summary=conversation_summary,
+            summary_conversation = self.get_or_save_summary(thread_id, WeaviateSchemas.EMAIL_THREAD_SUMMARY, 'thread_id')
+            response[thread_id] = EmailConversationWithSummary(thread_id= thread_id, conversation=summary_conversation.conversation, summary=summary_conversation.summary.text,
                                                                last_response=emails[-1].date)
         return response
 
@@ -175,6 +170,29 @@ class BriefingSupport:
                 thread_text[thread_id] = thread_list
         return thread_text
     
+    def get_or_save_summary(self, id: str, collection: WeaviateSchemas, id_prop: str) -> CommunicationSummaryAndConversation:
+        summary: CommunicationSummary = self.weave.get_summary_by_id(collection, id_prop, id)
+        items: list[CommunicationEntry] = self.weave.get_conversation_for_summary(collection, id)
+        conversation: str = self.create_communication_script(items)
+
+        latest = items[-1].entry_date if items and len(items) > 0 else datetime.now()
+
+        print("Items", items)
+        print("Latest is ", latest, "and summary date is", summary.summary_date if summary else None)
+        if summary is None or summary.summary_date < latest:
+            s = self.summarizer.summarize(WeaviateSchemas.summary_prompt_key(collection), {'Conversation': conversation})
+            self.weave.save_summary(collection, id_prop, id, s, latest)
+            summary = self.weave.get_summary_by_id(collection, id_prop, id)
+
+        return CommunicationSummaryAndConversation(summary=summary, conversation=conversation)
+
+    def create_communication_script(self, messages: list[CommunicationEntry]) -> str:
+        conversation = ""
+        messages = messages or []
+        for message in messages:
+            conversation += "\n" + message.sender + ": " + "".join(message.text)
+        return conversation
+    
     def email_context_for(self, event: Event, certainty: float = None, threshold: float = None, use_hyde: bool = False) -> list[EmailConversationEntry]:
         sum_email: list[dict[str, any]] = self.context_for(event, WeaviateSchemas.EMAIL_TEXT, WeaviateSchemas.EMAIL, 'email_id', 
                                                            certainty, threshold=threshold, use_hyde = use_hyde) 
@@ -197,44 +215,35 @@ class BriefingSupport:
     def slack_context_for(self, event: Event, certainty: float = None, threshold: float = None, use_hyde: bool = False) -> list[SlackConversationEntry]:
         sum_slack = self.context_for(event, WeaviateSchemas.SLACK_MESSAGE_TEXT, WeaviateSchemas.SLACK_THREAD, 'thread_id', 
                                      certainty, threshold= threshold, use_hyde = use_hyde)
-        prompt = self.prompt_manager.get_latest_prompt_template("BriefingSupport.slack_context_for")
         w = self.weave
         result: list[SlackConversationEntry] = []
         for thread in sum_slack:
             messages: SlackThreadResponse = w.get_slack_thread_messages_by_id(thread['thread_id'])
-            conversation = ""
-            for message in messages.messages:
-                conversation += "\n" + message.sender + ": " + "".join(message.text)
-            
-            summary = self.summarizer.summarize_with_prompt(prompt, {'Conversation': conversation})
+            summary_conversation = self.get_or_save_summary(thread['thread_id'], WeaviateSchemas.SLACK_THREAD, 'thread_id')
+
             result.append(SlackConversationEntry(
-                text = conversation,
+                text = summary_conversation.conversation,
                 thread_id = thread['thread_id'],
                 channel_id = thread['channel_id'],
-                summary = summary,
+                summary = summary_conversation.summary,
                 last_response = messages.messages[-1].ts
             ))
         return result
     
     def transcript_context_for(self, event: Event, certainty: float, threshold: float, use_hyde: bool = False) -> list[TranscriptEntry]:
         sum_transcript = self.context_for(event, WeaviateSchemas.TRANSCRIPT_ENTRY, WeaviateSchemas.TRANSCRIPT, 'meeting_code', certainty, threshold,  use_hyde)
-        prompt = self.prompt_manager.get_latest_prompt_template("BriefingSupport.transcript_context_for")
         w = self.weave
         result: list[TranscriptEntry] = []
         for transcript in sum_transcript:
             record: TranscriptConversation = w.get_transcript_conversation_by_meeting_code(transcript['meeting_code'])
-            conversation = ""
-            for message in record.conversation:
-                conversation += "\n" + message.speaker + ": " + "".join(message.text)
-            
-            summary = self.summarizer.summarize_with_prompt(prompt, {'Conversation': conversation})
+            summary_conversation = self.get_or_save_summary(transcript['meeting_code'], WeaviateSchemas.TRANSCRIPT_SUMMARY, 'meeting_code')
             result.append(TranscriptEntry(
                 document_id = record.transcript_id,
                 meeting_code = record.meeting_code,
                 provider = record.provider,
                 title = record.title,
                 attendee_names = record.attendee_names,
-                summary= summary
+                summary= summary_conversation.summary,
             ))
         return result
     

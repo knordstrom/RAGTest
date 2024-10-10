@@ -6,7 +6,7 @@ from library.llms.promptmanager import PromptManager
 from library.data.external.slack import Slack
 from library.utils import Utils
 import library.data.local.weaviate as weaviate
-from library.models.weaviate_schemas import WeaviateSchema, WeaviateSchemas
+from library.models.weaviate_schemas import TranscriptEntry, WeaviateSchema, WeaviateSchemas
 from groq import Groq
 from dotenv import load_dotenv
 import os
@@ -46,8 +46,11 @@ class Handlers:
         for line in transcript.conversation:
             entry: dict[str, str] = line.model_dump()
             entry['meeting_code'] = transcript.meeting_code
-            result &= self.w.upsert_text_vectorized(line.text, entry,  WeaviateSchemas.TRANSCRIPT_ENTRY)
+            result &= self.handle_transcript_entry(entry, line.text)
         return result
+    
+    def handle_transcript_entry(self, entry: dict[str, any], text: str) -> bool:
+        return self.w.upsert_text_vectorized(text, entry,  WeaviateSchemas.TRANSCRIPT_ENTRY)
 
     def get_file(self, document: dict[str, any]) -> str:
         url = document['url']
@@ -109,7 +112,6 @@ class Handlers:
         print("     Threads", len(threads))
 
         for thread in threads:
-            thread_vdb = self.format_thread(thread, slack['id'])
             thread_id = thread['id']
             messages_vdb = []
             messages_text_vdb = []
@@ -121,6 +123,7 @@ class Handlers:
                 messages_text_vdb.append(message_text_vdb)
     
             if len(messages_vdb) > 0:
+                thread_vdb = self.format_thread(thread, slack['id'])
                 print('         Thread: ', thread_vdb)
                 print('                            Messages:', len(messages_vdb))
                 print('                            Message: ', messages_vdb[0])
@@ -129,8 +132,11 @@ class Handlers:
                 self.w.upsert(thread_vdb, WeaviateSchemas.SLACK_THREAD, 'thread_id')
                 for message_vdb, message_text_vdb in zip(messages_vdb, messages_text_vdb):
                     #TODO: upsert message_vdb
-                    self.w.upsert(message_vdb, WeaviateSchemas.SLACK_MESSAGE, 'message_id')
-                    self.w.upsert_text_vectorized(message_text_vdb['text'], message_text_vdb, WeaviateSchemas.SLACK_MESSAGE_TEXT)
+                    self.handle_slack_message(message_vdb, message_text_vdb)
+
+    def handle_slack_message(self, message_vdb: dict[str, any], message_text_vdb: dict[str, any]) -> None:
+        self.w.upsert(message_vdb, WeaviateSchemas.SLACK_MESSAGE, 'message_id')
+        self.w.upsert_text_vectorized(message_text_vdb['text'], message_text_vdb, WeaviateSchemas.SLACK_MESSAGE_TEXT)
 
 
 class Summarizer:
