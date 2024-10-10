@@ -6,7 +6,7 @@ RAG Test
 .. |testing| image:: https://github.com/knordstrom/RAGTest/actions/workflows/unit-testing.yml/badge.svg
    :alt: Unit tests
 .. |coverage| image:: https://coveralls.io/repos/github/knordstrom/RAGTest/badge.svg?branch=main
-   :target: https://coveralls.io/github/knordstrom/RAGTest?branch=main
+   :target: https://coveralls.io/github/knordstrom/RAGTest?branch=main&v=0.0.21
 
 |testing| |coverage|
 
