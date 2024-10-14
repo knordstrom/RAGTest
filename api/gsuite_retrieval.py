@@ -31,9 +31,10 @@ creds = root_path + '/../' + os.getenv('GSUITE_CREDS_FILE', 'resources/gmail_cre
 
 @route.get('/data/gsuite/email')
 async def email(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_scheme))], 
-                email: EmailStr, n: Union[int, None] = None) -> List[Message]:
+                email: Optional[EmailStr] = None, n: Union[int, None] = None) -> List[Message]:
     """Get the last n emails from the specified user's gsuite account. Response is a pass-through of the Gmail API response."""
     AuthManager.assert_authorization_email(me, email)
+    # email_user: User = AuthManager().get_user_by_email(email)
     mapped: list[Message] = APISupport.read_last_emails(me, creds, count = n)
     for message in mapped:
         print("Message: ", message) 
@@ -42,7 +43,7 @@ async def email(me: Annotated[User, Depends(AuthManager.get_user_dependency(oaut
 
 @route.get('/data/gsuite/calendar')
 async def calendar(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_scheme))],
-                   email: EmailStr, n: int) -> List[dict[str, Any]]:
+                   email: Optional[EmailStr] = None, n: Union[int, None] = None) -> List[dict[str, Any]]:
     """Get the next n events from the specified user's gsuite calendar. Response is a pass-through of the Calendar API response."""
     AuthManager.assert_authorization_email(me, email)
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -54,7 +55,7 @@ async def calendar(me: Annotated[User, Depends(AuthManager.get_user_dependency(o
 
 @route.get('/data/gsuite/documents')
 async def documents(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_scheme))],
-                    email: EmailStr, n: int) -> dict[str, Any]:
+                    email: Optional[EmailStr] = None, n: Union[int, None] = None) -> dict[str, Any]:
     """Get the documents from the specified user's gsuite account. Response is a pass-through of the Drive API response."""
     AuthManager.assert_authorization_email(me, email)
     # now = datetime.datetime.now(datetime.UTC).isoformat()
@@ -68,7 +69,7 @@ async def documents(me: Annotated[User, Depends(AuthManager.get_user_dependency(
 
 @route.get('/data/gsuite/conferences')
 async def list_conferences(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_scheme))],
-                           email: EmailStr, n: int, start: Optional[datetime.datetime] = None) -> List[ConferenceCall]:
+                           email: Optional[EmailStr] = None, n: Union[int, None] = None, start: Optional[datetime.datetime] = None) -> List[ConferenceCall]:
     """Get the meetings from the specified user's gsuite account. Response is a pass-through of the Calendar API response."""
     AuthManager.assert_authorization_email(me, email)
     try:

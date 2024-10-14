@@ -1,0 +1,148 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python application
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    types: 
+      - opened 
+      - reopened
+      - synchronize
+      - edited
+    branches: [ "main" ]
+    paths:
+      - '**.py'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11.6"
+    - name: Set up Poetry
+      run: |
+        pip install poetry==1.8.2
+        which poetry
+    - name: Ensure lock file consistency
+      run: |
+        poetry lock --no-update
+    - name: Include antiword
+      run: |
+        sudo apt-get install antiword
+    - name: Output some variables for clarity
+      run: |
+        docker --version
+        pwd
+        ls
+        env
+    - name: Install dependencies
+      run: |
+        poetry install
+    - name: Establish env file
+      env:
+        QA_ENV_FILE: ${{ secrets.QA_ENV_FILE }}
+      run: |
+        echo $QA_ENV_FILE > /home/runner/work/RAGTest/RAGTest.env
+        echo $QA_ENV_FILE > /home/runner/work/RAGTest/RAGTest/tests/.env
+    - name: Report space init
+      run: |
+        df -h
+    - name: What is in opt
+      run: |
+        cd /opt
+        ls
+        echo "---------"
+
+        echo "Will be eliminating everything from these dirs:"
+        find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache '!' -path ./pipx_bin '!' -path ./pipx '!' -path ./hostedtoolcache 
+        echo "What's in hostedtoolcache"
+        cd hostedtoolcache
+        ls
+        echo "---------"
+        find . -maxdepth 1 -mindepth 1 '!' -path ./Python
+        
+    # - name: Clear space
+    #   run: |
+    #     echo "Poetry is (before cleanse)"
+    #     which poetry
+    #     cd /opt
+    #     find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner-cache '!' -path ./pipx_bin '!' -path ./pipx '!' -path ./hostedtoolcache -exec rm -rf '{}' ';'        
+    #     cd hostedtoolcache
+    #     find . -maxdepth 1 -mindepth 1 '!' -path ./Python -exec rm -rf '{}' ';'
+    #     docker system prune --all --force
+    #     echo "=============================================================================="
+    #     echo "Freeing up disk space on CI system per script"
+    #     echo "=============================================================================="
+    #     echo "Poetry is"
+    #     which poetry
+    #     echo "Listing 100 largest packages"
+    #     dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
+    #     echo "Removing large packages"
+    #     sudo apt-get remove -y '^azure-cli.*'
+    #     sudo apt-get remove -y '^microsoft-edge-stable.*'
+    #     sudo apt-get remove -y '^google-chrome-stable.*'
+    #     sudo apt-get remove -y '^firefox.*'
+    #     sudo apt-get remove -y '^dotnet-.*'
+    #     sudo apt-get remove -y '^llvm-.*'
+    #     sudo apt-get remove -y '^temurin.*'
+    #     sudo apt-get remove -y '^powershell.*'
+    #     sudo apt-get remove -y '^mono-devel.*'
+    #     sudo apt-get remove -y '^mysql-server.*'
+    #     sudo apt-get autoremove -y
+    #     sudo apt-get clean
+    #     echo "Removing large directories"
+    #     # deleting 15GB
+    #     rm -rf /usr/share/dotnet/
+    #     echo "Poetry should still be here ..."
+    #     which poetry
+
+    - name: Report space post prune
+      run: |
+        df -h
+    - name: Login to docker
+      run: |
+        echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+    - name: Include app credentials
+      run: |
+        echo ${{ secrets.GSUITE_APP_CREDS }} > resources/gsuite_creds.json
+    # - name: Create containers
+    #   run: |
+    #     make docker-processor
+    #     make docker-api
+    # - name: Report space post creation
+    #   run: |
+    #     df -h
+    # - name: Run containers
+    #   run: |
+    #     cd docker
+    #     docker compose up -d
+    
+    - name: Show running containers
+      run: |
+        docker ps -a
+    - name: Unit test
+      run: |
+        echo "Env file:"
+        cat /home/runner/work/RAGTest/RAGTest/tests/.env
+        echo "----------------------------------"
+        set -a 
+        source /home/runner/work/RAGTest/RAGTest/tests/.env
+        set +a        
+        env
+        which poetry
+        make test-all
+    - name: Coveralls
+      uses: coverallsapp/github-action@v2
+      with:
+        file: coverage.lcov

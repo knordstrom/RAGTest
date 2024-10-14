@@ -41,7 +41,7 @@ class Message(BaseModel):
             email_id = message.get('id'),
             history_id = message.get('historyId'),
             thread_id = message.get('threadId'),
-            labels = message.get('labelIds'),
+            labels = message.get('labelIds', []),
             date = datetime.datetime.fromtimestamp(int(message.get('internalDate')) / 1000).astimezone(),
             to = data.to,
             cc = data.cc,

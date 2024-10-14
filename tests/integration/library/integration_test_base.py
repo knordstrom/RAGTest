@@ -1,6 +1,8 @@
+import dotenv
 import pytest
 import requests
 
+from globals import Globals
 from library.data.local.weaviate import Weaviate
 from library.models.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 from weaviate.classes.query import Filter
@@ -8,6 +10,9 @@ from weaviate.collections.collection import Collection
 from weaviate.collections.classes.internal import Object
 from weaviate.collections.classes.types import Properties, References
 class IntegrationTestBase:
+
+    print("Loading .env file")
+    dotenv.load_dotenv(dotenv_path=Globals().root_resource("tests/.env"))
 
     def get_truncation_property(self, schema: dict) -> str:
         property = schema['properties'][0].name

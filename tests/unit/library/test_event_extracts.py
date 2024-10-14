@@ -1,6 +1,7 @@
 import unittest
 import os
 
+from globals import Globals
 from library.models.api_models import MeetingAttendee
 from library.models.event import Event as EventModel
 from library.managers.processor_support import EventRecordWrapper, ProcessorSupport
@@ -9,7 +10,7 @@ from library.models.weaviate_schemas import EmailParticipant, Event
 class TestEventExtracts(unittest.TestCase):
 
     def test_event_extract_invite1(self):
-        file = os.path.join(os.path.dirname(__file__), '../../resources/events', 'invite1.ics')
+        file = Globals().test_resource('events/invite1.ics')
         with open(file, 'r') as file:
             ics_file = file.read()
             event: EventModel = EventModel.create(ics_file)
@@ -30,7 +31,7 @@ class TestEventExtracts(unittest.TestCase):
             assert MeetingAttendee(name = 'email2@myhouse.com', email = 'email2@myhouse.com') in event.attendees 
 
     def test_event_extract_invite2(self):
-        file = os.path.join(os.path.dirname(__file__), '../../resources/events', 'invite2.ics')
+        file = Globals().test_resource('events/invite2.ics')
         with open(file, 'r') as file:
             ics_file = file.read()
             event: EventModel = EventModel.create(ics_file)
@@ -49,7 +50,7 @@ class TestEventExtracts(unittest.TestCase):
             assert len(event.attendees ) == 0
 
     def test_event_extract_standup(self):
-        file = os.path.join(os.path.dirname(__file__), '../../resources/events', 'standup.ics')
+        file = Globals().test_resource('events/standup.ics')
         with open(file, 'r') as file:
             ics_file = file.read()
             event: EventModel = EventModel.create(ics_file)
@@ -73,7 +74,7 @@ class TestEventExtracts(unittest.TestCase):
             assert MeetingAttendee(name='prakash@myhouse.com' , email='prakash@myhouse.com') in event.attendees 
 
     def test_event_extract_allday(self):
-        file = os.path.join(os.path.dirname(__file__), '../../resources/events', 'allday.ics')
+        file = Globals().test_resource('events/allday.ics')
         with open(file, 'r') as file:
             ics_file = file.read()
             event: EventModel = EventModel.create(ics_file)
@@ -92,7 +93,7 @@ class TestEventExtracts(unittest.TestCase):
             assert len(event.attendees ) == 0
     
     def test_event_extract_sample1(self):
-        file = os.path.join(os.path.dirname(__file__), '../../resources/events', 'sample1.ics')
+        file = Globals().test_resource('events/sample1.ics')
         with open(file, 'r') as file:
             ics_file = file.read()
             event: EventModel = EventModel.create(ics_file)

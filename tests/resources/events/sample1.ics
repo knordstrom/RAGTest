@@ -1,0 +1,91 @@
+BEGIN:VCALENDAR
+METHOD:REQUEST
+PRODID:Microsoft Exchange Server 2010
+VERSION:2.0
+BEGIN:VTIMEZONE
+TZID:Mountain Standard Time
+BEGIN:STANDARD
+DTSTART:16010101T020000
+TZOFFSETFROM:-0600
+TZOFFSETTO:-0700
+RRULE:FREQ=YEARLY;INTERVAL=1;BYDAY=1SU;BYMONTH=11
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:16010101T020000
+TZOFFSETFROM:-0700
+TZOFFSETTO:-0600
+RRULE:FREQ=YEARLY;INTERVAL=1;BYDAY=2SU;BYMONTH=3
+END:DAYLIGHT
+END:VTIMEZONE
+BEGIN:VEVENT
+ORGANIZER;CN=Andrew Thompson:mailto:andrew.t@company.com
+ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=keith@myho
+ use.com:mailto:keith@myhouse.com
+ATTENDEE;ROLE=OPT-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=Gary Bresi
+ en:mailto:gary@recruiter.com
+DESCRIPTION;LANGUAGE=en-US:Looking forward to talking today Keith.\n_______
+ _________________________________________________________________________\
+ nMicrosoft Teams Need help?<https://aka.ms/JoinTeamsMeeting?omkt=en-US>\nJ
+ oin the meeting now<https://teams.microsoft.com/l/meetup-join/19%3ameeting
+ _MDNmNGJkYzEtY2QzYS00YWQ5LTk4ZjItM2E3ZGE3NDJhMzQ5%40thread.v2/0?context=%7
+ b%22Tid%22%3a%22d696bbe1-15a3-440b-bebc-38842612be93%22%2c%22Oid%22%3a%227
+ 5c69dd6-fe03-47d0-a42b-dede0ad85f35%22%7d>\nMeeting ID: 287 571 821 575\nP
+ asscode: ipZhYf\n________________________________\nFor organizers: Meeting
+  options<https://teams.microsoft.com/meetingOptions/?organizerId=75c69dd6-
+ fe03-47d0-a42b-dede0ad85f35&tenantId=d696bbe1-15a3-440b-bebc-38842612be93&
+ threadId=19_meeting_MDNmNGJkYzEtY2QzYS00YWQ5LTk4ZjItM2E3ZGE3NDJhMzQ5@threa
+ d.v2&messageId=0&language=en-US> | Reset dial-in PIN<https://dialin.teams.
+ microsoft.com/usp/pstnconferencing>\n_____________________________________
+ ___________________________________________\n\nNOTICE: This electronic mes
+ sage transmission contains information that may be Hayden Data Corporation
+  SENSITIVE\, RESTRICTED\, or CONFIDENTIAL. Any misuse or unauthorized disc
+ losure can result in both civil and criminal penalties. If you are not the
+  intended recipient\, be aware that any disclosure\, copying\, distributio
+ n\, or use of the content of this information is prohibited. If you have r
+ eceived this communication in error\, please notify us immediately by emai
+ l and delete the original message.\n
+UID:040000008200E00074C5B7101A82E00800000000C0EAD578A994DA01000000000000000
+ 010000000A87945CED770314E896263731E214D0C
+SUMMARY;LANGUAGE=en-US:Andrew Thompson <<>> Keith Nordstrom - Introduction 
+ to Hayden Data
+DTSTART;TZID=Mountain Standard Time:20240422T120000
+DTEND;TZID=Mountain Standard Time:20240422T130000
+CLASS:PUBLIC
+PRIORITY:5
+DTSTAMP:20240422T173906Z
+TRANSP:OPAQUE
+STATUS:CONFIRMED
+SEQUENCE:0
+LOCATION;LANGUAGE=en-US:Microsoft Teams Meeting
+X-MICROSOFT-CDO-APPT-SEQUENCE:0
+X-MICROSOFT-CDO-OWNERAPPTID:-881440792
+X-MICROSOFT-CDO-BUSYSTATUS:TENTATIVE
+X-MICROSOFT-CDO-INTENDEDSTATUS:BUSY
+X-MICROSOFT-CDO-ALLDAYEVENT:FALSE
+X-MICROSOFT-CDO-IMPORTANCE:1
+X-MICROSOFT-CDO-INSTTYPE:0
+X-MICROSOFT-SKYPETEAMSMEETINGURL:https://teams.microsoft.com/l/meetup-join/
+ 19%3ameeting_MDNmNGJkYzEtY2QzYS00YWQ5LTk4ZjItM2E3ZGE3NDJhMzQ5%40thread.v2/
+ 0?context=%7b%22Tid%22%3a%22d696bbe1-15a3-440b-bebc-38842612be93%22%2c%22O
+ id%22%3a%2275c69dd6-fe03-47d0-a42b-dede0ad85f35%22%7d
+X-MICROSOFT-SCHEDULINGSERVICEUPDATEURL:https://api.scheduler.teams.microsof
+ t.com/teams/d696bbe1-15a3-440b-bebc-38842612be93/75c69dd6-fe03-47d0-a42b-d
+ ede0ad85f35/19_meeting_MDNmNGJkYzEtY2QzYS00YWQ5LTk4ZjItM2E3ZGE3NDJhMzQ5@th
+ read.v2/0
+X-MICROSOFT-SKYPETEAMSPROPERTIES:{"cid":"19:meeting_MDNmNGJkYzEtY2QzYS00YWQ
+ 5LTk4ZjItM2E3ZGE3NDJhMzQ5@thread.v2"\,"private":true\,"type":0\,"mid":0\,"
+ rid":0\,"uid":null}
+X-MICROSOFT-DONOTFORWARDMEETING:FALSE
+X-MICROSOFT-DISALLOW-COUNTER:FALSE
+X-MICROSOFT-REQUESTEDATTENDANCEMODE:DEFAULT
+X-MICROSOFT-ISRESPONSEREQUESTED:TRUE
+X-MICROSOFT-LOCATIONS:[ { "DisplayName" : "Microsoft Teams Meeting"\, "Loca
+ tionAnnotation" : ""\, "LocationSource" : 0\, "Unresolved" : false\, "Loca
+ tionUri" : "" } ]
+BEGIN:VALARM
+DESCRIPTION:REMINDER
+TRIGGER;RELATED=START:-PT15M
+ACTION:DISPLAY
+END:VALARM
+END:VEVENT
+END:VCALENDAR

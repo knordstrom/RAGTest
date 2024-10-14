@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from hashlib import md5
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID, uuid4
 import dotenv
 from neo4j import GraphDatabase, Record, Result
@@ -53,6 +53,7 @@ class Neo4j:
 
     PERSON = "Person"
     EVENT = "Event"
+    CREDENTIALS = "Credentials"
 
     def __init__(self, host: str = None, port: str = None, protocol: str = None, user: str = None, password: str = None):
         dotenv.load_dotenv(dotenv_path = Globals().root_resource('.env'))
@@ -61,8 +62,9 @@ class Neo4j:
         self.db_port = os.getenv("NEO4J_DB_PORT", "7687") if port is None else port
         self.url = f"{protocol}://{self.db_host}:{self.db_port}"
         self.username = os.getenv("NEO4J_USERNAME", "neo4j") if user is None else user
-        self.password = os.getenv("NEO4J_PASSWORD", "neo4j") if password is None else password
+        self.password = os.getenv("NEO4J_PASSWORD", "password") if password is None else password
         self.driver = GraphDatabase.driver(self.url, auth=(self.username, self.password))
+ #       print("Connecting to Neo4j at", self.url, "using ", self.username, " and ", self.password)
         self.connect()
 
     def connect(self) -> None:
@@ -94,19 +96,20 @@ class Neo4j:
         """
         print("Querying Neo4j with: " + query)
         with self.driver.session() as session:
-            results = session.run(query, email=email, start_time=start_time.astimezone().isoformat(), end_time=end_time.astimezone().isoformat())
+            results = session.run(query, email=email.lower(), start_time=start_time.astimezone().isoformat(), end_time=end_time.astimezone().isoformat())
             print("Results were", results)
             return Neo4j.collate_schedule_response(results)
 
-    def merge_node(self, label: str, identifier: str, properties: dict[str, any]) -> Result:
+    def merge_node(self, label: str, identifier: str, properties: dict[str, any]) -> list[Record]:
         query = f"""
         MERGE (n:{label} {{{identifier}: $id}})
         ON CREATE SET n += $properties
         ON MATCH SET n += $properties
+        RETURN n
         """
         print(f"Merging node: {label} with properties {properties}")
         with self.driver.session() as session:
-            return session.run(query, id=properties[identifier], properties=properties)
+            return list(session.run(query, id=properties[identifier], properties=properties))
 
     def create_relationship(self, start_node_label: str, start_node_key: str, start_node_value: str, rel_type: str, 
                             end_node_label: str, end_node_key: str, end_node_value: str, properties: dict[str, any]) -> Result:
@@ -123,10 +126,10 @@ class Neo4j:
     ### Employee ###
     def process_org_chart(self, org: list[Employee]) -> None:
         # performance: do without recursion?
-
         for employee in org:
             person = employee.to_dict()
-            self.merge_node(self.PERSON, "id", person)
+            result: list[Record] = self.merge_node(self.PERSON, "email", person)
+            print("Received back from org chart write", result)
             self.process_org_chart(employee.reports)
             for sub in employee.reports:
                 report = sub.to_dict()
@@ -165,6 +168,21 @@ class Neo4j:
                 return User.from_neo4j(record)
             return None
         
+    def get_user_by_email(self, email: str) -> User:
+        query = """
+        MATCH (person:Person {email: $email}) 
+        RETURN DISTINCT person as result, person.email as email
+        UNION ALL
+        MATCH (person:Person)-[:HAS_CREDENTIALS]-(credentials:Credentials {email: $email})
+        RETURN DISTINCT person as result, credentials.email as email
+        """
+        print("Querying Neo4j with: " + query)
+        with self.driver.session() as session:
+            results: list[Record] = list(session.run(query, email=email.lower()))
+            for record in results:
+                return User.from_neo4j(record)
+            return None
+        
     def get_org_chart_above(self, email: str) -> list[Employee]:
         ceo_emails: list[str] = [x.work_email for x in self.get_chief_executives()]
         ceo_str = "','".join(ceo_emails)
@@ -175,7 +193,7 @@ class Neo4j:
         """
         print("Querying Neo4j with: " + query)
         with self.driver.session() as session:
-            results: list[Record] = list(session.run(query, email=email, ceo_emails = ceo_str))
+            results: list[Record] = list(session.run(query, email=email.lower(), ceo_emails = ceo_str))
 
             result: list[Employee] = []
             for r in results:
@@ -201,7 +219,7 @@ class Neo4j:
         """
         print("Querying Neo4j with: " + query)
         with self.driver.session() as session:
-            results = session.run(query, email=email)
+            results = session.run(query, email=email.lower())
 
             result: Employee = None
             emap: dict[str, Employee] = {}
@@ -235,12 +253,12 @@ class Neo4j:
     #### Auth ####
     def authenticate(self, email: str, password: str) -> list[dict[str, Any]]:
         query = """
-        MATCH (person:Person {email: $email})
+        MATCH (person:Person {email: $email, password: $password})
         RETURN DISTINCT person.name, person.email, person.password, person.token, person.token_expiry
         """
         print("Querying Neo4j with: " + query)
         with self.driver.session() as session:
-            result: Result = session.run(query, email=email)
+            result: Result = session.run(query, email=email.lower(), password=self.password_encode(password))
             records: list[dict[str, Any]] = list(result)
             return records
 
@@ -253,7 +271,7 @@ class Neo4j:
         print("Querying Neo4j with: " + query)
         with self.driver.session() as session:
             token, token_expiry = TokenGenerator.generate_token()
-            records: list[dict[str, Any]] = list(session.run(query, email=email, token = token, token_expiry = token_expiry.isoformat()))
+            records: list[dict[str, Any]] = list(session.run(query, email=email.lower(), token = token, token_expiry = token_expiry.isoformat()))
             return records 
     
     def create_login(self, email: str, password: str) -> TokenResponse:
@@ -262,7 +280,7 @@ class Neo4j:
         SET person.password = $password, person.token = $token, person.token_expiry = $token_expiry
         RETURN DISTINCT person.name, person.email, person.password, person.token, person.token_expiry
         """
-        return self.perform_user_update(query, email, password)
+        return self.perform_user_update(query, email.lower(), password)
         
     def create_new_user(self, email: str, password: str) -> TokenResponse:
         query = """
@@ -275,10 +293,13 @@ class Neo4j:
         print("Querying Neo4j with: " + query)
         with self.driver.session() as session:
             token, token_expiry = TokenGenerator.generate_token()
-            records: list[dict[str, Any]] = list(session.run(query, email=email, password=str(md5(password.encode()).hexdigest()), token = token, token_expiry = token_expiry.isoformat()))
+            records: list[dict[str, Any]] = list(session.run(query, email=email.lower(), password=self.password_encode(password), token = token, token_expiry = token_expiry.isoformat()))
             if len(records) == 0:
                 return None
-            return TokenResponse(email=email, token=token, expiry=token_expiry)
+            return TokenResponse(email=email.lower(), name = records[0].get("person.name"), token=token, expiry=token_expiry)
+    
+    def password_encode(self, password: str) -> str:
+        return str(md5(password.encode()).hexdigest())
 
     #### Events ####
     def process_events(self, events: list[ConsumerRecord]) -> None:
@@ -336,7 +357,11 @@ class Neo4j:
         model: dict[str, str] = creds.model_dump()
         model['remote_target'] = creds.remote_target.name
         model['id'] = self._credential_id_for_user(user, creds.remote_target)
-        self.merge_node("Credentials", 'id', model)
+        self.merge_node(self.CREDENTIALS, 'id', model)
+        self.create_relationship(self.PERSON, "email", user.email, 
+                                "HAS_CREDENTIALS", 
+                                self.CREDENTIALS, "id", model['id'], 
+                                 {"id": f"has_creds-{user.email}-{model['id']}"})
     
     def read_remote_credentials(self, user: User, provider: DataSources) -> OAuthCreds:
         query = """
@@ -345,7 +370,18 @@ class Neo4j:
         """
         with self.driver.session() as session:
             result = list(session.run(query, id=self._credential_id_for_user(user, provider)))
-            return OAuthCreds.from_neo4j(result[0]['creds']) if len(result) > 0 else None             
+            return OAuthCreds.from_neo4j(result[0]['creds']) if len(result) > 0 else None     
+
+    def read_all_remote_credentials(self, user: User) -> list[OAuthCreds]:
+        query = """
+        MATCH (person:Person)-[has:HAS_CREDENTIALS]-(creds:Credentials)
+        WHERE elementId(person) = $id
+        RETURN person, creds
+        """
+        print("Executing query: ", query, " with id: ", user.id)
+        with self.driver.session() as session:
+            result = list(session.run(query, id=user.id))
+            return [OAuthCreds.from_neo4j(r['creds']) for r in result]
 
     @staticmethod
     def collate_schedule_response(records: list[dict[str, Any]]) -> list[Event]:

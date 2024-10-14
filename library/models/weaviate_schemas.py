@@ -16,6 +16,7 @@ class WeaviateSchemas(enum.Enum):
     EMAIL_TEXT = 'email_text'
     EVENT = 'event'
     EVENT_TEXT = 'event_text'
+    EMAIL_THREAD_SUMMARY = 'email_thread_summary'
     DOCUMENT = 'document'
     DOCUMENT_TEXT = 'document_text'
     DOCUMENT_SUMMARY = 'document_summary'
@@ -23,9 +24,22 @@ class WeaviateSchemas(enum.Enum):
     SLACK_THREAD = 'slack_thread'
     SLACK_MESSAGE = 'slack_message'
     SLACK_MESSAGE_TEXT = 'slack_message_text'
+    SLACK_THREAD_SUMMARY = 'slack_thread_summary'
     TRANSCRIPT = 'transcript'
     TRANSCRIPT_ENTRY = 'transcript_entry'
     TRANSCRIPT_SUMMARY = 'transcript_summary'
+
+    @staticmethod
+    def summary_prompt_key(schema: 'WeaviateSchemas') -> str:
+        if schema == WeaviateSchemas.EMAIL_THREAD_SUMMARY:
+            return 'Summarizer.email_summarizer'
+        elif schema == WeaviateSchemas.DOCUMENT_SUMMARY:
+            return None
+        elif schema == WeaviateSchemas.SLACK_THREAD_SUMMARY:
+            return "BriefingSupport.slack_context_for"
+        elif schema == WeaviateSchemas.TRANSCRIPT_SUMMARY:
+            return "BriefingSupport.transcript_context_for"
+        return None
 
 class WeaviateSchemaTransformer:
     @staticmethod
@@ -78,6 +92,20 @@ class WeaviateSchemaTransformer:
             result.append(p)
 
         return result
+    
+class CommunicationSummary(BaseModel):
+    text: str
+    thread_id: str
+    summary_date: datetime
+
+class CommunicationSummaryAndConversation(BaseModel):
+    summary: CommunicationSummary
+    conversation: str
+
+class CommunicationEntry(BaseModel):
+    text: str
+    sender: str
+    entry_date: datetime
 
 class EmailThread(BaseModel):
     thread_id: str
@@ -107,6 +135,11 @@ class EmailText(BaseModel):
     thread_id: str
     ordinal: int
     date: datetime
+
+class EmailThreadSummary(CommunicationSummary):
+    text: str
+    thread_id: str
+    summary_date: datetime
 
 class EmailTextWithFrom(BaseModel):
     text: str
@@ -185,9 +218,16 @@ class DocumentText(BaseModel):
     document_id: str
     ordinal: int
 
-class DocumentSummary(BaseModel):
+class DocumentSummary(CommunicationSummary):
     text: str
     document_id: str
+    summary_date: datetime
+
+    def __init__(self, text: str, document_id: str, summary_date: datetime):
+        self.document_id = document_id
+        self.thread_id = document_id
+        self.text = text
+        self.summary_date = summary_date
 
 class SlackChannel(BaseModel):
     channel_id: str
@@ -218,6 +258,11 @@ class SlackMessageText(BaseModel):
     thread_id: str
     ordinal: int
 
+class SlackThreadSummary(CommunicationSummary):
+    text: str
+    thread_id: str
+    summary_date: datetime
+
 class Transcript(BaseModel):
     document_id: str
     meeting_code: str
@@ -230,6 +275,15 @@ class TranscriptEntry(BaseModel):
     speaker: str
     text: str
     ordinal: int
+
+class TranscriptSummary(CommunicationSummary):
+    text: str
+    meeting_code: str
+    summary_date: datetime
+
+    def __init__(self, text: str, meeting_code: str, summary_date: datetime):
+        super().__init__(text=text, thread_id=meeting_code, summary_date=summary_date, meeting_code = meeting_code)
+        # self.meeting_code = meeting_code
     
 class WeaviateSchema:
 
@@ -249,6 +303,12 @@ class WeaviateSchema:
         (WeaviateSchemas.EMAIL_TEXT, {
                 "class": "EmailText",
                 "properties": WeaviateSchemaTransformer.to_props(EmailText),       
+                "references": [],
+                "vectorizer": True,
+        }),
+        (WeaviateSchemas.EMAIL_THREAD_SUMMARY, {
+                "class": "EmailThreadSummary",
+                "properties": WeaviateSchemaTransformer.to_props(EmailThreadSummary),       
                 "references": [],
                 "vectorizer": True,
         }),
@@ -307,6 +367,12 @@ class WeaviateSchema:
                 "references": [],
                 "vectorizer": True,
         }),
+        (WeaviateSchemas.SLACK_THREAD_SUMMARY, {
+                "class": "SlackThreadSummary",
+                "properties": WeaviateSchemaTransformer.to_props(SlackThreadSummary),       
+                "references": [],
+                "vectorizer": True,
+        }),
         (WeaviateSchemas.TRANSCRIPT, {   
                 "class": "Transcript",
                 "properties": WeaviateSchemaTransformer.to_props(Transcript),
@@ -316,6 +382,12 @@ class WeaviateSchema:
         (WeaviateSchemas.TRANSCRIPT_ENTRY, {   
                 "class": "TranscriptEntry",
                 "properties": WeaviateSchemaTransformer.to_props(TranscriptEntry),
+                "references": [],
+                "vectorizer": True,
+        }),
+        (WeaviateSchemas.TRANSCRIPT_SUMMARY, {
+                "class": "TranscriptSummary",
+                "properties": WeaviateSchemaTransformer.to_props(TranscriptSummary),       
                 "references": [],
                 "vectorizer": True,
         })

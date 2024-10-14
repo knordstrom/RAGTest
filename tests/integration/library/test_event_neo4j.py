@@ -1,3 +1,4 @@
+import os
 from neo4j import Record
 import pytest
 import requests
@@ -28,12 +29,12 @@ class TestEventNeo4j(IntegrationTestBase):
         port = docker_services.port_for("neo4j", 7575)
         url = "http://{}:{}".format(docker_ip, port)
         docker_services.wait_until_responsive(
-            timeout=30.0, pause=0.1, check=lambda: self.is_responsive(url)
+            timeout=60.0, pause=0.1, check=lambda: self.is_responsive(url)
         )
         return {
             'url': url,
             'host': docker_ip,
-            'port': "7688"
+            'port': os.getenv("NEO4J_BOLT_PORT","7688")
         }
     
     def test_event_model_create(self, service):

@@ -1,5 +1,5 @@
 import unittest
-from library.models.weaviate_schemas import Document, DocumentSummary, DocumentText, Email, EmailText, EmailThread, Event, EventText, SlackChannel, SlackMessage, SlackMessageText, SlackThread, WeaviateSchemaTransformer
+from library.models.weaviate_schemas import Document, DocumentSummary, DocumentText, Email, EmailText, EmailThread, EmailThreadSummary, Event, EventText, SlackChannel, SlackMessage, SlackMessageText, SlackThread, SlackThreadSummary, Transcript, TranscriptEntry, TranscriptSummary, WeaviateSchemaTransformer
 from weaviate.classes.config import Property, DataType
 
 class TestWeaviateSchemas(unittest.TestCase):
@@ -50,6 +50,13 @@ class TestWeaviateSchemas(unittest.TestCase):
         assert props[2] == Property(name = "thread_id", data_type=DataType.TEXT)         
         assert props[3] == Property(name = "ordinal", data_type=DataType.INT)
         assert props[4] == Property(name = "date", data_type=DataType.DATE)
+
+    def test_email_thread_summary(self):
+        props: list[Property] = WeaviateSchemaTransformer.to_props(EmailThreadSummary)
+        assert len(props) == 3
+        assert props[0] == Property(name = "text", data_type=DataType.TEXT)
+        assert props[1] == Property(name = "thread_id", data_type=DataType.TEXT)         
+        assert props[2] == Property(name = "summary_date", data_type=DataType.DATE)
 
     def test_event(self):
         props: list[Property] = WeaviateSchemaTransformer.to_props(Event)
@@ -134,6 +141,8 @@ class TestWeaviateSchemas(unittest.TestCase):
         props: list[Property] = WeaviateSchemaTransformer.to_props(DocumentSummary)
         assert props == [
             Property(name="text", data_type=DataType.TEXT),
+            Property(name="thread_id", data_type=DataType.TEXT),
+            Property(name="summary_date", data_type=DataType.DATE),
             Property(name="document_id", data_type=DataType.TEXT),
         ]
     
@@ -157,7 +166,7 @@ class TestWeaviateSchemas(unittest.TestCase):
             Property(name = "channel_id", data_type=DataType.TEXT),
             Property(name = "latest", data_type=DataType.DATE),
         ]
-    
+
     def test_slack_message(self):
         props: list[Property] = WeaviateSchemaTransformer.to_props(SlackMessage)
         assert props == [
@@ -176,4 +185,39 @@ class TestWeaviateSchemas(unittest.TestCase):
             Property(name = "message_id", data_type=DataType.TEXT),
             Property(name = "thread_id", data_type=DataType.TEXT),
             Property(name = "ordinal", data_type=DataType.INT),
+        ]
+    
+    def test_slack_thread_summary(self):
+        props: list[Property] = WeaviateSchemaTransformer.to_props(SlackThreadSummary)
+        assert len(props) == 3
+        assert props[0] == Property(name = "text", data_type=DataType.TEXT)
+        assert props[1] == Property(name = "thread_id", data_type=DataType.TEXT)         
+        assert props[2] == Property(name = "summary_date", data_type=DataType.DATE)
+    
+    def test_transcript(self):
+        props: list[Property] = WeaviateSchemaTransformer.to_props(Transcript)
+        assert props == [
+            Property(name="document_id", data_type=DataType.TEXT),
+            Property(name="meeting_code", data_type=DataType.TEXT),
+            Property(name="title", data_type=DataType.TEXT),
+            Property(name="provider", data_type=DataType.TEXT),
+            Property(name="attendee_names", data_type=DataType.TEXT_ARRAY),
+        ]
+    
+    def test_transcript_entry(self):
+        props: list[Property] = WeaviateSchemaTransformer.to_props(TranscriptEntry)
+        assert props == [
+            Property(name="meeting_code", data_type=DataType.TEXT),
+            Property(name="speaker", data_type=DataType.TEXT),
+            Property(name="text", data_type=DataType.TEXT),
+            Property(name="ordinal", data_type=DataType.INT),
+        ]
+
+    def test_transcript_summary(self):
+        props: list[Property] = WeaviateSchemaTransformer.to_props(TranscriptSummary)
+        assert props == [
+            Property(name="text", data_type=DataType.TEXT),
+            Property(name="thread_id", data_type=DataType.TEXT),
+            Property(name="summary_date", data_type=DataType.DATE),
+            Property(name="meeting_code", data_type=DataType.TEXT),         
         ]

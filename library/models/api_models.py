@@ -131,7 +131,7 @@ class EmailMessage(BaseModel):
     email_id: str
     history_id: str
     thread_id: str
-    labels: List[str]
+    labels: List[str] = []
     to: List[MeetingAttendee]
     cc: List[MeetingAttendee]
     bcc: List[MeetingAttendee]
@@ -238,9 +238,10 @@ class TokenResponse(BaseModel):
     email: EmailStr
     expiry: Optional[datetime] = None
     access_token: Optional[str] = None
+    name: Optional[str] = None
 
-    def __init__(self, token: Optional[str] = None, email: EmailStr = None, expiry: Optional[datetime] = None):
-        super().__init__(token=token, email=email, expiry=expiry, access_token=token)
+    def __init__(self, email: EmailStr, name: Optional[str] = None, token: Optional[str] = None, expiry: Optional[datetime] = None):
+        super().__init__(token=token, name=name, email=email, expiry=expiry, access_token=token)
 
 class ConferenceSpace(BaseModel):
     name: str
@@ -335,6 +336,7 @@ class SlackUser(BaseModel):
 
 class OAuthCreds(BaseModel):
     remote_target: DataSources 
+    email: EmailStr
     token: str
     refresh_token: Optional[str] = None
     expiry: datetime
@@ -357,9 +359,10 @@ class OAuthCreds(BaseModel):
         ) 
     
     @staticmethod
-    def from_google_credentials(creds: Credentials, remote_target: DataSources) -> 'OAuthCreds':
+    def from_google_credentials(creds: Credentials, email: str) -> 'OAuthCreds':
         return OAuthCreds(
-            remote_target=remote_target,
+            remote_target=DataSources.GOOGLE,
+            email=email,
             token=creds.token,
             refresh_token=creds.refresh_token,
             expiry=creds.expiry,
@@ -374,6 +377,7 @@ class OAuthCreds(BaseModel):
         expiry: neo4j_time.DateTime = creds['expiry']
         scopes: list[str] = creds['scopes']
         return OAuthCreds(remote_target=DataSources.__members__.get(creds['remote_target']), 
+                            email=creds['email'],
                             token=creds['token'], 
                             refresh_token=creds.get('refresh_token'), 
                             expiry=expiry.to_native(), 

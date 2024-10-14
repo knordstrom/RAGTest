@@ -36,12 +36,12 @@ class TestImportanceService(IntegrationTestBase):
         weaviate_port = docker_services.port_for("weaviate", 8081)
         weaviate_url = "http://{}:{}".format(docker_ip, weaviate_port)
         docker_services.wait_until_responsive(
-            timeout=30.0, pause=0.1, check=lambda: self.is_responsive(weaviate_url)
+            timeout=60.0, pause=0.1, check=lambda: self.is_responsive(weaviate_url)
         )
         neo4j_port = docker_services.port_for("neo4j", 7575)
         neo4j_url = "http://{}:{}".format(docker_ip, neo4j_port)
         docker_services.wait_until_responsive(
-            timeout=30.0, pause=0.1, check=lambda: self.is_responsive(neo4j_url)
+            timeout=60.0, pause=0.1, check=lambda: self.is_responsive(neo4j_url)
         )
         return {
             'weaviate': {

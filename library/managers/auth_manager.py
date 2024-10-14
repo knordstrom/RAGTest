@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from hashlib import md5
-from typing import Annotated, Any
+from typing import Annotated, Any, Optional
 from uuid import uuid4
 
 from fastapi import Depends, HTTPException
@@ -13,13 +13,17 @@ from library.models.employee import Employee, User
 
 class AuthManager:
 
-    def __init__(self):
-        self.datastore = Neo4j()
+    def __init__(self, datastore: Neo4j = None) -> None:
+        self.datastore = datastore if datastore else Neo4j()
 
     @staticmethod
     def assert_authorization_email(me: User, emails: str | list[str]) -> None:
+        if not me:
+            raise HTTPException(status_code=401, detail="You are not authenticated.")
+        if not emails: # authorized for me only, nothing to check
+            return
         if isinstance(emails, str):
-            emails = [emails]
+            emails = [emails]    
         if me.email not in emails:
             raise HTTPException(status_code=403, detail="You are not authorized to access this email account.")
 
@@ -52,10 +56,10 @@ class AuthManager:
         token_expiry = record.get('person.token_expiry')
         print("Token is: ", token, " with expiry: ", token_expiry)
         if token is not None and token_expiry is not None and datetime.now() < datetime.fromisoformat(token_expiry):
-                return TokenResponse(email=record['person.email'], token=token, expiry=token_expiry)
-        return self.update_user_token(record['person.email']) 
+                return TokenResponse(email=record['person.email'], name=record['person.name'], token=token, expiry=token_expiry)
+        return self.update_user_token(record['person.email'], record.get('person.name')) 
     
-    def update_user_token(self, email: str) -> TokenResponse:     
+    def update_user_token(self, email: str, name: Optional[str] = None) -> TokenResponse:     
         records: list[dict[str, Any]] = self.datastore.update_user_token(email)
         if len(records) == 0:
             return None
@@ -64,12 +68,12 @@ class AuthManager:
         token = record.get('person.token')
         token_expiry = record.get('person.token_expiry')   
         print("Updated token: ", token, " with expiry: ", token_expiry)
-        ressult = TokenResponse(email=email, token=token, expiry=token_expiry)
-        print("Auth result", ressult)
-        return ressult
+        result = TokenResponse(email=email, name = name, token=token, expiry=token_expiry)
+        print("Auth result", result)
+        return result
 
     def fail_login(self, email: str) -> TokenResponse:
-        return TokenResponse(email = email, token = None, expiry = None)
+        return TokenResponse(email = email, name = None, token = None, expiry = None)
     
     def write_remote_credentials(self, user: User, target: str, token: str, refresh_token: str, expiry: datetime, client_id: str, 
                                  client_secret: str, token_uri: str, scopes: list[str]) -> None:
@@ -80,6 +84,7 @@ class AuthManager:
         creds = OAuthCreds(
             remote_target=provider, 
             token=token, 
+            email=user.email,
             refresh_token=refresh_token, 
             expiry=expiry, 
             client_id=client_id, 
@@ -93,3 +98,6 @@ class AuthManager:
 
     def read_remote_credentials(self, user: User, provider: DataSources) -> OAuthCreds:
         return self.datastore.read_remote_credentials(user, provider)
+    
+    def read_all_remote_credentials(self, user: User) -> list[OAuthCreds]:
+        return self.datastore.read_all_remote_credentials(user)

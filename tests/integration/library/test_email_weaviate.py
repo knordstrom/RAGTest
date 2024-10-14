@@ -30,7 +30,7 @@ class TestEmailWeaviate(IntegrationTestBase):
         port = docker_services.port_for("weaviate", 8081)
         url = "http://{}:{}".format(docker_ip, port)
         docker_services.wait_until_responsive(
-            timeout=30.0, pause=0.1, check=lambda: self.is_responsive(url)
+            timeout=60.0, pause=0.1, check=lambda: self.is_responsive(url)
         )
         return {
             'url': url,
@@ -118,7 +118,7 @@ class TestEmailWeaviate(IntegrationTestBase):
         metadata: list[Object[Properties, None]] = [e for e in emails.iterator()]
         text: list[Object[Properties, None]] = [t for t in texts.iterator()]
 
-        assert len(text) > 1, "The email text should be chunked into multiple segments"
+        assert len(text) > 1, "The email text should be chunked into multiple segments, we have " + str(len(text))
         assert len(metadata) == 1, "There should be a single email metadata model saved"
         
         assert len(metadata) == 1, "There should be a single email metadata model saved"
