@@ -43,7 +43,7 @@ def _check_float(value: Union[float,None], field_name: str) -> Union[float,None]
             value = value / 100
     return value
 
-@app.get("/status")
+@app.get("/status", include_in_schema=False)
 def get_status():
     return {"status": "ok"}
 
@@ -61,10 +61,6 @@ async def briefs(me: Annotated[User, Depends(AuthManager.get_user_dependency(oau
                  certainty: Union[float,None] = None, threshold: Union[float,None] = None, use_hyde: bool = False) -> ApiResponse[BriefResponse]:
     """Create briefings for a user. Toggle [use_hyde] to use the GroqBriefingSummarizer to perform a HYpothetical Document Embeddings search."""
     AuthManager.assert_authorization_email(me, email)
-    if not email:
-        APISupport.error_response(400, "Email is required.")
-    if not start:
-        APISupport.error_responsen(400, "Start time is required.")
     certainty  = _check_float(certainty, "certainty")
     threshold = _check_float(threshold, "threshold")
     plus12 = start + datetime.timedelta(hours=12)

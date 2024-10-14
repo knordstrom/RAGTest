@@ -121,7 +121,7 @@ class APISupport:
 
         print(str(texts))
         
-        response = GroqClient(os.getenv('GROQ_API_KEY'), max_tokens=max_tokens).query(prompt['versions'][0]['template'], {'Question':question, 'Context': texts})
+        response = GroqClient(os.getenv('GROQ_API_KEY'), max_tokens=max_tokens).query(prompt, {'Question':question, 'Context': texts})
         return AskResponse(
             question = question,
             response = response,

@@ -57,8 +57,8 @@ class Weaviate(VDB):
         if not hasattr(cls, 'instance'):
             cls.instance = super(Weaviate, cls).__new__(cls)
             self = cls.instance
-            self.host = os.getenv('VECTOR_DB_HOST', host if host else '127.0.0.1')
-            self.port = os.getenv('VECTOR_DB_PORT', port if port else '8080')
+            self.host = host if host else os.getenv('VECTOR_DB_HOST', '127.0.0.1')
+            self.port = port if port else os.getenv('VECTOR_DB_PORT', '8080')
             self.url = self.host + ":" + self.port
             
             self.create_schemas(schemas)

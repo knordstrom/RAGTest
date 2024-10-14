@@ -1,9 +1,13 @@
 import pytest
 import requests
-from tests.integration.library.integration_test_base import IntegrationTestBase
+from library.managers.auth_manager import AuthManager
+from library.models.api_models import TokenResponse
+from tests.integration.library.integration_test_base import IntegrationTestBase, MultiReadyResponse, ReadyResponse
 import time
 
 class TestApiContainer(IntegrationTestBase):
+    docker_service_object: MultiReadyResponse
+
     def is_responsive(self, url):
         try:
             response = requests.get(url)
@@ -37,112 +41,121 @@ class TestApiContainer(IntegrationTestBase):
             timeout=120.0, pause=0.1, check=lambda: self.is_responsive(api_url)
         )
 
-        service = {
-            'weaviate': {
-                'url': weaviate_url,
-                'host': docker_ip,
-                'port': str(weaviate_port)
-            },
-            'neo4j': {
-                'url': neo4j_url,
-                'host': docker_ip,
-                'port': str(neo4j_port)
-            },
-            'api': {
-                'url': api_url,
-                'host': docker_ip,
-                'port': str(api_port)
-            }
-        }
+        token: TokenResponse = AuthManager().datastore.create_new_user(email="emmasmithcto6306@gmail.com", password="password")
+
+        service = MultiReadyResponse(
+            weaviate=ReadyResponse(
+                url=weaviate_url,
+                host=docker_ip,
+                port=str(weaviate_port)
+            ),
+            neo4j = ReadyResponse(
+                url=neo4j_url,
+                host=docker_ip,
+                port=str(neo4j_port)
+            ),
+            api = ReadyResponse(
+                url = api_url,
+                host = docker_ip,
+                port = str(api_port)
+            ),
+            token = token
+        )
+        self.docker_service_object = service
         return service
+
+    def _make_api_get_request(self, endpoint: str, service: MultiReadyResponse, params: dict[str, str] = {}, headers: dict[str, str] = {}):
+        headers["Authorization"] = f"Bearer {service.token.access_token}"
+        response = requests.get(url=f"http://localhost:{service.api.port}/{endpoint}", params=params, headers=headers)
+        return response
 
     '''
     briefs endpoint testing
     '''
-    def test_briefs_endpoint_without_any_params(self, service):
-        response = requests.get(f"http://localhost:{service['api']['port']}/briefs")
+    def test_briefs_endpoint_without_any_params(self, service: MultiReadyResponse):
+        response = self._make_api_get_request(endpoint="briefs", service=service)
         print("response status code: ", response.status_code)
         assert response.status_code == 422
 
-    def test_briefs_endpoint_without_email_params(self, service):
+    def test_briefs_endpoint_without_email_params(self, service: MultiReadyResponse):
         params = {
             "start": "2024-07-29T17:00:00Z",
             "end": "2024-07-30T17:00:00Z",
         }
-        response = requests.get(url=f"http://localhost:{service['api']['port']}/briefs", params=params)
+        response = self._make_api_get_request(endpoint="briefs", service=service, params=params)
         print("response status code: ", response.status_code)
         assert response.status_code == 422
 
-    def test_briefs_endpoint_without_start_params(self, service):
+    def test_briefs_endpoint_without_start_params(self, service: MultiReadyResponse):
         params = {
             "email": "emmasmithcto6306@gmail.com",
             "end": "2024-07-30T17:00:00Z",
         }
-        response = requests.get(url=f"http://localhost:{service['api']['port']}/briefs", params=params)
+        response = self._make_api_get_request(endpoint="briefs", service=service, params=params)
         print("response status code: ", response.status_code)
         assert response.status_code == 422
     
-    def test_briefs_endpoint_without_incorrect_threshold_params(self, service):
+    def test_briefs_endpoint_without_incorrect_threshold_params(self, service: MultiReadyResponse):
         params = {
             "email": "emmasmithcto6306@gmail.com",
             "start": "2024-07-29T17:00:00Z",
             "end": "2024-07-30T17:00:00Z",
             "threshold": "120"
         }
-        response = requests.get(url=f"http://localhost:{service['api']['port']}/briefs", params=params)
+        response = self._make_api_get_request(endpoint="briefs", service=service, params=params)
         print("response status code: ", response.status_code)
         assert response.status_code == 400
     
-    def test_briefs_endpoint_without_incorrect_certainty_params(self, service):
+    def test_briefs_endpoint_without_incorrect_certainty_params(self, service: MultiReadyResponse):
         params = {
             "email": "emmasmithcto6306@gmail.com",
             "start": "2024-07-29T17:00:00Z",
             "end": "2024-07-30T17:00:00Z",
             "threshold": "120"
         }
-        response = requests.get(url=f"http://localhost:{service['api']['port']}/briefs", params=params)
+        response = self._make_api_get_request(endpoint="briefs", service=service, params=params)
         print("response status code: ", response.status_code)
         assert response.status_code == 400
     
-    def test_briefs_endpoint_with_params(self, service):
+    def test_briefs_endpoint_with_params(self, service: MultiReadyResponse):
         params = {
             "email": "emmasmithcto6306@gmail.com",
             "start": "2024-07-29T17:00:00Z",
             "end": "2024-07-30T17:00:00Z",
         }
-        response = requests.get(url=f"http://localhost:{service['api']['port']}/briefs", params=params)
+        response = self._make_api_get_request(endpoint="briefs", service=service, params=params)
         print("response status code: ", response.status_code)
         assert response.status_code == 200
     
     '''
     test schedule endpoint
     '''
-    def test_schedule_endpoint_with_params(self, service):
+    def test_schedule_endpoint_with_params(self, service: MultiReadyResponse):
         params = {
             "email": "emmasmithcto6306@gmail.com",
             "start": "2024-07-29T17:00:00Z",
             "end": "2024-07-30T17:00:00Z",
         }
-        response = requests.get(url=f"http://localhost:{service['api']['port']}/schedule", params=params)
+        response = self._make_api_get_request(endpoint="schedule", service=service, params=params)
         assert response.status_code == 200
     
-    def test_schedule_endpoint_without_params(self, service):
-        response = requests.get(url=f"http://localhost:{service['api']['port']}/schedule")
+    def test_schedule_endpoint_without_params(self, service: MultiReadyResponse):
+        response = self._make_api_get_request(endpoint="schedule", service=service)
         assert response.status_code == 422
     
     '''
     test ask endpoint
     '''
-    def test_ask_endpoint_with_params(self, service):
+    def test_ask_endpoint_with_params(self, service: MultiReadyResponse):
         params = {
             "query": "What is happening?",
             "n": 3
         }
-        response = requests.get(url=f"http://localhost:{service['api']['port']}/ask", params=params)
+        response = self._make_api_get_request(endpoint="ask", service=service, params=params)
+        print("Reponse was", response.raw)
         assert response.status_code == 200
     
-    def test_ask_endpoint_without_params(self, service):
-        
-        response = requests.get(url=f"http://localhost:{service['api']['port']}/ask")
+    def test_ask_endpoint_without_params(self, service: MultiReadyResponse):
+        response = self._make_api_get_request(endpoint="ask", service=service)
         assert response.status_code == 422
     
