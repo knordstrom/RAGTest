@@ -116,10 +116,10 @@ jobs:
     - name: Include app credentials
       run: |
         echo ${{ secrets.GSUITE_APP_CREDS }} > resources/gsuite_creds.json
-    # - name: Create containers
-    #   run: |
-    #     make docker-processor
-    #     make docker-api
+    - name: Create containers
+      run: |
+        # make docker-processor
+        make docker-api
     # - name: Report space post creation
     #   run: |
     #     df -h
