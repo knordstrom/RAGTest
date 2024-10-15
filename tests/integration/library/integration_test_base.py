@@ -4,6 +4,7 @@ import requests
 
 from globals import Globals
 from library.data.local.weaviate import Weaviate
+from library.models.api_models import TokenResponse
 from library.models.weaviate_schemas import WeaviateSchema, WeaviateSchemas
 from weaviate.classes.query import Filter
 from weaviate.collections.collection import Collection
@@ -102,7 +103,11 @@ class ReadyResponse:
 class MultiReadyResponse:
     weaviate: ReadyResponse
     neo4j: ReadyResponse
+    api: ReadyResponse
+    token: TokenResponse
 
-    def __init__(self, weaviate: ReadyResponse, neo4j: ReadyResponse):
+    def __init__(self, weaviate: ReadyResponse, neo4j: ReadyResponse, api: ReadyResponse = None, token: TokenResponse = None):
         self.weaviate = weaviate
         self.neo4j = neo4j
+        self.api = api
+        self.token = token

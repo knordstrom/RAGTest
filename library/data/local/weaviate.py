@@ -57,8 +57,8 @@ class Weaviate(VDB):
         if not hasattr(cls, 'instance'):
             cls.instance = super(Weaviate, cls).__new__(cls)
             self = cls.instance
-            self.host = host if host is not None else os.getenv('VECTOR_DB_HOST', '127.0.0.1')
-            self.port = port if port is not None else os.getenv('VECTOR_DB_PORT', '8080')
+            self.host = host if host else os.getenv('VECTOR_DB_HOST', '127.0.0.1')
+            self.port = port if port else os.getenv('VECTOR_DB_PORT', '8080')
             self.url = self.host + ":" + self.port
             
             self.create_schemas(schemas)
@@ -206,7 +206,11 @@ class Weaviate(VDB):
         return filtered_response
 
     def search(self, user:User, query:str, key: WeaviateSchemas, limit: int = 5, certainty: float = .7, threshold: float = None, use_hyde: bool = False) -> list[dict[str, any]]:
-        collection: Collection[Properties, References] = self.collection(key)
+        try:
+            collection: Collection[Properties, References] = self.collection(key)
+        except KeyError:
+            print(f"Key '{key}' not found in the collection. Returning an empty list.")
+            return []
         search_query: str = self._hyde_query(query, key, use_hyde)
 
         rerank = Rerank(prop="text", query=query) if threshold is not None else None
