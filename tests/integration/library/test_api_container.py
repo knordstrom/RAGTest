@@ -43,6 +43,7 @@ class TestApiContainer(IntegrationTestBase):
 
         token: TokenResponse = AuthManager().datastore.create_new_user(email="emmasmithcto6306@gmail.com", password="password")
 
+        print("Have a token: ", token)
         service = MultiReadyResponse(
             weaviate=ReadyResponse(
                 url=weaviate_url,
@@ -65,8 +66,10 @@ class TestApiContainer(IntegrationTestBase):
         return service
 
     def _make_api_get_request(self, endpoint: str, service: MultiReadyResponse, params: dict[str, str] = {}, headers: dict[str, str] = {}):
+        print("Making request to ", f"http://localhost:{service.api.port}/{endpoint}", "with token ", service.token.access_token)
         headers["Authorization"] = f"Bearer {service.token.access_token}"
         response = requests.get(url=f"http://localhost:{service.api.port}/{endpoint}", params=params, headers=headers)
+        print("Response was ", response)
         return response
 
     '''
