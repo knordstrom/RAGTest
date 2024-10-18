@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Keith Nordstrom <keith@timeli.io>"]
 readme = "README.rst"
-packages = [{include = "library"}, {include = "processor"}]
+packages = [{include = "library"}, {include = "processor"}, {include = "jobs"}]
 
 [tool.poetry.scripts]
 processor = "processor.emails:start"
@@ -15,7 +15,7 @@ slack_processor = "processor.slack:start"
 transcripts_processor = "processor.transcripts:start"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11.6, <= 3.11.10"
 pytest = "^8.1.1"
 google-api-python-client = "^2.122.0"
 google-auth-httplib2 = "^0.2.0"
@@ -48,6 +48,7 @@ uvicorn = "^0.30.3"
 cachetools = "^5.4.0"
 frozendict = "^2.4.4"
 google-apps-meet = "^0.1.8"
+dagster = "^1.8.11"
 
 
 [tool.poetry.group.dev.dependencies]
