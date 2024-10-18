@@ -3,6 +3,7 @@ import io
 import json
 import os
 import dotenv
+import requests
 from slack_sdk import WebClient
 from google.oauth2.credentials import Credentials
 from slack_sdk.oauth import AuthorizeUrlGenerator
@@ -61,6 +62,27 @@ class Slack:
         ]
         self.client = WebClient()
         self.bot_client = None
+
+    @staticmethod
+    def refresh_token(creds: OAuthCreds) -> OAuthCreds:
+        response: requests.Response = requests.post(
+            "https://slack.com/api/oauth.v2.access",
+            data={
+                "client_id": creds.client_id,
+                "client_secret": creds.client_secret,
+                "grant_type": "refresh_token",
+                "refresh_token": creds.refresh_token
+            }
+        )
+        print("Response: ", response.text, response.status_code)
+        data = json.loads(response.text)
+        if response.status_code >= 300 or data.get("error"):
+            print("Error refreshing token: ", data.get("error"))
+            return None
+           
+        creds.token = data.get("access_token")
+        creds.expiry = (datetime.datetime.now() + datetime.timedelta(seconds=data.get("expires_in")))
+        return creds
 
     def api_test(self) -> SlackResponse:
         response: SlackResponse = self.client.api_test()

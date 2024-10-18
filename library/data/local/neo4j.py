@@ -382,6 +382,18 @@ class Neo4j:
         with self.driver.session() as session:
             result = list(session.run(query, id=user.id))
             return [OAuthCreds.from_neo4j(r['creds']) for r in result]
+    
+    def read_all_expiring_credentials(self, provider: DataSources) -> list[OAuthCreds]:
+        match_date = (datetime.now() - timedelta(hours=1)).isoformat()
+        query = """
+        MATCH (creds:Credentials)
+        WHERE creds.expiry < $match_date AND creds.remote_target = $provider
+        RETURN creds
+        """
+
+        with self.driver.session() as session:
+            result = list(session.run(query, match_date = match_date, provider=provider.name))
+            return [OAuthCreds.from_neo4j(r['creds']) for r in result]
 
     @staticmethod
     def collate_schedule_response(records: list[dict[str, Any]]) -> list[Event]:
