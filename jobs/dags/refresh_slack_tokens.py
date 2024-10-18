@@ -97,19 +97,21 @@ def write_refrehed_creds(context: AssetExecutionContext) -> MaterializeResult:
         neo.write_remote_credentials(user, c)
 
 assets = [find_expiring_creds, refresh_creds, write_refrehed_creds]
-materialize(assets)
+if not os.getenv("IS_TEST"):
 
-slack_refresh_job = define_asset_job(
-    "slack_refresh_job", AssetSelection.groups("slack_refresh")
-)
+    materialize(assets)
 
-# schedule = os.getenv("DAGSTER_SLACK_REFRESH_TOKEN_SCHEDULE")
-slack_refresh_schedule = ScheduleDefinition(
-    job=slack_refresh_job,
-    cron_schedule="*/5 * * * *",
-    # os.getenv("DAGSTER_SLACK_REFRESH_TOKEN_SCHEDULE", "* * * * *"),
-    default_status=DefaultScheduleStatus.RUNNING,
-)
+    slack_refresh_job = define_asset_job(
+        "slack_refresh_job", AssetSelection.groups("slack_refresh")
+    )
+
+    # schedule = os.getenv("DAGSTER_SLACK_REFRESH_TOKEN_SCHEDULE")
+    slack_refresh_schedule = ScheduleDefinition(
+        job=slack_refresh_job,
+        cron_schedule="*/5 * * * *",
+        # os.getenv("DAGSTER_SLACK_REFRESH_TOKEN_SCHEDULE", "* * * * *"),
+        default_status=DefaultScheduleStatus.RUNNING,
+    )
 
 
 
