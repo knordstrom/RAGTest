@@ -43,6 +43,10 @@ def _check_float(value: Union[float,None], field_name: str) -> Union[float,None]
             value = value / 100
     return value
 
+@app.get("/status", include_in_schema=False)
+def get_status():
+    return {"status": "ok"}
+
 @app.get('/ask', tags=tags)
 async def ask(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_scheme))],
               query:str, n: Union[int,None] = None, 
