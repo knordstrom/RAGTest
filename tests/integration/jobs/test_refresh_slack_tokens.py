@@ -32,7 +32,7 @@ class TestRefreshSlackTokens(IntegrationTestBase):
         neo4j_port = docker_services.port_for("neo4j", 7575)
         neo4j_url = "http://{}:{}".format(docker_ip, neo4j_port)
         print("Checking if service is responsive at ", neo4j_url, " ... ")
-        time.sleep(10)
+        time.sleep(60)
         subprocess.run(["docker", "ps", "-a"])
         docker_services.wait_until_responsive(
             timeout=180.0, pause=0.1, check=lambda: self.is_responsive(neo4j_url)
