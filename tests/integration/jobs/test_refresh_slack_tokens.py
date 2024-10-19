@@ -15,7 +15,7 @@ from tests.integration.library.integration_test_base import IntegrationTestBase,
 import time
 
 class TestRefreshSlackTokens(IntegrationTestBase):
-    docker_service_object: MultiReadyResponse
+    docker_service_object: ReadyResponse
 
     def is_responsive(self, url):
         try:
@@ -27,7 +27,7 @@ class TestRefreshSlackTokens(IntegrationTestBase):
 
 
     @pytest.fixture(scope="session")
-    def service(self, docker_ip, docker_services):
+    def service(self, docker_ip, docker_services) -> ReadyResponse:
         # """Ensure that service is up and responsive."""
         neo4j_port = docker_services.port_for("neo4j", 7575)
         neo4j_url = "http://{}:{}".format(docker_ip, neo4j_port)
@@ -37,17 +37,15 @@ class TestRefreshSlackTokens(IntegrationTestBase):
         docker_services.wait_until_responsive(
             timeout=180.0, pause=0.1, check=lambda: self.is_responsive(neo4j_url)
         )
-        service = MultiReadyResponse(
-            neo4j = ReadyResponse(
+        service = ReadyResponse(
                 url=neo4j_url,
                 host=docker_ip,
                 port=str(neo4j_port)
-            ),
-        )
+            )
         self.docker_service_object = service
         return service
 
-    def test_refresh_slack_tokens_find_expiring_creds(self, service):
+    def test_refresh_slack_tokens_find_expiring_creds(self, service: ReadyResponse):
         neo = Neo4j()
         mg = AuthManager(neo)
         user: User = neo.create_new_user("someone@somewhere.idk", "password")
