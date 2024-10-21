@@ -13,6 +13,7 @@ from library.models.api_models import OAuthCreds, TokenResponse
 from library.models.employee import User
 from tests.integration.library.integration_test_base import IntegrationTestBase, MultiReadyResponse, ReadyResponse
 import time
+from dagster import MaterializeResult, materialize
 
 class TestRefreshSlackTokens(IntegrationTestBase):
     docker_service_object: ReadyResponse
@@ -91,5 +92,12 @@ class TestRefreshSlackTokens(IntegrationTestBase):
         neo.write_remote_credentials(user=user, creds=slack_creds_current)
         neo.write_remote_credentials(user=user, creds=google_creds_expired)
 
-        result = find_expiring_creds.execute_in_process()
+        result: MaterializeResult = materialize(find_expiring_creds)
         assert result is not None
+
+        assert result.metadata is not None
+        assert result.metadata["num_records"] == 1
+        assert result.metadata["credentials"] is not None
+        assert len(result.metadata["credentials"]) == 1
+        assert result.metadata["credentials"][0]["email"] == slack_creds_almost_expired.email
+        assert result.metadata["credentials"][0]["remote_target"] == slack_creds_almost_expired.remote_target.name
