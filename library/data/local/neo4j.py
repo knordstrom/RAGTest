@@ -383,16 +383,27 @@ class Neo4j:
             result = list(session.run(query, id=user.id))
             return [OAuthCreds.from_neo4j(r['creds']) for r in result]
     
-    def read_all_expiring_credentials(self, provider: DataSources) -> list[OAuthCreds]:
-        match_date = (datetime.now() - timedelta(hours=1)).isoformat()
+    def read_all_creds(self) -> list[OAuthCreds]:
         query = """
         MATCH (creds:Credentials)
-        WHERE creds.expiry < $match_date AND creds.remote_target = $provider
+        RETURN creds
+        """
+        with self.driver.session() as session:
+            result = list(session.run(query))
+            return [OAuthCreds.from_neo4j(r['creds']) for r in result]
+    
+    def read_all_credentials_to_refresh(self, provider: DataSources, allow_expired: bool = False) -> list[OAuthCreds]:
+        match_date = (datetime.now() - timedelta(hours=1)).isoformat()
+        clause = " AND datetime(creds.expiry) < datetime($now)" if not allow_expired else ""
+        query = """
+        MATCH (creds:Credentials)
+        WHERE datetime(creds.expiry) > datetime($match_date)""" + clause + """ AND creds.remote_target = $provider
         RETURN creds
         """
 
+        print("Matching date is: ", match_date, "now is", datetime.now())
         with self.driver.session() as session:
-            result = list(session.run(query, match_date = match_date, provider=provider.name))
+            result = list(session.run(query, match_date = match_date, now = datetime.now(), provider=provider.name))
             return [OAuthCreds.from_neo4j(r['creds']) for r in result]
 
     @staticmethod

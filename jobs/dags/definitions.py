@@ -1,4 +1,4 @@
-from dagster import Definitions, load_assets_from_modules
+from jobs import Definitions, load_assets_from_modules
 
 from . import refresh_slack_tokens
 from .refresh_slack_tokens import assets, slack_refresh_job, slack_refresh_schedule

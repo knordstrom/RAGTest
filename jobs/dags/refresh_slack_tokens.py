@@ -34,16 +34,20 @@ def creds_to_json(creds: OAuthCreds) -> dict[str, any]:
     obj["remote_target"] = obj["remote_target"].value
     return obj
 
+def report(context: AssetExecutionContext, *args):
+    context.log.info(args)
+    print(args)
+
 @asset(group_name="slack_refresh")
 def find_expiring_creds(context: AssetExecutionContext) -> MaterializeResult:
     neo = Neo4j()
-    creds = neo.read_all_expiring_credentials(DataSources.SLACK)
+    creds = neo.read_all_credentials_to_refresh(DataSources.SLACK)
     
-    context.log.info(f"Found {len(creds)} expiring credentials")
+    report(context, f"Found {len(creds)} expiring credentials")
     result = []
     for cred in creds:
         result.append(creds_to_json(cred))
-        context.log.info(f"     Expiring credential: {cred}")
+        report(context, f"     Expiring credential: {cred}")
 
     return MaterializeResult(
         asset_key="find_expiring_creds",
