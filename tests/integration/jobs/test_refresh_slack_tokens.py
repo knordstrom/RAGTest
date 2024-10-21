@@ -48,9 +48,10 @@ class TestRefreshSlackTokens(IntegrationTestBase):
     def test_refresh_slack_tokens_find_expiring_creds(self, service: ReadyResponse):
         neo = Neo4j()
         mg = AuthManager(neo)
-        user: User = neo.create_new_user("someone@somewhere.idk", "password")
+        token: TokenResponse = neo.create_new_user("someone@somewhere.idk", "password")
+        user:User = mg.datastore.get_user_by_email("someone@somewhere.idk")
         slack_creds_almost_expired: OAuthCreds = OAuthCreds(
-            email=user.email,
+            email=token.email,
             remote_target=DataSources.SLACK,
             token="slack_creds_almost_expired",
             refresh_token="refresh_slack_creds_almost_expired",
@@ -62,7 +63,7 @@ class TestRefreshSlackTokens(IntegrationTestBase):
         )
 
         slack_creds_current: OAuthCreds = OAuthCreds(
-            email=user.email,
+            email=token.email,
             remote_target=DataSources.SLACK,
             token="slack_creds_current",
             refresh_token="refresh_slack_creds_current",
@@ -75,7 +76,7 @@ class TestRefreshSlackTokens(IntegrationTestBase):
 
 
         google_creds_expired: OAuthCreds = OAuthCreds(
-            email=user.email,
+            email=token.email,
             remote_target=DataSources.GOOGLE,
             token="google_creds_expired",
             refresh_token="refresh_google_creds_expired",
