@@ -57,3 +57,8 @@ ipykernel = "^6.29.4"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.dagster]
+module_name = "jobs.dags.definitions"
+code_location_name = "jobs"
