@@ -26,6 +26,9 @@ docker-processor:
 docker-api:
 	docker build -f ApiDockerfile -t context-api:0.1.1 .
 
+docker-jobs:
+	docker build -f DagsterDockerfile -t batch-jobs:0.1.1 .
+
 docker-all: 
 	make docker-processor 
 	make docker-api
@@ -39,7 +42,7 @@ docker-all:
 	docker image tag event-processor:0.1.1 knordstrom/event-processor:latest
 	docker image tag document-processor:0.1.1 knordstrom/document-processor:latest
 	docker image tag transcript-processor:0.1.1 knordstrom/transcript-processor:latest
-	docker image tag slack-processor:0.1.1 knordstrom/slack-processorlatest
+	docker image tag slack-processor:0.1.1 knordstrom/slack-processor:latest
 	docker image tag context-api:0.1.1 knordstrom/sofia-api:latest
 	docker push knordstrom/email-processor:$(VERSION)
 	docker push knordstrom/event-processor:$(VERSION)

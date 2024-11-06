@@ -4,6 +4,7 @@ services:
     ports:
     - 8080:8080
     - 50051:50051
+    - 2112:2112
   #  restart: on-failure:5
     environment:
       QUERY_DEFAULTS_LIMIT: 25
@@ -14,6 +15,7 @@ services:
       TRANSFORMERS_INFERENCE_API: http://t2v-transformers:8080
       RERANKER_INFERENCE_API: http://reranker-transformers:8080
       CLUSTER_HOSTNAME: 'weaviate-1'
+      PROMETHEUS_MONITORING_ENABLED: true
   reranker-transformers:
     platform: linux/x86_64
     image: cr.weaviate.io/semitechnologies/reranker-transformers:cross-encoder-ms-marco-MiniLM-L-6-v2
@@ -24,30 +26,36 @@ services:
     environment:
       ENABLE_CUDA: 0 
   neo4j:
-    image: neo4j:5.22.0
+    image: neo4j:5.24.2
     ports:
     - 7687:7687
     - 7474:7474
+    - 2004:2004
  #   restart: on-failure:5
     # volumes:
     #   - /var/lib/neo4j/data:/data
     environment:
-      - NEO4JLABS_PLUGINS=["apoc"]
+      - NEO4J_PLUGINS=["apoc"]
       - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
       - NEO4J_apoc_export_file_enabled=true 
       - NEO4J_apoc_import_file_enabled=true 
       - NEO4J_apoc_import_file_use__neo4j__config=true 
+      # - NEO4J_server_metrics_prometheus_enabled=true
+      # - NEO4J_server_metrics_prometheus_endpoint=0.0.0.0:2004
   zoo1:
     image: confluentinc/cp-zookeeper:7.3.2
     hostname: zoo1
     container_name: zoo1
     ports:
       - "2181:2181"
+      - 7070:7070
+      - 9998:9998
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_SERVERS: zoo1:2888:3888
-
+      ZOOKEEPER_JMX_PORT: 9998
+      ZOOKEEPER_JMX_HOSTNAME: 0.0.0.0
   kafka1:
     image: confluentinc/cp-kafka:7.3.2
     hostname: kafka1
@@ -67,7 +75,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_JMX_PORT: 9999
-      KAFKA_JMX_HOSTNAME: ${DOCKER_HOST_IP:-127.0.0.1}
+      KAFKA_JMX_HOSTNAME: 0.0.0.0
       KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
       KAFKA_AUTO_CREATE_TOPICS: "true"
@@ -76,6 +84,8 @@ services:
 
   processor:
     image: context-processor:0.1.1
+    ports:
+      - "5011:5011"
     environment:
       KAFKA_BROKER: "host.docker.internal:29092"
       KAFKA_TOPIC: "emails"
@@ -92,6 +102,8 @@ services:
 
   event_processor:
     image: event-processor:0.1.1
+    ports:
+      - "5013:5013"
     environment:
       KAFKA_BROKER: "kafka1:29092"
       KAFKA_TOPIC: "calendar"
@@ -106,6 +118,8 @@ services:
 
   document_processor:
     image: document-processor:0.1.1
+    ports:
+      - "5012:5012"
     environment:
       KAFKA_BROKER: "kafka1:29092"
       KAFKA_TOPIC: "documents"
@@ -119,6 +133,8 @@ services:
   
   transcript_processor:
     image: transcript-processor:0.1.1
+    ports:
+      - "5015:5015"
     environment:
       KAFKA_BROKER: "kafka1:29092"
       KAFKA_TOPIC: "transcripts"
@@ -132,6 +148,8 @@ services:
   
   slack_processor:
     image: slack-processor:0.1.1
+    ports:
+      - "5014:5014"
     environment:
       KAFKA_BROKER: "kafka1:29092"
       KAFKA_TOPIC: "slack"
@@ -164,78 +182,67 @@ services:
       - kafka1
       - weaviate
       - neo4j
-  
-  # This service runs the postgres DB used by dagster for run storage, schedule storage,
-  # and event log storage.
-  dagster_postgresql:
-    image: postgres:11
-    container_name: dagster_postgresql
-    environment:
-      POSTGRES_USER: "postgres_user"
-      POSTGRES_PASSWORD: "postgres_password"
-      POSTGRES_DB: "postgres_db"
-    networks:
-      - dagster_network
 
-  # This service runs dagster-webserver, which loads your user code from the user code container.
-  # Since our instance uses the QueuedRunCoordinator, any runs submitted from the webserver will be put on
-  # a queue and later dequeued and launched by dagster-daemon.
-  dagster_webserver:
-    image: dagster
-    entrypoint:
-      - dagster-webserver
-      - -h
-      - "0.0.0.0"
-      - -p
-      - "3000"
-      - -w
-      - workspace.yaml
-    container_name: dagster_webserver
-    expose:
-      - "3000"
+  jmx_exporter:
+    image: sscaling/jmx-prometheus-exporter:latest
+    container_name: jmx_exporter
     ports:
-      - "3000:3000"
-    environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
-    volumes: # Make docker client accessible, so we can terminate containers from the webserver
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp/io_manager_storage:/tmp/io_manager_storage
-    networks:
-      - dagster_network
+      - 5556:5556
     depends_on:
-      - dagster_postgresql
+      - kafka1
+    # ports:
+    # - 7070:7070
+    # command:
+    # - -p
+    # - "7070"
+    # - -f
+    # - /etc/jmx_exporter/zookeeper.yml
+    # volumes:
+    # - ./zookeeper.yml:/etc/jmx_exporter/zookeeper.yml:ro
+    # depends_on:
+    # - zoo1
 
-  # This service runs the dagster-daemon process, which is responsible for taking runs
-  # off of the queue and launching them, as well as creating runs from schedules or sensors.
-  dagster_daemon:
-    image: dagster
-    entrypoint:
-      - dagster-daemon
-      - run
-    container_name: dagster_daemon
-    restart: on-failure
-    environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
-      AWS_ACCESS_KEY_ID: "yourAWSKeyID"
-      AWS_SECRET_ACCESS_KEY: "yourAWSSecretAccessKey"
-      DATABASE_IP: "192.168.136.166"
-      DATABASE_PORT: 5432
-      DATABASE_USER: "etl_user"
-      DATABASE_PASSWORD: "etl_password"
-      DATABASE_NAME: "etl_db"
-    volumes: # Make docker client accessible, so we can launch containers using host docker
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp/io_manager_storage:/tmp/io_manager_storage
-    networks:
-      - dagster_network
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+    - 9090:9090
+    command:
+    - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+    - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     depends_on:
-      - dagster_postgresql
+    - cadvisor
 
-networks:
-  dagster_network:
-    driver: bridge
-    name: dagster_network
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources
+
+  pushgateway:
+    image: prom/pushgateway:latest
+    container_name: pushgateway
+    ports:
+    - 9091:9091
+    depends_on:
+    - prometheus
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    command:
+      - '-port=8098'
+    ports:
+    - 8098:8098
+    volumes:
+    - /:/rootfs:ro
+    - /var/run:/var/run:rw
+    - /sys:/sys:ro
+    - /var/lib/docker/:/var/lib/docker:ro

@@ -1,8 +1,13 @@
 from datetime import datetime
+import threading
 import dotenv
+from fastapi import FastAPI
 from groq import Groq
 from kafka import TopicPartition
 import os
+
+import uvicorn
+from api import metrics
 from library.data.local import neo4j
 from library.models.api_models import ConferenceTranscript, MeetingAttendee, TranscriptConversation, TranscriptLine
 from library.enums.kafka_topics import KafkaTopics
@@ -47,9 +52,26 @@ def write_transcripts_to_vdb(docs: list[ConsumerRecord]):
         if w is not None:
             w.close()
 
+def listen_to_kafka():
+    ProcessorSupport.kafka_listen(KafkaTopics.TRANSCRIPTS, "transcripts_processor", write_transcripts_to_vdb)
+
+def serve_metrics():
+    app = FastAPI(title="Transcripts Processor", version="0.1")
+    metrics_app = metrics.MetricsApp(app, prefix="transcripts_processor", use_kafka=True, use_neo4j=False, use_weaviate=True).make_metrics_app()
+    print("Metrics server starting at", metrics_app)
+
+    uvicorn.run(app, host="0.0.0.0", port=5015)
+    
 def start():
     dotenv.load_dotenv()
-    ProcessorSupport.kafka_listen(KafkaTopics.TRANSCRIPTS, "transcripts_processor", write_transcripts_to_vdb)
+    print("Starting transcripts processor...")
+    thread = threading.Thread(target = listen_to_kafka)
+    thread.daemon = False
+    thread.start()
+
+    serve_metrics()
+    
+    print("Transcripts processor started")
 
 
 if __name__ == '__main__':

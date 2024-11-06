@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Keith Nordstrom <keith@timeli.io>"]
 readme = "README.rst"
-packages = [{include = "library"}, {include = "processor"}, {include = "jobs"}]
+packages = [{include = "library"}, {include = "processor"}]
 
 [tool.poetry.scripts]
 processor = "processor.emails:start"
@@ -49,6 +49,7 @@ cachetools = "^5.4.0"
 frozendict = "^2.4.4"
 google-apps-meet = "^0.1.8"
 dagster = "^1.8.11"
+prometheus_client = "^0.21.0"
 
 
 [tool.poetry.group.dev.dependencies]

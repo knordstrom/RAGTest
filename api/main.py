@@ -3,6 +3,7 @@ from typing import Annotated, Union
 
 from fastapi.security import OAuth2PasswordBearer
 
+from api import metrics
 from library.managers.auth_manager import AuthManager
 from library.models.api_models import ApiResponse, AskResponse, BriefResponse, ScheduleResponse
 from library.managers.api_support import APISupport
@@ -17,13 +18,14 @@ from api.slack_retrieval import route as slack
 from api.auth import route as auth
 from api.script import route as script
 from api.employees import route as employees
+from api.metrics import MetricsApp
 from fastapi import Depends, FastAPI
 
 from library.models.employee import User
 
 warnings.simplefilter("ignore", ResourceWarning)
 
-app = FastAPI(title="Sofia API", description="API for intereacting with the Sofia agent", version="0.1")
+app = FastAPI(title="Sofia API", description="API for interacting with the Sofia agent", version="0.1")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login/openapi")
 
 app.include_router(refs)
@@ -32,6 +34,7 @@ app.include_router(slack)
 app.include_router(auth)
 app.include_router(script)
 app.include_router(employees)
+metrics_app = MetricsApp(app).make_metrics_app()
 
 tags = ["Main Interface"]
 
