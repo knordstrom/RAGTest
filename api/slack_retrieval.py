@@ -31,7 +31,7 @@ def slack(me: Annotated[User, Depends(AuthManager.get_user_dependency(oauth2_sch
     creds = s.check_auth()
     if creds:
         print("Creds valid or expired", creds.valid, creds.expired, creds.expiry)
-    if not creds or not creds.valid or creds.expired:
+    if s.is_local and (not creds or not creds.valid or creds.expired):
         if creds:
             print("Redirecting to auth", creds.valid, creds.expired, creds.expiry)
         return RedirectResponse(url=s.auth_target(default_destination))

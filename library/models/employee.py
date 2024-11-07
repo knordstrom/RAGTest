@@ -7,9 +7,9 @@ from pydantic import BaseModel, Field
 from library.models.person import Person
 class User(BaseModel):
     id: str
+    email: str
     employee_id: Optional[str] = None
     name: Optional[str] = None
-    email: str
 
     @staticmethod
     def from_neo4j(record: Record):
