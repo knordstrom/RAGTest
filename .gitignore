@@ -5,6 +5,7 @@ tests/__pycache__/
 api/__pycache__/
 *.py[cod]
 api/temp/
+tmp*/
 
 # C extensions
 *.so
