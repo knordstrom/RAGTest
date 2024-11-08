@@ -1,3 +1,4 @@
+import subprocess
 import pytest
 import requests
 from library.managers.auth_manager import AuthManager
@@ -24,7 +25,7 @@ class TestApiContainer(IntegrationTestBase):
         weaviate_port = docker_services.port_for("weaviate", 8081)
         weaviate_url = "http://{}:{}".format(docker_ip, weaviate_port)
         print("Checking if service is responsive at ", weaviate_url, " ... ")
-        time.sleep(60)
+        # time.sleep(60)
         docker_services.wait_until_responsive(
             timeout=180.0, pause=0.1, check=lambda: self.is_responsive(weaviate_url)
         )
@@ -37,9 +38,19 @@ class TestApiContainer(IntegrationTestBase):
         api_port = docker_services.port_for("api", 5010)
         api_url = "http://{}:{}/status".format(docker_ip, api_port)
         print("Checking if service is responsive at ", api_url, " ... ")
-        docker_services.wait_until_responsive(
-            timeout=120.0, pause=0.1, check=lambda: self.is_responsive(api_url)
-        )
+
+        count = 0
+        while count < 3 and not self.is_responsive(api_url):
+            print("DOCKER API LOGS")
+            subprocess.run(["docker", "logs", "api-test"])
+            try:
+                docker_services.wait_until_responsive(
+                    timeout=120.0, pause=0.1, check=lambda: self.is_responsive(api_url)
+                )
+            except Exception as e:
+                print("Service is not responsive yet, waiting for 10 seconds ...")
+                time.sleep(10)
+                count += 1
 
         token: TokenResponse = AuthManager().datastore.create_new_user(email="emmasmithcto6306@gmail.com", password="password")
 
