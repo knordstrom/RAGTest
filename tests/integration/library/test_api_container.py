@@ -63,7 +63,7 @@ class TestApiContainer(IntegrationTestBase):
             timeout=180.0, pause=0.1, check=lambda: self.is_responsive(neo4j_url)
         )
 
-        api_url, api_port = self.find_api(docker_services)
+        api_url, api_port = self.find_api(docker_ip, docker_services)
 
         token: TokenResponse = AuthManager().datastore.create_new_user(email="emmasmithcto6306@gmail.com", password="password")
 
