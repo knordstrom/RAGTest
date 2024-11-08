@@ -38,7 +38,8 @@ class TestApiContainer(IntegrationTestBase):
         )
 
         count = 0
-        while count < 3 and not self.is_responsive(api_url):
+        ready = False
+        while count < 3 and not ready:
             print("DOCKER API LOGS")
             subprocess.run(["docker", "logs", "api-test"])
             try:
@@ -50,6 +51,8 @@ class TestApiContainer(IntegrationTestBase):
                 docker_services.wait_until_responsive(
                     timeout=120.0, pause=0.1, check=lambda: self.is_responsive(api_url)
                 )
+
+                ready = self.is_responsive(api_url)
             except Exception as e:
                 print("Service is not responsive yet, waiting for 10 seconds ...")
                 time.sleep(10)
