@@ -5,6 +5,7 @@ from library.managers.auth_manager import AuthManager
 from library.models.api_models import TokenResponse
 from tests.integration.library.integration_test_base import IntegrationTestBase, MultiReadyResponse, ReadyResponse
 import time
+from pytest_docker.plugin import Services
 
 class TestApiContainer(IntegrationTestBase):
     docker_service_object: MultiReadyResponse
@@ -19,8 +20,10 @@ class TestApiContainer(IntegrationTestBase):
 
 
     @pytest.fixture(scope="session")
-    def service(self, docker_ip, docker_services):
+    def service(self, docker_ip, docker_services: Services):
         # """Ensure that service is up and responsive."""
+
+        print("API CONTAINER TESTS, services are", docker_services._services)
 
         weaviate_port = docker_services.port_for("weaviate", 8081)
         weaviate_url = "http://{}:{}".format(docker_ip, weaviate_port)
@@ -35,7 +38,7 @@ class TestApiContainer(IntegrationTestBase):
         docker_services.wait_until_responsive(
             timeout=180.0, pause=0.1, check=lambda: self.is_responsive(neo4j_url)
         )
-        api_port = docker_services.port_for("api", 5010)
+        api_port = docker_services.port_for("api-test", 5010)
         api_url = "http://{}:{}/status".format(docker_ip, api_port)
         print("Checking if service is responsive at ", api_url, " ... ")
 
