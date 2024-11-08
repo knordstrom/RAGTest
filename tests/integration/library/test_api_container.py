@@ -1,4 +1,5 @@
 import subprocess
+from typing import Tuple
 import pytest
 import requests
 from library.managers.auth_manager import AuthManager
@@ -18,6 +19,31 @@ class TestApiContainer(IntegrationTestBase):
         except ConnectionError:
             return False
 
+    def find_api(self, docker_ip, docker_services: Services) -> Tuple[str, int]:
+        count = 0
+        ready = False
+        api_port = 0
+        api_url = ""
+        while count < 3 and not ready:
+            print("DOCKER API LOGS")
+            subprocess.run(["docker", "logs", "api-test"])
+            try:
+                print("API CONTAINER TESTS, services are", docker_services._services)
+                subprocess.run(["docker", "ps", "-a"])
+                api_port = docker_services.port_for("api-test", 5010)
+                api_url = "http://{}:{}/status".format(docker_ip, api_port)
+                print("Checking if service is responsive at ", api_url, " ... ")
+                docker_services.wait_until_responsive(
+                    timeout=120.0, pause=0.1, check=lambda: self.is_responsive(api_url)
+                )
+
+                ready = self.is_responsive(api_url)
+            except Exception as e:
+                print("Service is not responsive yet, waiting for 10 seconds ...")
+                time.sleep(10)
+                count += 1
+
+        return api_port, api_url
 
     @pytest.fixture(scope="session")
     def service(self, docker_ip, docker_services: Services):
@@ -37,26 +63,7 @@ class TestApiContainer(IntegrationTestBase):
             timeout=180.0, pause=0.1, check=lambda: self.is_responsive(neo4j_url)
         )
 
-        count = 0
-        ready = False
-        while count < 3 and not ready:
-            print("DOCKER API LOGS")
-            subprocess.run(["docker", "logs", "api-test"])
-            try:
-                print("API CONTAINER TESTS, services are", docker_services._services)
-                subprocess.run(["docker", "ps", "-a"])
-                api_port = docker_services.port_for("api-test", 5010)
-                api_url = "http://{}:{}/status".format(docker_ip, api_port)
-                print("Checking if service is responsive at ", api_url, " ... ")
-                docker_services.wait_until_responsive(
-                    timeout=120.0, pause=0.1, check=lambda: self.is_responsive(api_url)
-                )
-
-                ready = self.is_responsive(api_url)
-            except Exception as e:
-                print("Service is not responsive yet, waiting for 10 seconds ...")
-                time.sleep(10)
-                count += 1
+        api_url, api_port = self.find_api(docker_services)
 
         token: TokenResponse = AuthManager().datastore.create_new_user(email="emmasmithcto6306@gmail.com", password="password")
 
