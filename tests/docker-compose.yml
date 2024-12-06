@@ -68,12 +68,13 @@ services:
       PYTHONUNBUFFERED: 1
       VECTOR_DB_HOST: "weaviate"
       VECTOR_DB_PORT: 8081
-      NEO4J_URI: "neo4j:7688"
       NEO4J_USERNAME: "${NEO4J_USERNAME}"
       NEO4J_PASSWORD: "${NEO4J_PASSWORD}"
       NEO4J_DB_HOST: "neo4j-test"
       NEO4J_DB_PORT: ${NEO4J_BOLT_PORT}
       GROQ_API_KEY: "${GROQ_API_KEY}"
+      GSUITE_CREDS_FILE: "${GSUITE_CREDS_FILE}"
+      NEO4J_BOLT_PORT: ${NEO4J_BOLT_PORT}
     depends_on:
       - weaviate
       - neo4j

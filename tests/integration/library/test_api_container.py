@@ -25,8 +25,9 @@ class TestApiContainer(IntegrationTestBase):
         api_port = 0
         api_url = ""
         while count < 3 and not ready:
-            print("DOCKER API LOGS")
+            print("==DOCKER API LOGS==")
             subprocess.run(["docker", "logs", "api-test"])
+            print("==END DOCKER API LOGS==")
             try:
                 print("API CONTAINER TESTS, services are", docker_services._services)
                 subprocess.run(["docker", "ps", "-a"])
