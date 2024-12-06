@@ -65,6 +65,8 @@ class MetricsApp:
 		return metrics_app
 
 	def get_kafka_topics(self)-> set[str]:
+		if os.getenv("IS_TEST", False):
+			return set()
 		kafka = os.getenv("KAFKA_BROKER", "127.0.0.1:9092")
 		consumer = KafkaConsumer(group_id='test', bootstrap_servers=[kafka])
 		topics = consumer.topics()
