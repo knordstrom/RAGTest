@@ -1,7 +1,11 @@
 import os
+import threading
 
+from fastapi import FastAPI
 from groq import Groq
+import uvicorn
 import weaviate
+from api import metrics
 from globals import Globals
 from library.enums.kafka_topics import KafkaTopics
 from library.managers import handlers as h
@@ -34,8 +38,25 @@ def write_slack_to_vdb(slacks: list[ConsumerRecord]):
         if weave is not None:
             weave.close()
 
-def start():
+def listen_to_kafka():
     ProcessorSupport.kafka_listen(KafkaTopics.SLACK, "slack", write_slack_to_vdb)
+
+def serve_metrics():
+    app = FastAPI(title="Slack Processor", version="0.1")
+    metrics_app = metrics.MetricsApp(app, prefix="slack_processor", use_kafka=True, use_neo4j=False, use_weaviate=True).make_metrics_app()
+    print("Metrics server starting at", metrics_app)
+
+    uvicorn.run(app, host="0.0.0.0", port=5014)
+
+def start():
+    print("Starting slack processor...")
+    thread = threading.Thread(target = listen_to_kafka)
+    thread.daemon = False
+    thread.start()
+
+    serve_metrics()
+    
+    print("Slack processor started")
 
 if __name__ == '__main__':
     start()

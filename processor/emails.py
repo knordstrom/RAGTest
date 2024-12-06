@@ -1,7 +1,12 @@
 from datetime import datetime
+import threading
+from fastapi import FastAPI
 from groq import Groq
 from kafka import TopicPartition
 import os
+
+import uvicorn
+from api import metrics
 from library.data.local import neo4j
 from library.models.api_models import MeetingAttendee
 from library.enums.kafka_topics import KafkaTopics
@@ -70,8 +75,25 @@ def write_events_to_neo4j(events: list[ConsumerRecord]) -> None:
     graph = neo4j.Neo4j()
     graph.process_events(events)
 
+def listen_to_kafka():
+    ProcessorSupport.kafka_listen(KafkaTopics.EMAILS, "email_processor", write_emails_to_vdb)   
+
+def serve_metrics():
+    app = FastAPI(title="Email Processor", version="0.1")
+    metrics_app = metrics.MetricsApp(app, prefix="email_processor", use_kafka=True, use_neo4j=True, use_weaviate=True).make_metrics_app()
+    print("Metrics server starting at", metrics_app)
+
+    uvicorn.run(app, host="0.0.0.0", port=5011)
+    
 def start():
-    ProcessorSupport.kafka_listen(KafkaTopics.EMAILS, "email_processor", write_emails_to_vdb)
+    print("Starting email processor...")
+    thread = threading.Thread(target = listen_to_kafka)
+    thread.daemon = False
+    thread.start()
+
+    serve_metrics()
+    
+    print("Email processor started")
 
 if __name__ == '__main__':
     start()

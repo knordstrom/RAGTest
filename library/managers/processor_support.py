@@ -76,7 +76,7 @@ class ProcessorSupport:
             message = None
             while partitions == None or len(partitions) == 0:
                 partitions: set[int] = consumer.partitions_for_topic(topic)
-                print("Waiting for partitions... have " + str(partitions))
+                # print("Waiting for partitions... have " + str(partitions))
             
             while True:
                 print("Tick")

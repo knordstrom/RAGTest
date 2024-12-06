@@ -5,7 +5,8 @@ services:
     ports:
     - 8080:8080
     - 50051:50051
-    restart: on-failure:0
+    - 2112:2112
+    restart: always
     environment:
       QUERY_DEFAULTS_LIMIT: 25
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
@@ -15,6 +16,7 @@ services:
       TRANSFORMERS_INFERENCE_API: http://t2v-transformers:8080
       RERANKER_INFERENCE_API: http://reranker-transformers:8080
       CLUSTER_HOSTNAME: 'weaviate-1'
+      PROMETHEUS_MONITORING_ENABLED: true
   reranker-transformers:
     platform: linux/x86_64
     restart: on-failure:0
@@ -27,13 +29,14 @@ services:
     environment:
       ENABLE_CUDA: 0 
   neo4j:
-    image: neo4j:5.22.0
+    image: neo4j:5.24.2
     ports:
     - 7687:7687
     - 7474:7474
-    restart: on-failure:0
-    # volumes:
-    #   - /var/lib/neo4j/data:/data
+    - 2004:2004
+    restart: always
+    volumes:
+      - /var/lib/neo4j/data:/data
     environment:
       - NEO4J_PLUGINS=["apoc"]
       - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
@@ -44,19 +47,23 @@ services:
     image: confluentinc/cp-zookeeper:7.3.2
     hostname: zoo1
     container_name: zoo1
-    restart: on-failure:0
+    restart: always
     ports:
       - "2181:2181"
+      - 7070:7070
+      - 9998:9998
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_SERVERS: zoo1:2888:3888
+      ZOOKEEPER_JMX_PORT: 9998
+      ZOOKEEPER_JMX_HOSTNAME: 0.0.0.0
 
   kafka1:
     image: confluentinc/cp-kafka:7.4.6
     hostname: kafka1
     container_name: kafka1
-    restart: on-failure:0
+    restart: always
     ports:
       - "9092:9092"
       - "29092:29092"
@@ -72,7 +79,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_JMX_PORT: 9999
-      KAFKA_JMX_HOSTNAME: ${DOCKER_HOST_IP:-127.0.0.1}
+      KAFKA_JMX_HOSTNAME: 0.0.0.0
       KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
       KAFKA_AUTO_CREATE_TOPICS: "true"
@@ -80,8 +87,10 @@ services:
       - zoo1
 
   processor:
-    image: knordstrom/email-processor:0.1.10
+    image: knordstrom/email-processor:${SOFIA_VERSION}
     restart: always
+    ports:
+      - "5011:5011"
     environment:
       KAFKA_BROKER: "kafka1:19092"
       KAFKA_TOPIC: "emails"
@@ -93,10 +102,16 @@ services:
       NEO4J_USERNAME: "${NEO4J_USERNAME}"
       NEO4J_PASSWORD: "${NEO4J_PASSWORD}"
       PROMPTTEAMS_API_KEY: "${PROMPTTEAMS_API_KEY}"
+    depends_on:
+      - kafka1
+      - weaviate
+      - neo4j
 
   event_processor:
-    image: knordstrom/event-processor:0.1.10
+    image: knordstrom/event-processor:${SOFIA_VERSION}
     restart: always
+    ports:
+      - "5013:5013"
     environment:
       KAFKA_BROKER: "kafka1:19092"
       KAFKA_TOPIC: "calendar"
@@ -106,10 +121,15 @@ services:
       NEO4J_USERNAME: "${NEO4J_USERNAME}"
       NEO4J_PASSWORD: "${NEO4J_PASSWORD}"
       PROMPTTEAMS_API_KEY: "${PROMPTTEAMS_API_KEY}"
+    depends_on:
+      - kafka1
+      - neo4j
 
   document_processor:
-    image: knordstrom/document-processor:0.1.10
+    image: knordstrom/document-processor:${SOFIA_VERSION}
     restart: always
+    ports:
+      - "5012:5012"
     environment:
       KAFKA_BROKER: "kafka1:19092"
       KAFKA_TOPIC: "documents"
@@ -118,10 +138,15 @@ services:
       VECTOR_DB_HOST: "docker-weaviate-1"
       VECTOR_DB_PORT: 8080
       PROMPTTEAMS_API_KEY: "${PROMPTTEAMS_API_KEY}"
-  
+    depends_on:
+      - kafka1
+      - weaviate
+
   transcript_processor:
-    image: knordstrom/transcript-processor:0.1.10
+    image: knordstrom/transcript-processor:${SOFIA_VERSION}
     restart: always
+    ports:
+      - "5015:5015"
     environment:
       KAFKA_BROKER: "kafka1:19092"
       KAFKA_TOPIC: "transcripts"
@@ -130,10 +155,15 @@ services:
       VECTOR_DB_HOST: "docker-weaviate-1"
       VECTOR_DB_PORT: 8080
       PROMPTTEAMS_API_KEY: "${PROMPTTEAMS_API_KEY}"
+    depends_on:
+      - kafka1
+      - weaviate
 
   slack_processor:
-    image: knordstrom/slack-processor:0.1.11
+    image: knordstrom/slack-processor:${SOFIA_VERSION}
     restart: always
+    ports:
+      - "5014:5014"
     environment:
       KAFKA_BROKER: "kafka1:19092"
       KAFKA_TOPIC: "slack"
@@ -142,10 +172,13 @@ services:
       VECTOR_DB_HOST: "docker-weaviate-1"
       VECTOR_DB_PORT: 8080
       PROMPTTEAMS_API_KEY: "${PROMPTTEAMS_API_KEY}"
-      
+    depends_on:
+      - kafka1
+      - weaviate
+
   api:
     restart: always
-    image: knordstrom/sofia-api:0.1.10
+    image: knordstrom/sofia-api:${SOFIA_VERSION}
     ports:
       - "5010:5010"
       - "3127:3127"
@@ -162,6 +195,10 @@ services:
       GROQ_API_KEY: "${GROQ_API_KEY}"
       GSUITE_CREDS_FILE: "${GSUITE_CREDS_FILE}"
       PROMPTTEAMS_API_KEY: "${PROMPTTEAMS_API_KEY}"
+    depends_on:
+      - kafka1
+      - weaviate
+      - neo4j
 
   nginx:
     restart: always
@@ -173,3 +210,60 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - api
+
+  jmx_exporter:
+    image: sscaling/jmx-prometheus-exporter:latest
+    container_name: jmx_exporter
+    ports:
+      - 5556:5556
+    depends_on:
+      - kafka1
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+    - 9090:9090
+    command:
+    - --config.file=/etc/prometheus/prometheus.yml
+     - '--web.external-url=/prometheus/'
+     - '--web.route-prefix=/prometheus/'
+    volumes:
+    - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+    - cadvisor
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+      - GF_SERVER_ROOT_URL=/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources
+
+  pushgateway:
+    image: prom/pushgateway:latest
+    container_name: pushgateway
+    ports:
+    - 9091:9091
+    depends_on:
+    - prometheus
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    command:
+      - '-port=8098'
+    ports:
+    - 8098:8098
+    volumes:
+    - /:/rootfs:ro
+    - /var/run:/var/run:rw
+    - /sys:/sys:ro
+    - /var/lib/docker/:/var/lib/docker:ro

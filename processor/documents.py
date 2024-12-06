@@ -1,7 +1,12 @@
 from datetime import datetime
+import threading
+from fastapi import FastAPI
 from groq import Groq
 from kafka import TopicPartition
 import os
+
+import uvicorn
+from api import metrics
 from library.data.local import neo4j
 from library.models.api_models import MeetingAttendee
 from library.enums.kafka_topics import KafkaTopics
@@ -41,8 +46,25 @@ def write_doc_to_vdb(docs: list[ConsumerRecord]):
         if w is not None:
             w.close()
 
-def start_kafka_documents():
+def listen_to_kafka():
     ProcessorSupport.kafka_listen(KafkaTopics.DOCUMENTS, "document_processor", write_doc_to_vdb)
+
+def serve_metrics():
+    app = FastAPI(title="Document Processor", version="0.1")
+    metrics_app = metrics.MetricsApp(app, prefix="document_processor", use_kafka=True, use_neo4j=False, use_weaviate=True).make_metrics_app()
+    print("Metrics server starting at", metrics_app)
+
+    uvicorn.run(app, host="0.0.0.0", port=5012)
+
+def start_kafka_documents():
+    print("Starting document processor...")
+    thread = threading.Thread(target = listen_to_kafka)
+    thread.daemon = False
+    thread.start()
+
+    serve_metrics()
+    
+    print("Document processor started")
 
 if __name__ == '__main__':
     start_kafka_documents()

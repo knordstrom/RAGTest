@@ -1,9 +1,12 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 library/__pycache__/
+tests/__pycache__/
 api/__pycache__/
 *.py[cod]
 api/temp/
+tmp*/
+*.wav
 
 # C extensions
 *.so

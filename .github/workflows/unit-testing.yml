@@ -141,6 +141,7 @@ jobs:
         set +a        
         env
         which poetry
+        export IS_TEST=true 
         make test-all
     - name: Coveralls
       uses: coverallsapp/github-action@v2
